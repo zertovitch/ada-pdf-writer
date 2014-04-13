@@ -149,8 +149,8 @@ package PDF_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "001 Preview 1";
-  reference : constant String:= "xx-Apr-2014";
+  version   : constant String:= "DRAFT"; -- 001 Preview 1
+  reference : constant String:= "xx-yyy-2014";
   web       : constant String:= "http://pdf-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
@@ -203,6 +203,10 @@ private
     zone          : Page_zone:= nowhere;
     last_page     : Natural:= 0;
     page_idx      : Page_table;
+    page_min_x    : Natural;
+    page_min_y    : Natural;
+    page_max_x    : Natural;
+    page_max_y    : Natural;
     objects       : Natural:= last_fix_obj_idx;
     object_offset : Offset_table;
   end record;
