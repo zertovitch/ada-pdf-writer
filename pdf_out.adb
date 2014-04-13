@@ -72,11 +72,16 @@ package body PDF_Out is
     end if;
   end Block_Write;
 
+  procedure Write(pdf : in out PDF_Out_Stream'Class; s: String) is
+  begin
+    String'Write(pdf.pdf_stream, s);
+  end Write;
+
   NL: constant Character:= ASCII.LF;
 
   procedure Write_Line(pdf : in out PDF_Out_Stream'Class; s: String) is
   begin
-    String'Write(pdf.pdf_stream, s & NL);
+    Write(pdf, s & NL);
   end Write_Line;
 
   function Buffer_index(pdf : PDF_Out_Stream'Class) return Ada.Streams.Stream_IO.Count is
@@ -84,11 +89,22 @@ package body PDF_Out is
     return Index(pdf) - pdf.start_index;
   end Buffer_index;
 
+  function Img(p: Positive) return String is
+  s: constant String:= Integer'Image(p); -- Skip the *%"%! front space
+  begin
+    return s(s'First+1..s'Last);
+  end;
+
+  procedure New_fixed_object(pdf : in out PDF_Out_Stream'Class; idx: Positive) is
+  begin
+    pdf.object_offset(idx):= Buffer_index(pdf);
+    Write_Line(pdf, Img(idx) & " 0 obj");
+  end New_fixed_object;
+
   procedure New_object(pdf : in out PDF_Out_Stream'Class) is
   begin
     pdf.objects:= pdf.objects + 1;
-    pdf.object_offset(pdf.objects):= Buffer_index(pdf);
-    Write_Line(pdf, Integer'Image(pdf.objects) & " 0 obj");
+    New_fixed_object(pdf, pdf.objects);
   end New_object;
 
   procedure Write_PDF_header(pdf : in out PDF_Out_Stream'Class) is
@@ -98,19 +114,36 @@ package body PDF_Out is
     case pdf.format is
       when PDF_1_3 =>
         Write_Line(pdf, "%PDF-1.3");
-        Byte_buffer'Write(pdf.pdf_stream, 
-          (16#25#, 16#C2#, 16#A5#, 16#C2#, 16#B1#, 16#C3#, 16#AB#, 
-           16#0A#, 16#0A#) -- two line feeds
+        Byte_buffer'Write(pdf.pdf_stream,
+          (16#25#, 16#C2#, 16#A5#, 16#C2#, 16#B1#, 16#C3#, 16#AB#)
         );
+        Write_Line(pdf, "");
     end case;
+    New_Page(pdf);
   end Write_PDF_header;
 
-  procedure Page_finish(pdf: in out PDF_Out_Stream; num : Long_Float) is
+  procedure New_Page(pdf: in out PDF_Out_Stream'Class) is
+  begin
+    pdf.last_page:= pdf.last_page + 1;
+    New_object(pdf);
+    pdf.page_idx(pdf.last_page):= pdf.objects;
+    Write_Line(pdf, "  <<");
+    Write_Line(pdf, "    /Type /Page");
+    Write_Line(pdf, "    /Parent " & Img(pages_idx) & " 0 R");
+    -- /Resources 2 0 R
+    -- /Contents 6 0 R
+    Write_Line(pdf, "  >>");
+    Write_Line(pdf, "endobj");
+    pdf.zone:= in_header;
+    Page_Header(pdf);
+    pdf.zone:= in_page;
+  end New_Page;
+
+  procedure Page_finish(pdf: in out PDF_Out_Stream'Class) is
   begin
     pdf.zone:= in_footer;
-    Footer(pdf);
-    pdf.zone:= in_page;
-    null; -- !!
+    Page_Footer(pdf);
+    pdf.zone:= nowhere;
   end Page_finish;
 
   procedure Put(pdf: in out PDF_Out_Stream; num : Long_Float) is
@@ -126,7 +159,7 @@ package body PDF_Out is
   is
   begin
     if base = 10 then
-      Put(pdf, Integer'Image(num));
+      Put(pdf, Img(num));
     else
       declare
         use Ada.Strings.Fixed;
@@ -184,7 +217,7 @@ package body PDF_Out is
     New_Line(pdf);
   end Put_Line;
 
-  procedure New_Line(pdf: in out PDF_Out_Stream; Spacing : Positive := 1) is
+  procedure New_Line(pdf: in out PDF_Out_Stream'Class; Spacing : Positive := 1) is
   begin
     null; -- !!
   end New_Line;
@@ -201,18 +234,18 @@ package body PDF_Out is
 
   function Page(pdf: in PDF_Out_Stream) return Positive is
   begin
-    return 1; -- !!
+    return pdf.last_page;
   end Page;
 
-  procedure Header(pdf : PDF_Out_Stream) is
+  procedure Page_Header(pdf : PDF_Out_Stream) is
   begin
-    null; -- !!
-  end Header;
+    null;
+  end;
 
-  procedure Footer(pdf : PDF_Out_Stream) is
+  procedure Page_Footer(pdf : PDF_Out_Stream) is
   begin
-    null; -- !!
-  end Footer;
+    null;
+  end;
 
   procedure Left_Margin(pdf : PDF_Out_Stream; inches: Long_Float) is
   begin
@@ -258,36 +291,57 @@ package body PDF_Out is
 
   procedure Finish(pdf : in out PDF_Out_Stream'Class) is
 
+    info_idx, cat_idx: Positive;
+
     procedure Info is
     begin
       New_object(pdf);
-      Write_Line(pdf, "<<");
+      info_idx:= pdf.objects;
+      Write_Line(pdf, "  <<");
       Write_Line(pdf,
-        "/Producer (Ada PDF Writer v." & version &
+        "    /Producer (Ada PDF Writer v." & version &
         ", ref: " & reference &
       ')');
-      Write_Line(pdf, ">>");
+      Write_Line(pdf, "  >>");
       Write_Line(pdf, "endobj");
     end Info;
+
+    procedure Pages is
+    begin
+      New_fixed_object(pdf, pages_idx);
+      Write_Line(pdf, "  <<");
+      Write_Line(pdf, "    /Type /Pages");
+      Write(pdf,      "    /Kids [");
+      for p in 1..pdf.last_page loop
+        Write(pdf, Img(pdf.page_idx(p)) & " 0 R ");
+      end loop;
+      Write_Line(pdf, "]");
+      Write_Line(pdf, "    /Count " & Img(pdf.last_page));
+      Write_Line(pdf, "    /MediaBox [0 0 600 842]"); -- !! calculate
+      -- Global page size, lower-left to upper-right, measured in points
+      Write_Line(pdf, "  >>");
+      Write_Line(pdf, "endobj");
+    end Pages;
 
     procedure Catalog is
     begin
       New_object(pdf);
-      Write_Line(pdf, "<<");
-      Write_Line(pdf, "/Type /Catalog");
-      Write_Line(pdf, "/Pages 1 0 R");
-      Write_Line(pdf, ">>");
+      cat_idx:= pdf.objects;
+      Write_Line(pdf, "  <<");
+      Write_Line(pdf, "    /Type /Catalog");
+      Write_Line(pdf, "    /Pages " & Img(pages_idx) & " 0 R");
+      Write_Line(pdf, "  >>");
       Write_Line(pdf, "endobj");
     end Catalog;
 
     procedure Trailer is
     begin
       Write_Line(pdf, "trailer");
-      Write_Line(pdf, "<<");
-      Write_Line(pdf, "/Size" & Integer'Image(pdf.objects+1));
-      Write_Line(pdf, "/Root" & Integer'Image(pdf.objects) & " 0 R");
-      Write_Line(pdf, "/Info" & Integer'Image(pdf.objects-1) & " 0 R");
-      Write_Line(pdf, ">>");
+      Write_Line(pdf, "  <<");
+      Write_Line(pdf, "    /Size " & Img(pdf.objects+1));
+      Write_Line(pdf, "    /Root " & Img(cat_idx) & " 0 R");
+      Write_Line(pdf, "    /Info " & Img(info_idx) & " 0 R");
+      Write_Line(pdf, "  >>");
     end Trailer;
 
     xref_offset: Ada.Streams.Stream_IO.Count;
@@ -297,7 +351,7 @@ package body PDF_Out is
     begin
       xref_offset:= Buffer_index(pdf);
       Write_Line(pdf, "xref");
-      Write_Line(pdf, '0' & Integer'Image(pdf.objects+1));
+      Write_Line(pdf, "0 " & Img(pdf.objects+1));
       Write_Line(pdf, "0000000000 65535 f ");
       for i in 1..pdf.objects loop
         CIO.Put(s10, pdf.object_offset(i));
@@ -311,7 +365,12 @@ package body PDF_Out is
     end XRef;
 
   begin
+    if pdf.last_page = 0 then
+      New_Page(pdf);
+    end if;
+    Page_finish(pdf);
     Info;
+    Pages;
     Catalog;
     XRef;
     Trailer;

@@ -10,11 +10,13 @@ with Ada.Text_IO;
 procedure PDF_Out_Demo is
 
   procedure Small_demo is
-    xl: PDF_Out_File;
+    pdf: PDF_Out_File;
   begin
-    Create(xl, "Small.pdf");
-    Put_Line(xl, "This is a small demo for PDF_Out");
-    Close(xl);
+    Create(pdf, "Small.pdf");
+    Put_Line(pdf, "This is a small demo for PDF_Out");
+    New_Page(pdf);
+    Put_Line(pdf, "Just had a page break...");
+    Close(pdf);
   end Small_demo;
 
   use Ada.Text_IO;

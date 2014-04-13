@@ -94,7 +94,8 @@ package PDF_Out is
   procedure Put_Line(pdf: in out PDF_Out_Stream; str : Unbounded_String);
   procedure Put_Line(pdf: in out PDF_Out_Stream; date: Time);
   --
-  procedure New_Line(pdf: in out PDF_Out_Stream; Spacing : Positive := 1);
+  procedure New_Line(pdf: in out PDF_Out_Stream'Class; Spacing : Positive := 1);
+  procedure New_Page(pdf: in out PDF_Out_Stream'Class);
 
   function Col(pdf: in PDF_Out_Stream) return Positive;
   function Line(pdf: in PDF_Out_Stream) return Positive;
@@ -105,8 +106,8 @@ package PDF_Out is
 
   -- You need to override the Header and Footer methods
   -- for setting up your custom header and footer.
-  procedure Header(pdf : PDF_Out_Stream);
-  procedure Footer(pdf : PDF_Out_Stream);
+  procedure Page_Header(pdf : PDF_Out_Stream);
+  procedure Page_Footer(pdf : PDF_Out_Stream);
   --
   procedure Left_Margin(pdf : PDF_Out_Stream; inches: Long_Float);
   procedure Right_Margin(pdf : PDF_Out_Stream; inches: Long_Float);
@@ -168,10 +169,17 @@ package PDF_Out is
 
 private
 
-  type Page_zone is (in_page, in_header, in_footer);
+  type Page_zone is (nowhere, in_page, in_header, in_footer);
 
   type Offset_table is array(1..1000) of Ada.Streams.Stream_IO.Count;
   -- !! size hardcoded
+
+  type Page_table is array(1..1000) of Positive; -- object ID's of pages
+
+  -- Some unique objects like Pages need to have a pre-determined index,
+  -- otherwise single Page objects don't know their parent's index.
+  pages_idx: constant:= 1;
+  last_fix_obj_idx: constant:= 1;
 
   ----------------------------------------
   -- Raw Streams, with 'Read and 'Write --
@@ -187,13 +195,15 @@ private
   -- variable of this type to reset values is not Ada compliant (LRM:3.9.3(8))
   --
   type PDF_Out_Pre_Root_Type is tagged record
-    pdf_stream  : PDF_Raw_Stream_Class;
-    start_index : Ada.Streams.Stream_IO.Count;
-    format      : PDF_type:= Default_PDF_type;
-    zone        : Page_zone;
-    is_created  : Boolean:= False;
-    is_closed   : Boolean:= False;
-    objects     : Natural:= 0;
+    pdf_stream    : PDF_Raw_Stream_Class;
+    start_index   : Ada.Streams.Stream_IO.Count;
+    is_created    : Boolean:= False;
+    is_closed     : Boolean:= False;
+    format        : PDF_type:= Default_PDF_type;
+    zone          : Page_zone:= nowhere;
+    last_page     : Natural:= 0;
+    page_idx      : Page_table;
+    objects       : Natural:= last_fix_obj_idx;
     object_offset : Offset_table;
   end record;
 
