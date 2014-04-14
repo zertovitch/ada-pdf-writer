@@ -132,10 +132,10 @@ package body PDF_Out is
   procedure Test_Page(pdf: in out PDF_Out_Stream'Class) is
   begin
     New_object(pdf);
-    WL(pdf, "  << /Length 55 >>");
+    WL(pdf, "  << /Length 60 >>");
     WL(pdf, "stream");
     WL(pdf, "  BT");
-    WL(pdf, "    /F1 36 Tf"); -- font
+    WL(pdf, "    /F1 24 Tf"); -- font
     WL(pdf, "    20 " & Img(pdf.page_max_y - 56) & " Td");  -- position
     WL(pdf, "    (Hello World !) Tj"); -- show
     WL(pdf, "  ET");
@@ -145,7 +145,10 @@ package body PDF_Out is
 
   procedure Page_finish(pdf: in out PDF_Out_Stream'Class) is
   begin
-    Test_Page(pdf);
+    if pdf.zone = nowhere then
+      return; -- We are already "between pages"
+    end if;
+    Test_Page(pdf); -- !!
     pdf.zone:= in_footer;
     Page_Footer(pdf);
     pdf.zone:= nowhere;
@@ -153,14 +156,14 @@ package body PDF_Out is
 
   procedure Test_Font(pdf: in out PDF_Out_Stream'Class) is
   begin
-    WL(pdf, "       << /Font");
-    WL(pdf, "           << /F1");
-    WL(pdf, "               << /Type /Font");
-    WL(pdf, "                  /Subtype /Type1");
-    WL(pdf, "                  /BaseFont /Times-Roman");
-    WL(pdf, "               >>");
-    WL(pdf, "           >>");
-    WL(pdf, "       >>");
+    WL(pdf, "<< /Font");
+    WL(pdf, "  << /F1");
+    WL(pdf, "    << /Type /Font");
+    WL(pdf, "       /Subtype /Type1");
+    WL(pdf, "       /BaseFont /Times-Roman");
+    WL(pdf, "    >>");
+    WL(pdf, "  >>");
+    WL(pdf, ">>");
   end;
 
   procedure New_Page(pdf: in out PDF_Out_Stream'Class) is
@@ -178,7 +181,7 @@ package body PDF_Out is
     WL(pdf, "  <</Type /Page");
     WL(pdf, "    /Parent " & Img(pages_idx) & " 0 R");
     WL(pdf, "    /Resources");
-    Test_Font(pdf);
+    Test_Font(pdf); -- !!
     WL(pdf, "    /Contents " & Img(pdf.objects+1) & " 0 R");
     -- Contents stream comes just after the Page object
     WL(pdf, "  >>");
@@ -389,8 +392,8 @@ package body PDF_Out is
     begin
       WL(pdf, "trailer");
       WL(pdf, "  <<");
-      WL(pdf, "    /Size " & Img(pdf.objects+1));
       WL(pdf, "    /Root " & Img(cat_idx) & " 0 R");
+      WL(pdf, "    /Size " & Img(pdf.objects+1));
       WL(pdf, "    /Info " & Img(info_idx) & " 0 R");
       WL(pdf, "  >>");
     end Trailer;
@@ -411,12 +414,13 @@ package body PDF_Out is
             s10(n):= '0';
           end if;
         end loop;
-        WL(pdf, s10 & " 00000 n");
+        WL(pdf, s10 & " 00000 n "); -- <- trailing space needed!
       end loop;
     end XRef;
 
   begin
     if pdf.last_page = 0 then
+      -- No page ? Then make quickly a blank page
       New_Page(pdf);
     end if;
     Page_finish(pdf);
@@ -426,7 +430,7 @@ package body PDF_Out is
     XRef;
     Trailer;
     WL(pdf, "startxref"); -- offset of xref
-    WL(pdf, Ada.Streams.Stream_IO.Count'Image(xref_offset));
+    WL(pdf, Img(Integer(xref_offset)));
     WL(pdf, "%%EOF");
     pdf.is_closed:= True;
   end Finish;
