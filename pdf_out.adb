@@ -133,12 +133,13 @@ package body PDF_Out is
   begin
     New_object(pdf);
     WL(pdf, "  << /Length 60 >>");
+    --  A stream, 60 bytes in length (after "stream" row, before "endstream" row)
     WL(pdf, "stream");
-    WL(pdf, "  BT");
-    WL(pdf, "    /F1 24 Tf"); -- font
-    WL(pdf, "    20 " & Img(pdf.page_max_y - 56) & " Td");  -- position
+    WL(pdf, "  BT");            --  Begin Text object
+    WL(pdf, "    /F1 24 Tf");   --  Use F1 font at 24 point size
+    WL(pdf, "    20 " & Img(pdf.page_max_y - 56) & " Td");  -- Text position
     WL(pdf, "    (Hello World !) Tj"); -- show
-    WL(pdf, "  ET");
+    WL(pdf, "  ET");            --  End Text
     WL(pdf, "endstream");
     WL(pdf, "endobj");
   end Test_Page;
@@ -183,7 +184,7 @@ package body PDF_Out is
     WL(pdf, "    /Resources");
     Test_Font(pdf); -- !!
     WL(pdf, "    /Contents " & Img(pdf.objects+1) & " 0 R");
-    -- Contents stream comes just after the Page object
+    --  ^ The Contents stream object is coming just after this Page object
     WL(pdf, "  >>");
     WL(pdf, "endobj");
     pdf.zone:= in_header;
@@ -345,15 +346,13 @@ package body PDF_Out is
       New_object(pdf);
       info_idx:= pdf.objects;
       WL(pdf, "  <<");
-      WL(pdf,
-        "    /Producer (Ada PDF Writer " & version &
-        ", ref: " & reference &
-      ')');
+      WL(pdf, "    /Producer (Ada PDF Writer " & version &
+              " - ref: " & reference & " - " & web & ")");
       WL(pdf, "  >>");
       WL(pdf, "endobj");
     end Info;
 
-    procedure Pages is
+    procedure Pages_dictionary is
     begin
       New_fixed_object(pdf, pages_idx);
       WL(pdf, "  <<");
@@ -375,9 +374,9 @@ package body PDF_Out is
       -- Global page size, lower-left to upper-right, measured in points
       WL(pdf, "  >>");
       WL(pdf, "endobj");
-    end Pages;
+    end Pages_dictionary;
 
-    procedure Catalog is
+    procedure Catalog_dictionary is
     begin
       New_object(pdf);
       cat_idx:= pdf.objects;
@@ -386,7 +385,7 @@ package body PDF_Out is
       WL(pdf, "    /Pages " & Img(pages_idx) & " 0 R");
       WL(pdf, "  >>");
       WL(pdf, "endobj");
-    end Catalog;
+    end Catalog_dictionary;
 
     procedure Trailer is
     begin
@@ -425,8 +424,8 @@ package body PDF_Out is
     end if;
     Page_finish(pdf);
     Info;
-    Pages;
-    Catalog;
+    Pages_dictionary;
+    Catalog_dictionary;
     XRef;
     Trailer;
     WL(pdf, "startxref"); -- offset of xref

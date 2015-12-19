@@ -9,7 +9,7 @@
 
 -- Legal licensing note:
 
---  Copyright (c) 2014 Gautier de Montmollin
+--  Copyright (c) 2014 .. 2015 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -150,8 +150,8 @@ package PDF_Out is
   --------------------------------------------------------------
 
   version   : constant String:= "DRAFT"; -- 001 Preview 1
-  reference : constant String:= "xx-yyy-2014";
-  web       : constant String:= "http://pdf-writer.sf.net/";
+  reference : constant String:= "xx-yyy-2015";
+  web       : constant String:= "http://apdf.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
   ----------------------------------
