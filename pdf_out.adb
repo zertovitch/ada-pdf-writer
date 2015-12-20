@@ -87,6 +87,20 @@ package body PDF_Out is
     W(pdf, s & NL);
   end;
 
+  --  Delayed output, for internal PDF's "stream" object
+
+  procedure Wd(pdf : in out PDF_Out_Stream'Class; s: String) is
+  begin
+    Append(pdf.stream_obj_buf, s);
+  end;
+
+  procedure WLd(pdf : in out PDF_Out_Stream'Class; s: String) is
+  begin
+    Wd(pdf, s & NL);
+  end;
+
+  --  External stream index
+
   function Buffer_index(pdf : PDF_Out_Stream'Class) return Ada.Streams.Stream_IO.Count is
   begin
     return Index(pdf) - pdf.start_index;
@@ -129,18 +143,29 @@ package body PDF_Out is
     New_Page(pdf);
   end Write_PDF_header;
 
+  procedure New_stream(pdf : in out PDF_Out_Stream'Class) is
+  begin
+    pdf.stream_obj_buf:= Null_Unbounded_String;
+  end New_stream;
+
+  procedure Finish_stream(pdf : in out PDF_Out_Stream'Class) is
+  begin
+    WL(pdf, "  << /Length" & Integer'Image(Length(pdf.stream_obj_buf)) & " >>");
+    WL(pdf, "stream");
+    WL(pdf, To_String(pdf.stream_obj_buf));
+    WL(pdf, "endstream");
+  end Finish_stream;
+
   procedure Test_Page(pdf: in out PDF_Out_Stream'Class) is
   begin
     New_object(pdf);
-    WL(pdf, "  << /Length 60 >>");
-    --  A stream, 60 bytes in length (after "stream" row, before "endstream" row)
-    WL(pdf, "stream");
-    WL(pdf, "  BT");            --  Begin Text object
-    WL(pdf, "    /F1 24 Tf");   --  Use F1 font at 24 point size
-    WL(pdf, "    20 " & Img(pdf.page_max_y - 56) & " Td");  -- Text position
-    WL(pdf, "    (Hello World !) Tj"); -- show
-    WL(pdf, "  ET");            --  End Text
-    WL(pdf, "endstream");
+    New_stream(pdf);
+    WLd(pdf, "  BT");            --  Begin Text object (9.4)
+    WLd(pdf, "    /F1 24 Tf");   --  F1 font, 24 pt size (9.3 Text State Parameters and Operators)
+    WLd(pdf, "    20 " & Img(pdf.page_max_y - 56) & " Td");  -- 9.4.2 Text-Positioning Operators
+    WLd(pdf, "    (Hello World !) Tj"); -- Tj: Show a text string (9.4.3 Text-Showing Operators)
+    Wd(pdf,  "  ET");            --  End Text
+    Finish_stream(pdf);
     WL(pdf, "endobj");
   end Test_Page;
 
@@ -331,7 +356,7 @@ package body PDF_Out is
     if pdf.is_created and not pdf.is_closed then
       raise PDF_stream_not_closed;
     end if;
-    -- We will reset evything with defaults, except this:
+    -- We will reset everything with defaults, except this:
     dummy_pdf_with_defaults.format:= PDF_format;
     -- Now we reset pdf:
     PDF_Out_Pre_Root_Type(pdf):= dummy_pdf_with_defaults;
@@ -370,8 +395,11 @@ package body PDF_Out is
         Img(pdf.page_min_y) & ' ' &
         Img(pdf.page_max_x) & ' ' &
         Img(pdf.page_max_y) & ']'
-      ); -- !! probably bounding box of all pages here
-      -- Global page size, lower-left to upper-right, measured in points
+      );
+      --  7.7.3.3 Page Objects - MediaBox
+      --  Boundaries of the physical medium on which the page shall be displayed or printed
+      --  Global page size, lower-left to upper-right, measured in points
+      --  Bounding box of all pages
       WL(pdf, "  >>");
       WL(pdf, "endobj");
     end Pages_dictionary;

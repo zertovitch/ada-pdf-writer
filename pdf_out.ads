@@ -209,6 +209,7 @@ private
     page_max_y    : Natural;
     objects       : Natural:= last_fix_obj_idx;
     object_offset : Offset_table;
+    stream_obj_buf: Unbounded_String;
   end record;
 
   type PDF_Out_Stream is abstract new PDF_Out_Pre_Root_Type with null record;
