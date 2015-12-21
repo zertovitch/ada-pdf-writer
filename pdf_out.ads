@@ -175,6 +175,7 @@ private
   -- !! size hardcoded
 
   type Page_table is array(1..1000) of Positive; -- object ID's of pages
+  -- !! size hardcoded
 
   -- Some unique objects like Pages need to have a pre-determined index,
   -- otherwise single Page objects don't know their parent's index.

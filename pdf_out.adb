@@ -151,6 +151,10 @@ package body PDF_Out is
   procedure Finish_stream(pdf : in out PDF_Out_Stream'Class) is
   begin
     WL(pdf, "  << /Length" & Integer'Image(Length(pdf.stream_obj_buf)) & " >>");
+    --  Length could be alternatively stored in next object,
+    --  so we wouldn't need to buffer the stream - see 7.3.10, Example 3.
+    --  But we prefer the buffered version, which could be compressed in a future version
+    --  of this package.
     WL(pdf, "stream");
     WL(pdf, To_String(pdf.stream_obj_buf));
     WL(pdf, "endstream");
@@ -162,8 +166,17 @@ package body PDF_Out is
     New_stream(pdf);
     WLd(pdf, "  BT");            --  Begin Text object (9.4)
     WLd(pdf, "    /F1 24 Tf");   --  F1 font, 24 pt size (9.3 Text State Parameters and Operators)
+    WLd(pdf, "    0.5 0 0 rg");  --  red, nonstroking colour (Table 74)
+    WLd(pdf, "    0.25 G") ;     --  25% gray stroking colour (Table 74)
+    WLd(pdf, "    2 Tr");        --  Tr: Set rendering mode as "Fill, then stroke text" (Table 106)
     WLd(pdf, "    20 " & Img(pdf.page_max_y - 56) & " Td");  -- 9.4.2 Text-Positioning Operators
     WLd(pdf, "    (Hello World !) Tj"); -- Tj: Show a text string (9.4.3 Text-Showing Operators)
+    WLd(pdf, "    16 TL");       -- TL: set text leading (distance between lines, 9.3.5)
+    WLd(pdf, "    T*");          -- T*: Move to the start of the next line (9.4.2)
+    WLd(pdf, "    /F1 12 Tf");
+    WLd(pdf, "    0 Tr");        --  Tr: Set rendering mode as default: "Fill text" (Table 106)
+    WLd(pdf, "    0 g");         --  black (default)
+    WLd(pdf, "    (Second line.) Tj T* (PDF is fun, isn't it ?) Tj");
     Wd(pdf,  "  ET");            --  End Text
     Finish_stream(pdf);
     WL(pdf, "endobj");
@@ -204,6 +217,7 @@ package body PDF_Out is
     pdf.page_min_y:= 0; -- !! hardcoded
     pdf.page_max_x:= 420; -- !! hardcoded
     pdf.page_max_y:= 540; -- !! hardcoded
+    --  Table 30 for options
     WL(pdf, "  <</Type /Page");
     WL(pdf, "    /Parent " & Img(pages_idx) & " 0 R");
     WL(pdf, "    /Resources");
@@ -411,6 +425,10 @@ package body PDF_Out is
       WL(pdf, "  <<");
       WL(pdf, "    /Type /Catalog");
       WL(pdf, "    /Pages " & Img(pages_idx) & " 0 R");
+      if pdf.last_page > 0 then
+        WL(pdf, "    /OpenAction [" & Img(pdf.page_idx(1)) & " 0 R /Fit]");
+        --  ^ Open on page 1, fit the entire page within the window (Table 151)
+      end if;
       WL(pdf, "  >>");
       WL(pdf, "endobj");
     end Catalog_dictionary;
