@@ -171,12 +171,12 @@ package body PDF_Out is
     WLd(pdf, "    2 Tr");        --  Tr: Set rendering mode as "Fill, then stroke text" (Table 106)
     WLd(pdf, "    20 " & Img(pdf.page_max_y - 56) & " Td");  -- 9.4.2 Text-Positioning Operators
     WLd(pdf, "    (Hello World !) Tj"); -- Tj: Show a text string (9.4.3 Text-Showing Operators)
-    WLd(pdf, "    16 TL");       -- TL: set text leading (distance between lines, 9.3.5)
-    WLd(pdf, "    T*");          -- T*: Move to the start of the next line (9.4.2)
-    WLd(pdf, "    /F1 12 Tf");
+    WLd(pdf, "    16 TL");       --  TL: set text leading (distance between lines, 9.3.5)
+    WLd(pdf, "    T*");          --  T*: Move to the start of the next line (9.4.2)
+    WLd(pdf, "    /F2 12 Tf");
     WLd(pdf, "    0 Tr");        --  Tr: Set rendering mode as default: "Fill text" (Table 106)
     WLd(pdf, "    0 g");         --  black (default)
-    WLd(pdf, "    (Second line.) Tj T* (PDF is fun, isn't it ?) Tj");
+    WLd(pdf, "    (Second line here.) Tj T* (PDF is fun, ) Tj /F3 12 Tf (isn't it ?) Tj");
     Wd(pdf,  "  ET");            --  End Text
     Finish_stream(pdf);
     WL(pdf, "endobj");
@@ -196,11 +196,9 @@ package body PDF_Out is
   procedure Test_Font(pdf: in out PDF_Out_Stream'Class) is
   begin
     WL(pdf, "<< /Font");
-    WL(pdf, "  << /F1");
-    WL(pdf, "    << /Type /Font");
-    WL(pdf, "       /Subtype /Type1");
-    WL(pdf, "       /BaseFont /Times-Roman");
-    WL(pdf, "    >>");
+    WL(pdf, "  << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>");
+    WL(pdf, "     /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+    WL(pdf, "     /F3 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique >>");
     WL(pdf, "  >>");
     WL(pdf, ">>");
   end;
