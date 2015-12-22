@@ -1,3 +1,9 @@
+--  All technical references are to PDF 1.7 format, ISO 32000-1 standard (2008)
+--  http://www.adobe.com/devnet/pdf/pdf_reference.html
+--
+--  ? Are units always pt ?
+--
+
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;
 -- with Ada.Integer_Text_IO;               use Ada.Integer_Text_IO;
@@ -160,11 +166,9 @@ package body PDF_Out is
     WL(pdf, "endstream");
   end Finish_stream;
 
-  procedure Test_Page(pdf: in out PDF_Out_Stream'Class) is
+  procedure Test_Text(pdf: in out PDF_Out_Stream'Class) is
   begin
-    New_object(pdf);
-    New_stream(pdf);
-    WLd(pdf, "  BT");            --  Begin Text object (9.4)
+    --  WLd(pdf, "  BT");            --  Begin Text object (9.4)
     WLd(pdf, "    /F1 24 Tf");   --  F1 font, 24 pt size (9.3 Text State Parameters and Operators)
     WLd(pdf, "    0.5 0 0 rg");  --  red, nonstroking colour (Table 74)
     WLd(pdf, "    0.25 G") ;     --  25% gray stroking colour (Table 74)
@@ -176,21 +180,23 @@ package body PDF_Out is
     WLd(pdf, "    /F2 12 Tf");
     WLd(pdf, "    0 Tr");        --  Tr: Set rendering mode as default: "Fill text" (Table 106)
     WLd(pdf, "    0 g");         --  black (default)
-    WLd(pdf, "    (Second line here.) Tj T* (PDF is fun, ) Tj /F3 12 Tf (isn't it ?) Tj");
-    Wd(pdf,  "  ET");            --  End Text
-    Finish_stream(pdf);
-    WL(pdf, "endobj");
-  end Test_Page;
+    WLd(pdf, "    (Subtitle here.) Tj T*");
+    --  Wd(pdf,  "  ET");            --  End Text
+  end Test_Text;
 
+  --  Internal, call by new page to finish preceding page
+  --
   procedure Page_finish(pdf: in out PDF_Out_Stream'Class) is
   begin
     if pdf.zone = nowhere then
       return; -- We are already "between pages"
     end if;
-    Test_Page(pdf); -- !!
     pdf.zone:= in_footer;
     Page_Footer(pdf);
     pdf.zone:= nowhere;
+    Wd(pdf,  "  ET");            --  End Text
+    Finish_stream(pdf);
+    WL(pdf, "endobj");
   end Page_finish;
 
   procedure Test_Font(pdf: in out PDF_Out_Stream'Class) is
@@ -209,6 +215,9 @@ package body PDF_Out is
       Page_finish(pdf);
     end if;
     pdf.last_page:= pdf.last_page + 1;
+    --
+    --  Page descriptor object:
+    --
     New_object(pdf);
     pdf.page_idx(pdf.last_page):= pdf.objects;
     pdf.page_min_x:= 0; -- !! hardcoded
@@ -224,6 +233,15 @@ package body PDF_Out is
     --  ^ The Contents stream object is coming just after this Page object
     WL(pdf, "  >>");
     WL(pdf, "endobj");
+    --
+    --  Page contents object:
+    --
+    New_object(pdf);
+    New_stream(pdf);
+    WLd(pdf, "  BT");            --  Begin Text object (9.4)
+    WLd(pdf, "    /F1 12 Tf");   --  F1 font (9.3 Text State Parameters and Operators)
+    WLd(pdf, "    20 " & Img(pdf.page_max_y - 120) & " Td");  -- 9.4.2 Text-Positioning Operators
+    WLd(pdf, "    16 TL");       --  TL: set text leading (distance between lines, 9.3.5)
     pdf.zone:= in_header;
     Page_Header(pdf);
     pdf.zone:= in_page;
@@ -234,7 +252,7 @@ package body PDF_Out is
     null; -- !!
   end Put;
 
-  procedure Put(pdf    : in out PDF_Out_Stream;
+  procedure Put(pdf   : in out PDF_Out_Stream;
                 num   : in Integer;
                 width : in Ada.Text_IO.Field := 0; -- ignored
                 base  : in Ada.Text_IO.Number_Base := 10
@@ -258,7 +276,7 @@ package body PDF_Out is
 
   procedure Put(pdf: in out PDF_Out_Stream; str : String) is
   begin
-    null; -- !!
+    WLd(pdf, "    (" & str & ") Tj");
   end Put;
 
   procedure Put(pdf: in out PDF_Out_Stream; str : Unbounded_String) is
@@ -302,7 +320,9 @@ package body PDF_Out is
 
   procedure New_Line(pdf: in out PDF_Out_Stream'Class; Spacing : Positive := 1) is
   begin
-    null; -- !!
+    for i in 1..Spacing loop
+      WLd(pdf, "    T*");
+    end loop;
   end New_Line;
 
   function Col(pdf: in PDF_Out_Stream) return Positive is
@@ -322,12 +342,13 @@ package body PDF_Out is
     return pdf.last_page;
   end Page;
 
-  procedure Page_Header(pdf : PDF_Out_Stream) is
+  procedure Page_Header(pdf : in out PDF_Out_Stream) is
   begin
     null;
+    --Test_Text(pdf); -- !! To be removed !!
   end;
 
-  procedure Page_Footer(pdf : PDF_Out_Stream) is
+  procedure Page_Footer(pdf : in out PDF_Out_Stream) is
   begin
     null;
   end;

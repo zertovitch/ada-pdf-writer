@@ -106,8 +106,8 @@ package PDF_Out is
 
   -- You need to override the Header and Footer methods
   -- for setting up your custom header and footer.
-  procedure Page_Header(pdf : PDF_Out_Stream);
-  procedure Page_Footer(pdf : PDF_Out_Stream);
+  procedure Page_Header(pdf : in out PDF_Out_Stream);
+  procedure Page_Footer(pdf : in out PDF_Out_Stream);
   --
   procedure Left_Margin(pdf : PDF_Out_Stream; inches: Long_Float);
   procedure Right_Margin(pdf : PDF_Out_Stream; inches: Long_Float);
