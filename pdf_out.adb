@@ -1,12 +1,9 @@
---  All technical references are to PDF 1.7 format, ISO 32000-1 standard (2008)
+--  All technical references are to PDF 1.7 format, ISO 32000-1:2008 standard
 --  http://www.adobe.com/devnet/pdf/pdf_reference.html
---
---  ? Are units always pt ?
 --
 
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;
--- with Ada.Integer_Text_IO;               use Ada.Integer_Text_IO;
 
 with Interfaces;                        use Interfaces;
 
@@ -122,6 +119,50 @@ package body PDF_Out is
     end if;
   end;
 
+  package RIO is new Ada.Text_IO.Float_IO(Real);
+
+  --  Compact real number image, taken from TeXCAD (TeX_Number in tc.adb)
+  --
+  function Img( x: Real; prec: Positive:= Real'Digits ) return String is
+    s: String(1..30);
+    na,nb,np:Natural;
+  begin
+    RIO.Put(s,x,prec,0);
+    na:= s'First;
+    nb:= s'Last;
+    np:= 0;
+    for i in s'Range loop
+      case s(i) is
+        when '.' => np:= i; exit;  --   Find a decimal point
+        when ' ' => na:= i+1;      -- * Trim spaces on left
+        when others => null;
+      end case;
+    end loop;
+    if np > 0 then
+      while nb > np and then s(nb)='0' loop
+        nb:= nb-1;                 -- * Remove extra '0's
+      end loop;
+      if nb = np then
+        nb:= nb-1;                 -- * Remove '.' if it is at the end
+      elsif s(na..np-1)= "-0" then
+        na:= na+1;
+        s(na):= '-';               -- * Reduce "-0.x" to "-.x"
+      elsif s(na..np-1)= "0" then
+        na:= na+1;                 -- * Reduce "0.x" to ".x"
+      end if;
+    end if;
+    return s(na..nb);
+  end Img;
+
+  function Img(box: Rectangle) return String is
+  begin
+    return
+      Img(box.x_min) & ' ' &
+      Img(box.y_min) & ' ' &
+      Img(box.x_max) & ' ' &
+      Img(box.y_max) & ' ';
+  end Img;
+
   procedure New_fixed_object(pdf : in out PDF_Out_Stream'Class; idx: Positive) is
   begin
     pdf.object_offset(idx):= Buffer_index(pdf);
@@ -146,7 +187,6 @@ package body PDF_Out is
         );
         WL(pdf, "");
     end case;
-    New_Page(pdf);
   end Write_PDF_header;
 
   procedure New_stream(pdf : in out PDF_Out_Stream'Class) is
@@ -173,7 +213,7 @@ package body PDF_Out is
     WLd(pdf, "    0.5 0 0 rg");  --  red, nonstroking colour (Table 74)
     WLd(pdf, "    0.25 G") ;     --  25% gray stroking colour (Table 74)
     WLd(pdf, "    2 Tr");        --  Tr: Set rendering mode as "Fill, then stroke text" (Table 106)
-    WLd(pdf, "    20 " & Img(pdf.page_max_y - 56) & " Td");  -- 9.4.2 Text-Positioning Operators
+    WLd(pdf, "    20 " & Img(pdf.page_box.y_max - 56.0) & " Td");  -- 9.4.2 Text-Positioning Operators
     WLd(pdf, "    (Hello World !) Tj"); -- Tj: Show a text string (9.4.3 Text-Showing Operators)
     WLd(pdf, "    16 TL");       --  TL: set text leading (distance between lines, 9.3.5)
     WLd(pdf, "    T*");          --  T*: Move to the start of the next line (9.4.2)
@@ -202,9 +242,9 @@ package body PDF_Out is
   procedure Test_Font(pdf: in out PDF_Out_Stream'Class) is
   begin
     WL(pdf, "<< /Font");
-    WL(pdf, "  << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>");
-    WL(pdf, "     /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
-    WL(pdf, "     /F3 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique >>");
+    WL(pdf, "  << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+    WL(pdf, "     /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique >>");
+    WL(pdf, "     /F3 << /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>");
     WL(pdf, "  >>");
     WL(pdf, ">>");
   end;
@@ -220,10 +260,6 @@ package body PDF_Out is
     --
     New_object(pdf);
     pdf.page_idx(pdf.last_page):= pdf.objects;
-    pdf.page_min_x:= 0; -- !! hardcoded
-    pdf.page_min_y:= 0; -- !! hardcoded
-    pdf.page_max_x:= 420; -- !! hardcoded
-    pdf.page_max_y:= 540; -- !! hardcoded
     --  Table 30 for options
     WL(pdf, "  <</Type /Page");
     WL(pdf, "    /Parent " & Img(pages_idx) & " 0 R");
@@ -231,6 +267,7 @@ package body PDF_Out is
     Test_Font(pdf); -- !!
     WL(pdf, "    /Contents " & Img(pdf.objects+1) & " 0 R");
     --  ^ The Contents stream object is coming just after this Page object
+    WL(pdf, "    /MediaBox [" & Img(pdf.page_box) & ']');
     WL(pdf, "  >>");
     WL(pdf, "endobj");
     --
@@ -240,14 +277,18 @@ package body PDF_Out is
     New_stream(pdf);
     WLd(pdf, "  BT");            --  Begin Text object (9.4)
     WLd(pdf, "    /F1 12 Tf");   --  F1 font (9.3 Text State Parameters and Operators)
-    WLd(pdf, "    20 " & Img(pdf.page_max_y - 120) & " Td");  -- 9.4.2 Text-Positioning Operators
+    -- Td: 9.4.2 Text-Positioning Operators
+    WLd(pdf, "    " &
+      Img(pdf.page_margins.left) & ' ' &
+      Img(pdf.page_box.y_max - pdf.page_margins.top) & " Td"
+    );
     WLd(pdf, "    16 TL");       --  TL: set text leading (distance between lines, 9.3.5)
     pdf.zone:= in_header;
     Page_Header(pdf);
     pdf.zone:= in_page;
   end New_Page;
 
-  procedure Put(pdf: in out PDF_Out_Stream; num : Long_Float) is
+  procedure Put(pdf: in out PDF_Out_Stream; num : Real) is
   begin
     null; -- !!
   end Put;
@@ -265,7 +306,7 @@ package body PDF_Out is
       declare
         use Ada.Strings.Fixed;
         s: String(1..50 + 0*width);
-        -- 0*width is just to skip a warning of width being unused
+        -- "0*width" is just to skip a warning about width being unused
         package IIO is new Ada.Text_IO.Integer_IO(Integer);
       begin
         IIO.Put(s, num, Base => base);
@@ -276,6 +317,9 @@ package body PDF_Out is
 
   procedure Put(pdf: in out PDF_Out_Stream; str : String) is
   begin
+    if pdf.zone = nowhere then
+      New_Page(pdf);
+    end if;
     WLd(pdf, "    (" & str & ") Tj");
   end Put;
 
@@ -289,7 +333,7 @@ package body PDF_Out is
     null; -- !!
   end Put;
 
-  procedure Put_Line(pdf: in out PDF_Out_Stream; num : Long_Float) is
+  procedure Put_Line(pdf: in out PDF_Out_Stream; num : Real) is
   begin
     Put(pdf, num);
     New_Line(pdf);
@@ -344,39 +388,50 @@ package body PDF_Out is
 
   procedure Page_Header(pdf : in out PDF_Out_Stream) is
   begin
-    null;
+    null;  --  Default header is empty.
+    --
     --Test_Text(pdf); -- !! To be removed !!
   end;
 
   procedure Page_Footer(pdf : in out PDF_Out_Stream) is
   begin
-    null;
+    null;  --  Default footer is empty.
   end;
 
-  procedure Left_Margin(pdf : PDF_Out_Stream; inches: Long_Float) is
+  procedure Left_Margin(pdf : in out PDF_Out_Stream; pts: Real) is
   begin
-    null; -- !!
+    pdf.page_margins.left:= pts;
   end Left_Margin;
 
-  procedure Right_Margin(pdf : PDF_Out_Stream; inches: Long_Float) is
+  procedure Right_Margin(pdf : in out PDF_Out_Stream; pts: Real) is
   begin
-    null; -- !!
+    pdf.page_margins.right:= pts;
   end Right_Margin;
 
-  procedure Top_Margin(pdf : PDF_Out_Stream; inches: Long_Float) is
+  procedure Top_Margin(pdf : in out PDF_Out_Stream; pts: Real) is
   begin
-    null; -- !!
+    pdf.page_margins.top:= pts;
   end Top_Margin;
 
-  procedure Bottom_Margin(pdf : PDF_Out_Stream; inches: Long_Float) is
+  procedure Bottom_Margin(pdf : in out PDF_Out_Stream; pts: Real) is
   begin
-    null; -- !!
+    pdf.page_margins.bottom:= pts;
   end Bottom_Margin;
 
-  procedure Margins(pdf : PDF_Out_Stream; left, right, top, bottom: Long_Float) is
+  procedure Set_Margins(pdf : in out PDF_Out_Stream; new_margins: Margins) is
   begin
-    null; -- !!
-  end Margins;
+    pdf.page_margins:= new_margins;
+  end Set_Margins;
+
+  procedure Set_Page_layout(pdf : in out PDF_Out_Stream; layout: Rectangle) is
+  begin
+    pdf.page_box:= layout;
+    pdf.maximum_box:=
+      ( x_min => Real'Min(pdf.maximum_box.x_min, layout.x_min),
+        y_min => Real'Min(pdf.maximum_box.y_min, layout.y_min),
+        x_max => Real'Max(pdf.maximum_box.x_max, layout.x_max),
+        y_max => Real'Max(pdf.maximum_box.y_max, layout.y_max) );
+  end Set_Page_layout;
 
   procedure Reset(
     pdf           : in out PDF_Out_Stream'Class;
@@ -423,14 +478,11 @@ package body PDF_Out is
       if pdf.last_page > 0 then
         WL(pdf, "    /Count " & Img(pdf.last_page));
       end if;
-      WL(pdf, "    /MediaBox [" &
-        Img(pdf.page_min_x) & ' ' &
-        Img(pdf.page_min_y) & ' ' &
-        Img(pdf.page_max_x) & ' ' &
-        Img(pdf.page_max_y) & ']'
+      WL(pdf, "    /MediaBox [" & Img(pdf.maximum_box) & ']'
       );
       --  7.7.3.3 Page Objects - MediaBox
       --  Boundaries of the physical medium on which the page shall be displayed or printed
+      --  7.7.3.4 Inheritance of Page Attributes
       --  Global page size, lower-left to upper-right, measured in points
       --  Bounding box of all pages
       WL(pdf, "  >>");

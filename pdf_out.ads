@@ -49,6 +49,8 @@
 --
 --  Header and footer are set up by overriding the corresponding methods.
 --
+--  Note: the standard PDF measurement unit is a "point", set as 1/72 inch.
+--
 --------------------------------------------------------------------------
 
 with Ada.Calendar;                      use Ada.Calendar;
@@ -74,11 +76,13 @@ package PDF_Out is
 
   Default_PDF_type: constant PDF_type:= PDF_1_3;
 
+  subtype Real is Long_Float;
+
   ----------------------------
   -- (2) Document contents: --
   ----------------------------
 
-  procedure Put(pdf: in out PDF_Out_Stream; num : Long_Float);
+  procedure Put(pdf: in out PDF_Out_Stream; num : Real);
   procedure Put(pdf    : in out PDF_Out_Stream;
                 num   : in Integer;
                 width : in Ada.Text_IO.Field := 0; -- ignored
@@ -88,7 +92,7 @@ package PDF_Out is
   procedure Put(pdf: in out PDF_Out_Stream; str : Unbounded_String);
   procedure Put(pdf: in out PDF_Out_Stream; date: Time);
   --
-  procedure Put_Line(pdf: in out PDF_Out_Stream; num : Long_Float);
+  procedure Put_Line(pdf: in out PDF_Out_Stream; num : Real);
   procedure Put_Line(pdf: in out PDF_Out_Stream; num : Integer);
   procedure Put_Line(pdf: in out PDF_Out_Stream; str : String);
   procedure Put_Line(pdf: in out PDF_Out_Stream; str : Unbounded_String);
@@ -104,16 +108,40 @@ package PDF_Out is
   PDF_stream_not_created,
   PDF_stream_not_closed : exception;
 
-  -- You need to override the Header and Footer methods
-  -- for setting up your custom header and footer.
+  --  You need to override the Header and Footer methods
+  --  for setting up your custom header and footer.
   procedure Page_Header(pdf : in out PDF_Out_Stream);
   procedure Page_Footer(pdf : in out PDF_Out_Stream);
+
   --
-  procedure Left_Margin(pdf : PDF_Out_Stream; inches: Long_Float);
-  procedure Right_Margin(pdf : PDF_Out_Stream; inches: Long_Float);
-  procedure Top_Margin(pdf : PDF_Out_Stream; inches: Long_Float);
-  procedure Bottom_Margin(pdf : PDF_Out_Stream; inches: Long_Float);
-  procedure Margins(pdf : PDF_Out_Stream; left, right, top, bottom: Long_Float);
+  --  These page layout procedures have to be called before New_Page in order
+  --  to influence the next page.
+  --  For the first page, call them before any output (typically right after Create).
+  --
+  procedure Left_Margin(pdf : in out PDF_Out_Stream; pts: Real);
+  procedure Right_Margin(pdf : in out PDF_Out_Stream; pts: Real);
+  procedure Top_Margin(pdf : in out PDF_Out_Stream; pts: Real);
+  procedure Bottom_Margin(pdf : in out PDF_Out_Stream; pts: Real);
+  --
+  type Margins is record
+    left, right, top, bottom: Real;
+  end record;
+
+  one_cm: constant:= 72.0 / 2.54;
+  one_cm_margins: constant Margins:= (one_cm, one_cm, one_cm, one_cm);
+
+  procedure Set_Margins(pdf : in out PDF_Out_Stream; new_margins: Margins);
+
+  type Rectangle is record
+    x_min, y_min,
+    x_max, y_max : Real;
+  end record;
+
+  --  A4 is 21.0 x 29.7 cm
+  A4_portrait : constant Rectangle:= (0.0, 0.0, 21.0 * one_cm, 29.7 * one_cm);
+  A4_landscape: constant Rectangle:= (0.0, 0.0, A4_portrait.y_max, A4_portrait.x_max);
+
+  procedure Set_Page_layout(pdf : in out PDF_Out_Stream; layout: Rectangle);
 
   -----------------------------------------------------------------
   -- Here, the derived stream types pre-defined in this package. --
@@ -198,17 +226,16 @@ private
   type PDF_Out_Pre_Root_Type is tagged record
     pdf_stream    : PDF_Raw_Stream_Class;
     start_index   : Ada.Streams.Stream_IO.Count;
-    is_created    : Boolean:= False;
-    is_closed     : Boolean:= False;
-    format        : PDF_type:= Default_PDF_type;
-    zone          : Page_zone:= nowhere;
-    last_page     : Natural:= 0;
+    is_created    : Boolean     := False;
+    is_closed     : Boolean     := False;
+    format        : PDF_type    := Default_PDF_type;
+    zone          : Page_zone   := nowhere;
+    last_page     : Natural     := 0;
     page_idx      : Page_table;
-    page_min_x    : Natural;
-    page_min_y    : Natural;
-    page_max_x    : Natural;
-    page_max_y    : Natural;
-    objects       : Natural:= last_fix_obj_idx;
+    page_box      : Rectangle   := A4_portrait;
+    maximum_box   : Rectangle   := A4_portrait;
+    page_margins  : Margins     := one_cm_margins;
+    objects       : Natural     := last_fix_obj_idx;
     object_offset : Offset_table;
     stream_obj_buf: Unbounded_String;
   end record;
