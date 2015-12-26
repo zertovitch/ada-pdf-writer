@@ -206,9 +206,9 @@ package body PDF_Out is
     WL(pdf, "endstream");
   end Finish_stream;
 
-  procedure Test_Text(pdf: in out PDF_Out_Stream'Class) is
+  procedure Test_Page(pdf: in out PDF_Out_Stream'Class) is
   begin
-    --  WLd(pdf, "  BT");            --  Begin Text object (9.4)
+    WLd(pdf, "  BT");            --  Begin Text object (9.4)
     WLd(pdf, "    /F1 24 Tf");   --  F1 font, 24 pt size (9.3 Text State Parameters and Operators)
     WLd(pdf, "    0.5 0 0 rg");  --  red, nonstroking colour (Table 74)
     WLd(pdf, "    0.25 G") ;     --  25% gray stroking colour (Table 74)
@@ -221,23 +221,8 @@ package body PDF_Out is
     WLd(pdf, "    0 Tr");        --  Tr: Set rendering mode as default: "Fill text" (Table 106)
     WLd(pdf, "    0 g");         --  black (default)
     WLd(pdf, "    (Subtitle here.) Tj T*");
-    --  Wd(pdf,  "  ET");            --  End Text
-  end Test_Text;
-
-  --  Internal, call by new page to finish preceding page
-  --
-  procedure Page_finish(pdf: in out PDF_Out_Stream'Class) is
-  begin
-    if pdf.zone = nowhere then
-      return; -- We are already "between pages"
-    end if;
-    pdf.zone:= in_footer;
-    Page_Footer(pdf);
-    pdf.zone:= nowhere;
     Wd(pdf,  "  ET");            --  End Text
-    Finish_stream(pdf);
-    WL(pdf, "endobj");
-  end Page_finish;
+  end Test_Page;
 
   procedure Test_Font(pdf: in out PDF_Out_Stream'Class) is
   begin
@@ -247,7 +232,13 @@ package body PDF_Out is
     WL(pdf, "     /F3 << /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>");
     WL(pdf, "  >>");
     WL(pdf, ">>");
-  end;
+  end Test_Font;
+
+  test_page_mode: constant Boolean:= True;
+
+  --  Internal, called by New_Page and Finish to finish current page
+  --
+  procedure Page_finish(pdf: in out PDF_Out_Stream'Class);
 
   procedure New_Page(pdf: in out PDF_Out_Stream'Class) is
   begin
@@ -275,18 +266,39 @@ package body PDF_Out is
     --
     New_object(pdf);
     New_stream(pdf);
-    WLd(pdf, "  BT");            --  Begin Text object (9.4)
-    WLd(pdf, "    /F1 12 Tf");   --  F1 font (9.3 Text State Parameters and Operators)
-    -- Td: 9.4.2 Text-Positioning Operators
-    WLd(pdf, "    " &
-      Img(pdf.page_margins.left) & ' ' &
-      Img(pdf.page_box.y_max - pdf.page_margins.top) & " Td"
-    );
-    WLd(pdf, "    16 TL");       --  TL: set text leading (distance between lines, 9.3.5)
-    pdf.zone:= in_header;
-    Page_Header(pdf);
+    if test_page_mode then
+      Test_Page(pdf);
+    else
+      WLd(pdf, "  BT");            --  Begin Text object (9.4)
+      WLd(pdf, "    /F1 12 Tf");   --  F1 font (9.3 Text State Parameters and Operators)
+      -- Td: 9.4.2 Text-Positioning Operators
+      WLd(pdf, "    " &
+        Img(pdf.page_margins.left) & ' ' &
+        Img(pdf.page_box.y_max - pdf.page_margins.top) & " Td"
+      );
+      WLd(pdf, "    16 TL");       --  TL: set text leading (distance between lines, 9.3.5)
+      pdf.zone:= in_header;
+      Page_Header(pdf);
+    end if;
     pdf.zone:= in_page;
   end New_Page;
+
+  procedure Page_finish(pdf: in out PDF_Out_Stream'Class) is
+  begin
+    if pdf.zone = nowhere then
+      return; -- We are already "between pages"
+    end if;
+    if test_page_mode then
+      null;  --  Nothing to do anymore with test page
+    else
+      pdf.zone:= in_footer;
+      Page_Footer(pdf);
+      Wd(pdf,  "  ET");            --  End Text
+    end if;
+    pdf.zone:= nowhere;
+    Finish_stream(pdf);
+    WL(pdf, "endobj");
+  end Page_finish;
 
   procedure Put(pdf: in out PDF_Out_Stream; num : Real) is
   begin
