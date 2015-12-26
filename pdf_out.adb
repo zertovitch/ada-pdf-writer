@@ -206,9 +206,12 @@ package body PDF_Out is
     WL(pdf, "endstream");
   end Finish_stream;
 
+  --  Internal - test page for experimenting PDF constructs (and how Adobe Reader reacts to them)
+  --
   procedure Test_Page(pdf: in out PDF_Out_Stream'Class) is
   begin
-    WLd(pdf, "  BT");            --  Begin Text object (9.4)
+    WLd(pdf, "10 10 210 210 re S"); -- rectangle, stroke
+    WLd(pdf, "  BT");            --  Begin Text object (9.4). Text matrix and text line matrix:= I
     WLd(pdf, "    /F1 24 Tf");   --  F1 font, 24 pt size (9.3 Text State Parameters and Operators)
     WLd(pdf, "    0.5 0 0 rg");  --  red, nonstroking colour (Table 74)
     WLd(pdf, "    0.25 G") ;     --  25% gray stroking colour (Table 74)
@@ -217,12 +220,21 @@ package body PDF_Out is
     WLd(pdf, "    (Hello World !) Tj"); -- Tj: Show a text string (9.4.3 Text-Showing Operators)
     WLd(pdf, "    16 TL");       --  TL: set text leading (distance between lines, 9.3.5)
     WLd(pdf, "    T*");          --  T*: Move to the start of the next line (9.4.2)
+    WLd(pdf, "    20 20 220 220 re S"); -- rectangle, stroke (within text region)
     WLd(pdf, "    /F2 12 Tf");
     WLd(pdf, "    0 Tr");        --  Tr: Set rendering mode as default: "Fill text" (Table 106)
     WLd(pdf, "    0 g");         --  black (default)
     WLd(pdf, "    (Subtitle here.) Tj T*");
-    Wd(pdf,  "  ET");            --  End Text
+    WLd(pdf, "  ET");           --  End Text
+    WLd(pdf, "30 30 230 230 re S"); -- rectangle, stroke
+    WLd(pdf, "  BT");
+    WLd(pdf, "    5 5 Td (Second text chunk here.) Tj T*");
+    WLd(pdf, "  ET");
+    WLd(pdf, "40 40 240 240 re S"); -- rectangle, stroke
+    WLd(pdf, "15 15 Td (Text chunk not within BT/ET.) Tj");
   end Test_Page;
+
+  test_page_mode: constant Boolean:= False;
 
   procedure Test_Font(pdf: in out PDF_Out_Stream'Class) is
   begin
@@ -233,8 +245,6 @@ package body PDF_Out is
     WL(pdf, "  >>");
     WL(pdf, ">>");
   end Test_Font;
-
-  test_page_mode: constant Boolean:= True;
 
   --  Internal, called by New_Page and Finish to finish current page
   --
@@ -332,7 +342,11 @@ package body PDF_Out is
     if pdf.zone = nowhere then
       New_Page(pdf);
     end if;
-    WLd(pdf, "    (" & str & ") Tj");
+    if test_page_mode then
+      null;  --  Nothing to do anymore with test page
+    else
+      WLd(pdf, "    (" & str & ") Tj");
+    end if;
   end Put;
 
   procedure Put(pdf: in out PDF_Out_Stream; str : Unbounded_String) is
@@ -376,9 +390,16 @@ package body PDF_Out is
 
   procedure New_Line(pdf: in out PDF_Out_Stream'Class; Spacing : Positive := 1) is
   begin
-    for i in 1..Spacing loop
-      WLd(pdf, "    T*");
-    end loop;
+    if pdf.zone = nowhere then
+      New_Page(pdf);
+    end if;
+    if test_page_mode then
+      null;  --  Nothing to do anymore with test page
+    else
+      for i in 1..Spacing loop
+        WLd(pdf, "    T*");
+      end loop;
+    end if;
   end New_Line;
 
   function Col(pdf: in PDF_Out_Stream) return Positive is
