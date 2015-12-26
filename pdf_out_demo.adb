@@ -13,7 +13,7 @@ procedure PDF_Out_Demo is
     pdf: PDF_Out_File;
   begin
     Create(pdf, "Small.pdf");
-    Set_Page_layout(pdf, A4_portrait);
+    Page_Setup(pdf, A4_portrait);
     Put_Line(pdf, "This is a small demo for PDF_Out.");
     Put(pdf, "If you like numbers, here are some: ");
     for i in 1..10 loop
@@ -22,7 +22,7 @@ procedure PDF_Out_Demo is
     end loop;
     New_Line(pdf);
     Put(pdf, "Fun, isn't it ?");
-    Set_Page_layout(pdf, A4_landscape);
+    Page_Setup(pdf, A4_landscape);
     New_Page(pdf);
     Put_Line(pdf, "Just had a page break (and switched to landscape)...");
     Close(pdf);

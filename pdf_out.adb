@@ -430,12 +430,12 @@ package body PDF_Out is
     pdf.page_margins.bottom:= pts;
   end Bottom_Margin;
 
-  procedure Set_Margins(pdf : in out PDF_Out_Stream; new_margins: Margins) is
+  procedure Margins(pdf : in out PDF_Out_Stream; new_margins: Margins_Type) is
   begin
     pdf.page_margins:= new_margins;
-  end Set_Margins;
+  end Margins;
 
-  procedure Set_Page_layout(pdf : in out PDF_Out_Stream; layout: Rectangle) is
+  procedure Page_Setup(pdf : in out PDF_Out_Stream; layout: Rectangle) is
   begin
     pdf.page_box:= layout;
     pdf.maximum_box:=
@@ -443,7 +443,7 @@ package body PDF_Out is
         y_min => Real'Min(pdf.maximum_box.y_min, layout.y_min),
         x_max => Real'Max(pdf.maximum_box.x_max, layout.x_max),
         y_max => Real'Max(pdf.maximum_box.y_max, layout.y_max) );
-  end Set_Page_layout;
+  end Page_Setup;
 
   procedure Reset(
     pdf           : in out PDF_Out_Stream'Class;

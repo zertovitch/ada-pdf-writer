@@ -114,8 +114,8 @@ package PDF_Out is
   procedure Page_Footer(pdf : in out PDF_Out_Stream);
 
   --
-  --  These page layout procedures have to be called before New_Page in order
-  --  to influence the next page.
+  --  Page layout procedures.
+  --  They have to be called before New_Page in order to influence the next page.
   --  For the first page, call them before any output (typically right after Create).
   --
   procedure Left_Margin(pdf : in out PDF_Out_Stream; pts: Real);
@@ -123,14 +123,14 @@ package PDF_Out is
   procedure Top_Margin(pdf : in out PDF_Out_Stream; pts: Real);
   procedure Bottom_Margin(pdf : in out PDF_Out_Stream; pts: Real);
   --
-  type Margins is record
+  type Margins_Type is record
     left, right, top, bottom: Real;
   end record;
 
   one_cm: constant:= 72.0 / 2.54;
-  one_cm_margins: constant Margins:= (one_cm, one_cm, one_cm, one_cm);
+  one_cm_margins: constant Margins_Type:= (one_cm, one_cm, one_cm, one_cm);
 
-  procedure Set_Margins(pdf : in out PDF_Out_Stream; new_margins: Margins);
+  procedure Margins(pdf : in out PDF_Out_Stream; new_margins: Margins_Type);
 
   type Rectangle is record
     x_min, y_min,
@@ -141,7 +141,7 @@ package PDF_Out is
   A4_portrait : constant Rectangle:= (0.0, 0.0, 21.0 * one_cm, 29.7 * one_cm);
   A4_landscape: constant Rectangle:= (0.0, 0.0, A4_portrait.y_max, A4_portrait.x_max);
 
-  procedure Set_Page_layout(pdf : in out PDF_Out_Stream; layout: Rectangle);
+  procedure Page_Setup(pdf : in out PDF_Out_Stream; layout: Rectangle);
 
   -----------------------------------------------------------------
   -- Here, the derived stream types pre-defined in this package. --
@@ -234,7 +234,7 @@ private
     page_idx      : Page_table;
     page_box      : Rectangle   := A4_portrait;
     maximum_box   : Rectangle   := A4_portrait;
-    page_margins  : Margins     := one_cm_margins;
+    page_margins  : Margins_Type:= one_cm_margins;
     objects       : Natural     := last_fix_obj_idx;
     object_offset : Offset_table;
     stream_obj_buf: Unbounded_String;
