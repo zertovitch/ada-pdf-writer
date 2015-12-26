@@ -343,7 +343,7 @@ package body PDF_Out is
       New_Page(pdf);
     end if;
     if test_page_mode then
-      null;  --  Nothing to do anymore with test page
+      null;  --  Nothing to do (test page instead)
     else
       WLd(pdf, "    (" & str & ") Tj");
     end if;
@@ -394,7 +394,7 @@ package body PDF_Out is
       New_Page(pdf);
     end if;
     if test_page_mode then
-      null;  --  Nothing to do anymore with test page
+      null;  --  Nothing to do (test page instead)
     else
       for i in 1..Spacing loop
         WLd(pdf, "    T*");
@@ -466,8 +466,13 @@ package body PDF_Out is
         y_max => Real'Max(pdf.maximum_box.y_max, layout.y_max) );
   end Page_Setup;
 
+  function Page_Count(pdf: PDF_Out_Stream) return Integer is
+  begin
+    return pdf.last_page;
+  end Page_Count;
+
   procedure Reset(
-    pdf           : in out PDF_Out_Stream'Class;
+    pdf        : in out PDF_Out_Stream'Class;
     PDF_format :        PDF_type:= Default_PDF_type
   )
   is
@@ -589,8 +594,8 @@ package body PDF_Out is
   ----------------------
 
   procedure Create(
-    pdf           : in out PDF_Out_File;
-    file_name    :        String;
+    pdf        : in out PDF_Out_File;
+    file_name  :        String;
     PDF_format :        PDF_type:= Default_PDF_type
   )
   is
@@ -696,7 +701,7 @@ package body PDF_Out is
   --- ***
 
   procedure Create(
-    pdf           : in out PDF_Out_String;
+    pdf        : in out PDF_Out_String;
     PDF_format :        PDF_type:= Default_PDF_type
   )
   is

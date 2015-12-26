@@ -143,6 +143,8 @@ package PDF_Out is
 
   procedure Page_Setup(pdf : in out PDF_Out_Stream; layout: Rectangle);
 
+  function Page_Count(pdf: PDF_Out_Stream) return Integer;
+
   -----------------------------------------------------------------
   -- Here, the derived stream types pre-defined in this package. --
   -----------------------------------------------------------------
@@ -151,8 +153,8 @@ package PDF_Out is
   type PDF_Out_File is new PDF_Out_Stream with private;
 
   procedure Create(
-    pdf           : in out PDF_Out_File;
-    file_name    :        String;
+    pdf        : in out PDF_Out_File;
+    file_name  :        String;
     PDF_format :        PDF_type:= Default_PDF_type
   );
 
@@ -165,7 +167,7 @@ package PDF_Out is
   type PDF_Out_String is new PDF_Out_Stream with private;
 
   procedure Create(
-    pdf           : in out PDF_Out_String;
+    pdf        : in out PDF_Out_String;
     PDF_format :        PDF_type:= Default_PDF_type
   );
 
