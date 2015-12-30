@@ -39,14 +39,14 @@ procedure PDF_Out_Demo is
       Page_Setup(pdf, A4_portrait);
       Put_Line(pdf, "This is a big demo for PDF_Out.");
       New_Line(pdf);
-      Put_Line(pdf, "Page" & Integer'Image(Page_Count(pdf)) & " /" & Integer'Image(page_nb));
+      Put_Line(pdf, "Page" & Integer'Image(Page(pdf)) & " /" & Integer'Image(page_nb));
       --  !! ^ Will do a proper footer...
       Page_Setup(pdf, A4_landscape);
       New_Page(pdf);
       Put_Line(pdf, "Just had a page break (and switched to landscape)...");
-      Put_Line(pdf, "Page" & Integer'Image(Page_Count(pdf)) & " /" & Integer'Image(page_nb));
+      Put_Line(pdf, "Page" & Integer'Image(Page(pdf)) & " /" & Integer'Image(page_nb));
       --  !! ^ Will do a proper footer...
-      page_nb:= Page_Count(pdf);
+      page_nb:= Page(pdf);
       Close(pdf);
       return Contents(pdf);
     end Large_demo_contents;

@@ -256,6 +256,8 @@ package body PDF_Out is
       Page_finish(pdf);
     end if;
     pdf.last_page:= pdf.last_page + 1;
+    pdf.current_line:= 1;
+    pdf.current_col:= 1;
     --
     --  Page descriptor object:
     --
@@ -271,7 +273,6 @@ package body PDF_Out is
     WL(pdf, "    /MediaBox [" & Img(pdf.page_box) & ']');
     WL(pdf, "  >>");
     WL(pdf, "endobj");
-    --
     --  Page contents object:
     --
     New_object(pdf);
@@ -393,6 +394,8 @@ package body PDF_Out is
     if pdf.zone = nowhere then
       New_Page(pdf);
     end if;
+    pdf.current_line:= pdf.current_line + 1;
+    pdf.current_col:= 1;
     if test_page_mode then
       null;  --  Nothing to do (test page instead)
     else
@@ -403,18 +406,16 @@ package body PDF_Out is
   end New_Line;
 
   function Col(pdf: in PDF_Out_Stream) return Positive is
-  pragma Unreferenced (pdf);
   begin
-    return 1; -- !!
+    return pdf.current_col;
   end Col;
 
   function Line(pdf: in PDF_Out_Stream) return Positive is
-  pragma Unreferenced (pdf);
   begin
-    return 1; -- !!
+    return pdf.current_line;
   end Line;
 
-  function Page(pdf: in PDF_Out_Stream) return Positive is
+  function Page(pdf: in PDF_Out_Stream) return Natural is
   begin
     return pdf.last_page;
   end Page;
@@ -465,11 +466,6 @@ package body PDF_Out is
         x_max => Real'Max(pdf.maximum_box.x_max, layout.x_max),
         y_max => Real'Max(pdf.maximum_box.y_max, layout.y_max) );
   end Page_Setup;
-
-  function Page_Count(pdf: PDF_Out_Stream) return Integer is
-  begin
-    return pdf.last_page;
-  end Page_Count;
 
   procedure Reset(
     pdf        : in out PDF_Out_Stream'Class;

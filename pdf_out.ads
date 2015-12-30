@@ -103,7 +103,7 @@ package PDF_Out is
 
   function Col(pdf: in PDF_Out_Stream) return Positive;
   function Line(pdf: in PDF_Out_Stream) return Positive;
-  function Page(pdf: in PDF_Out_Stream) return Positive;
+  function Page(pdf: in PDF_Out_Stream) return Natural;
 
   PDF_stream_not_created,
   PDF_stream_not_closed : exception;
@@ -142,8 +142,6 @@ package PDF_Out is
   A4_landscape: constant Rectangle:= (0.0, 0.0, A4_portrait.y_max, A4_portrait.x_max);
 
   procedure Page_Setup(pdf : in out PDF_Out_Stream; layout: Rectangle);
-
-  function Page_Count(pdf: PDF_Out_Stream) return Integer;
 
   -----------------------------------------------------------------
   -- Here, the derived stream types pre-defined in this package. --
@@ -233,6 +231,8 @@ private
     format        : PDF_type    := Default_PDF_type;
     zone          : Page_zone   := nowhere;
     last_page     : Natural     := 0;
+    current_line  : Positive    := 1;  --  Mostly for Ada.Text_IO compatibility
+    current_col   : Positive    := 1;  --  Mostly for Ada.Text_IO compatibility
     page_idx      : Page_table;
     page_box      : Rectangle   := A4_portrait;
     maximum_box   : Rectangle   := A4_portrait;
