@@ -130,6 +130,10 @@ package PDF_Out is
 
   procedure Rendering_Mode(pdf: in out PDF_Out_Stream; r: Text_Rendering_Mode);
 
+  --  If some PDF feature is missing in this package, you can insert
+  --  direct PDF code - at your own risk ;-).
+  procedure Insert_PDF_Code(pdf: in out PDF_Out_Stream; code: String);
+
   --  You need to override the Header and Footer methods
   --  for setting up your custom header and footer. By default they do nothing.
   procedure Page_Header(pdf : in out PDF_Out_Stream);

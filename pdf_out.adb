@@ -447,6 +447,11 @@ package body PDF_Out is
     --  Tr = Set rendering mode (Table 106)
   end;
 
+  procedure Insert_PDF_Code(pdf: in out PDF_Out_Stream; code: String) is
+  begin
+    WLd(pdf, "    " & code);
+  end;
+
   procedure Page_Header(pdf : in out PDF_Out_Stream) is
   begin
     null;  --  Default header is empty.
