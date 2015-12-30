@@ -150,6 +150,8 @@ package PDF_Out is
 
   procedure Page_Setup(pdf : in out PDF_Out_Stream; layout: Rectangle);
 
+  function Layout(pdf : PDF_Out_Stream) return Rectangle;
+
   -----------------------------------------------------------------
   -- Here, the derived stream types pre-defined in this package. --
   -----------------------------------------------------------------

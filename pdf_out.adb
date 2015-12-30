@@ -499,6 +499,11 @@ package body PDF_Out is
         y_max => Real'Max(pdf.maximum_box.y_max, layout.y_max) );
   end Page_Setup;
 
+  function Layout(pdf : PDF_Out_Stream) return Rectangle is
+  begin
+    return pdf.page_box;
+  end Layout;
+
   procedure Reset(
     pdf        : in out PDF_Out_Stream'Class;
     PDF_format :        PDF_type:= Default_PDF_type
