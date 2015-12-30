@@ -284,7 +284,8 @@ package body PDF_Out is
       WLd(pdf, "    /F1 12 Tf");   --  F1 font (9.3 Text State Parameters and Operators)
       WLd(pdf, "    16 TL");       --  TL: set text leading (distance between lines, 9.3.5)
       pdf.zone:= in_header;
-      Page_Header(pdf);
+      Page_Header(PDF_Out_Stream'Class(pdf));
+      -- ^ PDF_Out_Stream'Class: make the call to Page_Header dispatching
     end if;
     pdf.zone:= in_page;
     Text_XY(pdf, pdf.page_margins.left, pdf.page_box.y_max - pdf.page_margins.top);
@@ -299,7 +300,8 @@ package body PDF_Out is
       null;  --  Nothing to do anymore with test page
     else
       pdf.zone:= in_footer;
-      Page_Footer(pdf);
+      Page_Footer(PDF_Out_Stream'Class(pdf));
+      -- ^ PDF_Out_Stream'Class: make the call to Page_Header dispatching
       Wd(pdf,  "  ET");            --  End Text
     end if;
     pdf.zone:= nowhere;

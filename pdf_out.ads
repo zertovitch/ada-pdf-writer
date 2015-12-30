@@ -111,7 +111,7 @@ package PDF_Out is
   function Page(pdf: in PDF_Out_Stream) return Natural;
 
   --  You need to override the Header and Footer methods
-  --  for setting up your custom header and footer.
+  --  for setting up your custom header and footer. By default they do nothing.
   procedure Page_Header(pdf : in out PDF_Out_Stream);
   procedure Page_Footer(pdf : in out PDF_Out_Stream);
 
@@ -134,7 +134,9 @@ package PDF_Out is
   end record;
 
   one_cm: constant:= 72.0 / 2.54;
-  one_cm_margins: constant Margins_Type:= (one_cm, one_cm, one_cm, one_cm);
+  cm_2_5: constant:= one_cm * 2.5;
+
+  cm_2_5_margins: constant Margins_Type:= (cm_2_5, cm_2_5, cm_2_5, cm_2_5);
 
   procedure Margins(pdf : out PDF_Out_Stream; new_margins: Margins_Type);
   function Margins(pdf : PDF_Out_Stream) return Margins_Type;
@@ -245,7 +247,7 @@ private
     page_idx      : Page_table;
     page_box      : Rectangle   := A4_portrait;
     maximum_box   : Rectangle   := A4_portrait;
-    page_margins  : Margins_Type:= one_cm_margins;
+    page_margins  : Margins_Type:= cm_2_5_margins;
     objects       : Natural     := last_fix_obj_idx;
     object_offset : Offset_table;
     stream_obj_buf: Unbounded_String;
