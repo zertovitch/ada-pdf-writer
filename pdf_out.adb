@@ -282,13 +282,12 @@ package body PDF_Out is
     else
       WLd(pdf, "  BT");            --  Begin Text object (9.4)
       WLd(pdf, "    /F1 12 Tf");   --  F1 font (9.3 Text State Parameters and Operators)
-      -- Td: 9.4.2 Text-Positioning Operators
-      Text_XY(pdf, pdf.page_margins.left, pdf.page_box.y_max - pdf.page_margins.top);
       WLd(pdf, "    16 TL");       --  TL: set text leading (distance between lines, 9.3.5)
       pdf.zone:= in_header;
       Page_Header(pdf);
     end if;
     pdf.zone:= in_page;
+    Text_XY(pdf, pdf.page_margins.left, pdf.page_box.y_max - pdf.page_margins.top);
   end New_Page;
 
   procedure Page_finish(pdf: in out PDF_Out_Stream) is
@@ -409,6 +408,8 @@ package body PDF_Out is
     WLd(pdf, "  ET");            --  End Text
     WLd(pdf, "  BT");            --  Begin Text object (9.4.1, Table 107)
     WLd(pdf, "    " & Img(x) & ' ' & Img(y) & " Td");  --  Td: 9.4.2 Text-Positioning Operators
+    pdf.current_line:= 1;
+    pdf.current_col:= 1;
   end Text_XY;
 
   function Col(pdf: in PDF_Out_Stream) return Positive is
@@ -438,29 +439,54 @@ package body PDF_Out is
     null;  --  Default footer is empty.
   end;
 
-  procedure Left_Margin(pdf : in out PDF_Out_Stream; pts: Real) is
+  procedure Left_Margin(pdf : out PDF_Out_Stream; pts: Real) is
   begin
     pdf.page_margins.left:= pts;
   end Left_Margin;
 
-  procedure Right_Margin(pdf : in out PDF_Out_Stream; pts: Real) is
+  function Left_Margin(pdf : PDF_Out_Stream) return Real is
+  begin
+    return pdf.page_margins.left;
+  end Left_Margin;
+
+  procedure Right_Margin(pdf : out PDF_Out_Stream; pts: Real) is
   begin
     pdf.page_margins.right:= pts;
   end Right_Margin;
 
-  procedure Top_Margin(pdf : in out PDF_Out_Stream; pts: Real) is
+  function Right_Margin(pdf : PDF_Out_Stream) return Real is
+  begin
+    return pdf.page_margins.right;
+  end Right_Margin;
+
+  procedure Top_Margin(pdf : out PDF_Out_Stream; pts: Real) is
   begin
     pdf.page_margins.top:= pts;
   end Top_Margin;
 
-  procedure Bottom_Margin(pdf : in out PDF_Out_Stream; pts: Real) is
+  function Top_Margin(pdf : PDF_Out_Stream) return Real is
+  begin
+    return pdf.page_margins.top;
+  end Top_Margin;
+
+  procedure Bottom_Margin(pdf : out PDF_Out_Stream; pts: Real) is
   begin
     pdf.page_margins.bottom:= pts;
   end Bottom_Margin;
 
-  procedure Margins(pdf : in out PDF_Out_Stream; new_margins: Margins_Type) is
+  function Bottom_Margin(pdf : PDF_Out_Stream) return Real is
+  begin
+    return pdf.page_margins.bottom;
+  end Bottom_Margin;
+
+  procedure Margins(pdf : out PDF_Out_Stream; new_margins: Margins_Type) is
   begin
     pdf.page_margins:= new_margins;
+  end Margins;
+
+  function Margins(pdf : PDF_Out_Stream) return Margins_Type is
+  begin
+    return pdf.page_margins;
   end Margins;
 
   procedure Page_Setup(pdf : in out PDF_Out_Stream; layout: Rectangle) is

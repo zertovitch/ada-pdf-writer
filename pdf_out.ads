@@ -120,10 +120,14 @@ package PDF_Out is
   --  They have to be called before New_Page in order to influence the next page.
   --  For the first page, call them before any output (typically right after Create).
   --
-  procedure Left_Margin(pdf : in out PDF_Out_Stream; pts: Real);
-  procedure Right_Margin(pdf : in out PDF_Out_Stream; pts: Real);
-  procedure Top_Margin(pdf : in out PDF_Out_Stream; pts: Real);
-  procedure Bottom_Margin(pdf : in out PDF_Out_Stream; pts: Real);
+  procedure Left_Margin(pdf : out PDF_Out_Stream; pts: Real);
+  function Left_Margin(pdf : PDF_Out_Stream) return Real;
+  procedure Right_Margin(pdf : out PDF_Out_Stream; pts: Real);
+  function Right_Margin(pdf : PDF_Out_Stream) return Real;
+  procedure Top_Margin(pdf : out PDF_Out_Stream; pts: Real);
+  function Top_Margin(pdf : PDF_Out_Stream) return Real;
+  procedure Bottom_Margin(pdf : out PDF_Out_Stream; pts: Real);
+  function Bottom_Margin(pdf : PDF_Out_Stream) return Real;
   --
   type Margins_Type is record
     left, right, top, bottom: Real;
@@ -132,7 +136,8 @@ package PDF_Out is
   one_cm: constant:= 72.0 / 2.54;
   one_cm_margins: constant Margins_Type:= (one_cm, one_cm, one_cm, one_cm);
 
-  procedure Margins(pdf : in out PDF_Out_Stream; new_margins: Margins_Type);
+  procedure Margins(pdf : out PDF_Out_Stream; new_margins: Margins_Type);
+  function Margins(pdf : PDF_Out_Stream) return Margins_Type;
 
   type Rectangle is record
     x_min, y_min,
