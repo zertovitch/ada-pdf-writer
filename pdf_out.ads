@@ -70,6 +70,9 @@ package PDF_Out is
 
   type PDF_Out_Stream is abstract tagged private;
 
+  PDF_stream_not_created,
+  PDF_stream_not_closed : exception;
+
   type PDF_type is (
     PDF_1_3 -- PDF 1.3
   );
@@ -98,15 +101,14 @@ package PDF_Out is
   procedure Put_Line(pdf: in out PDF_Out_Stream; str : Unbounded_String);
   procedure Put_Line(pdf: in out PDF_Out_Stream; date: Time);
   --
-  procedure New_Line(pdf: in out PDF_Out_Stream'Class; Spacing : Positive := 1);
-  procedure New_Page(pdf: in out PDF_Out_Stream'Class);
+  procedure New_Line(pdf: in out PDF_Out_Stream; Spacing : Positive := 1);
+  procedure New_Page(pdf: in out PDF_Out_Stream);
+  --
+  procedure Text_XY(pdf: in out PDF_Out_Stream; x,y: Long_Float);
 
   function Col(pdf: in PDF_Out_Stream) return Positive;
   function Line(pdf: in PDF_Out_Stream) return Positive;
   function Page(pdf: in PDF_Out_Stream) return Natural;
-
-  PDF_stream_not_created,
-  PDF_stream_not_closed : exception;
 
   --  You need to override the Header and Footer methods
   --  for setting up your custom header and footer.

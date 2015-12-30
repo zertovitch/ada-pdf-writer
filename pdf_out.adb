@@ -248,9 +248,9 @@ package body PDF_Out is
 
   --  Internal, called by New_Page and Finish to finish current page
   --
-  procedure Page_finish(pdf: in out PDF_Out_Stream'Class);
+  procedure Page_finish(pdf: in out PDF_Out_Stream);
 
-  procedure New_Page(pdf: in out PDF_Out_Stream'Class) is
+  procedure New_Page(pdf: in out PDF_Out_Stream) is
   begin
     if pdf.zone /= nowhere then
       Page_finish(pdf);
@@ -283,10 +283,7 @@ package body PDF_Out is
       WLd(pdf, "  BT");            --  Begin Text object (9.4)
       WLd(pdf, "    /F1 12 Tf");   --  F1 font (9.3 Text State Parameters and Operators)
       -- Td: 9.4.2 Text-Positioning Operators
-      WLd(pdf, "    " &
-        Img(pdf.page_margins.left) & ' ' &
-        Img(pdf.page_box.y_max - pdf.page_margins.top) & " Td"
-      );
+      Text_XY(pdf, pdf.page_margins.left, pdf.page_box.y_max - pdf.page_margins.top);
       WLd(pdf, "    16 TL");       --  TL: set text leading (distance between lines, 9.3.5)
       pdf.zone:= in_header;
       Page_Header(pdf);
@@ -294,7 +291,7 @@ package body PDF_Out is
     pdf.zone:= in_page;
   end New_Page;
 
-  procedure Page_finish(pdf: in out PDF_Out_Stream'Class) is
+  procedure Page_finish(pdf: in out PDF_Out_Stream) is
   begin
     if pdf.zone = nowhere then
       return; -- We are already "between pages"
@@ -389,7 +386,7 @@ package body PDF_Out is
     New_Line(pdf);
   end Put_Line;
 
-  procedure New_Line(pdf: in out PDF_Out_Stream'Class; Spacing : Positive := 1) is
+  procedure New_Line(pdf: in out PDF_Out_Stream; Spacing : Positive := 1) is
   begin
     if pdf.zone = nowhere then
       New_Page(pdf);
@@ -404,6 +401,15 @@ package body PDF_Out is
       end loop;
     end if;
   end New_Line;
+
+  procedure Text_XY(pdf: in out PDF_Out_Stream; x,y: Long_Float) is
+  begin
+    --  This is just for resetting the text matrices (hence, position and orientation)
+    --
+    WLd(pdf, "  ET");            --  End Text
+    WLd(pdf, "  BT");            --  Begin Text object (9.4.1, Table 107)
+    WLd(pdf, "    " & Img(x) & ' ' & Img(y) & " Td");  --  Td: 9.4.2 Text-Positioning Operators
+  end Text_XY;
 
   function Col(pdf: in PDF_Out_Stream) return Positive is
   begin
@@ -484,7 +490,7 @@ package body PDF_Out is
     PDF_Out_Pre_Root_Type(pdf):= dummy_pdf_with_defaults;
   end Reset;
 
-  procedure Finish(pdf : in out PDF_Out_Stream'Class) is
+  procedure Finish(pdf : in out PDF_Out_Stream) is
 
     info_idx, cat_idx: Positive;
 
@@ -607,7 +613,7 @@ package body PDF_Out is
     procedure Dispose is new
       Ada.Unchecked_Deallocation(Ada.Streams.Stream_IO.File_Type, PDF_file_acc);
   begin
-    Finish(pdf);
+    Finish(PDF_Out_Stream(pdf));
     Close(pdf.pdf_file.all);
     Dispose(pdf.pdf_file);
   end Close;
@@ -712,7 +718,7 @@ package body PDF_Out is
 
   procedure Close(pdf : in out PDF_Out_String) is
   begin
-    Finish(pdf);
+    Finish(PDF_Out_Stream(pdf));
   end Close;
 
   function Contents(pdf: PDF_Out_String) return String is
