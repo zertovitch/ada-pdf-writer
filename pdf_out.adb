@@ -441,6 +441,12 @@ package body PDF_Out is
     --  RG = nonstroking colour (Table 74)
   end Stroking_Color;
 
+  procedure Rendering_Mode(pdf: in out PDF_Out_Stream; r: Text_Rendering_Mode) is
+  begin
+    WLd(pdf, "    " & Img(Text_Rendering_Mode'Pos(r)) & " Tr");
+    --  Tr = Set rendering mode (Table 106)
+  end;
+
   procedure Page_Header(pdf : in out PDF_Out_Stream) is
   begin
     null;  --  Default header is empty.

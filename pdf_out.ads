@@ -119,6 +119,17 @@ package PDF_Out is
   procedure Color(pdf: in out PDF_Out_Stream; c: Color_Type);
   procedure Stroking_Color(pdf: in out PDF_Out_Stream; c: Color_Type);
 
+  type Text_Rendering_Mode is (
+    fill, stroke, fill_then_stroke, invisible,
+    --  Same, but also add text to path for clipping.
+    fill_and_add_to_path,
+    stroke_and_add_to_path,
+    fill_then_stroke_and_add_to_path,
+    add_to_path
+  );
+
+  procedure Rendering_Mode(pdf: in out PDF_Out_Stream; r: Text_Rendering_Mode);
+
   --  You need to override the Header and Footer methods
   --  for setting up your custom header and footer. By default they do nothing.
   procedure Page_Header(pdf : in out PDF_Out_Stream);
