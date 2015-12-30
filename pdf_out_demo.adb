@@ -42,13 +42,15 @@ procedure PDF_Out_Demo is
       Page_Setup(pdf, A4_portrait);
       Put_Line(pdf, "This is a big demo for PDF_Out.");
       New_Line(pdf);
-      --  Put_Line(pdf, "Page" & Integer'Image(Page(pdf)) & " /" & Integer'Image(pdf.page_nb));
-      --  !! ^ Will do a proper footer...
+      for r in 1..5 loop
+        Color(pdf, (Real(r) * 0.2, 0.0, 0.0));
+        Put_Line(pdf, "Variations of red...");
+      end loop;
+      Color(pdf, black);
+      New_Line(pdf);
       Page_Setup(pdf, A4_landscape);
       New_Page(pdf);
       Put_Line(pdf, "Just had a page break (and switched to landscape)...");
-      -- Put_Line(pdf, "Page" & Integer'Image(Page(pdf)) & " /" & Integer'Image(pdf.page_nb));
-      --  !! ^ Will do a proper footer...
       mem_page_nb:= Page(pdf);
       Close(pdf);
       return Contents(pdf);

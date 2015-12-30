@@ -110,6 +110,15 @@ package PDF_Out is
   function Line(pdf: in PDF_Out_Stream) return Positive;
   function Page(pdf: in PDF_Out_Stream) return Natural;
 
+  type Color_Type is record
+    red, green, blue: Real;
+  end record;
+
+  black: constant Color_Type:= (0.0,0.0,0.0);
+
+  procedure Color(pdf: in out PDF_Out_Stream; c: Color_Type);
+  procedure Stroking_Color(pdf: in out PDF_Out_Stream; c: Color_Type);
+
   --  You need to override the Header and Footer methods
   --  for setting up your custom header and footer. By default they do nothing.
   procedure Page_Header(pdf : in out PDF_Out_Stream);

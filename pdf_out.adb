@@ -429,11 +429,21 @@ package body PDF_Out is
     return pdf.last_page;
   end Page;
 
+  procedure Color(pdf: in out PDF_Out_Stream; c: Color_Type) is
+  begin
+    WLd(pdf, "    " & Img(c.red) & ' ' & Img(c.green) & ' ' & Img(c.blue) & " rg");
+    --  rg = nonstroking colour (Table 74)
+  end Color;
+
+  procedure Stroking_Color(pdf: in out PDF_Out_Stream; c: Color_Type) is
+  begin
+    WLd(pdf, "    " & Img(c.red) & ' ' & Img(c.green) & ' ' & Img(c.blue) & " RG");
+    --  RG = nonstroking colour (Table 74)
+  end Stroking_Color;
+
   procedure Page_Header(pdf : in out PDF_Out_Stream) is
   begin
     null;  --  Default header is empty.
-    --
-    --Test_Text(pdf); -- !! To be removed !!
   end;
 
   procedure Page_Footer(pdf : in out PDF_Out_Stream) is
