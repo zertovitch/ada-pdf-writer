@@ -270,6 +270,7 @@ package body PDF_Out is
     pdf.last_page:= pdf.last_page + 1;
     pdf.current_line:= 1;
     pdf.current_col:= 1;
+    PDF_Out.Images.Clear_local_resource_flags(pdf);
     --
     --  Page descriptor object:
     --
@@ -291,8 +292,8 @@ package body PDF_Out is
       Test_Page(pdf);
     else
       WLd(pdf, "  BT");            --  Begin Text object (9.4)
-      WLd(pdf, "    /F1 12 Tf");   --  F1 font (9.3 Text State Parameters and Operators)
-      WLd(pdf, "    16 TL");       --  TL: set text leading (distance between lines, 9.3.5)
+      WLd(pdf, "    /F1 11 Tf");   --  F1 font (9.3 Text State Parameters and Operators)
+      WLd(pdf, "    14.6 TL");     --  TL: set text leading (distance between lines, 9.3.5)
       pdf.zone:= in_header;
       Page_Header(PDF_Out_Stream'Class(pdf));
       -- ^ PDF_Out_Stream'Class: make the call to Page_Header dispatching
@@ -458,6 +459,12 @@ package body PDF_Out is
   begin
     WLd(pdf, "    " & Img(Text_Rendering_Mode'Pos(r)) & " Tr");
     --  Tr = Set rendering mode (Table 106)
+  end;
+
+  procedure Image(pdf: in out PDF_Out_Stream; file_name: String; target: Rectangle) is
+    image_index: Positive;  --  Index in the list of images
+  begin
+    PDF_Out.Images.Image_ref(pdf, file_name, image_index);
   end;
 
   procedure Insert_PDF_Code(pdf: in out PDF_Out_Stream; code: String) is

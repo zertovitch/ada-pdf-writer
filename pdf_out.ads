@@ -9,7 +9,7 @@
 
 -- Legal licensing note:
 
---  Copyright (c) 2014 .. 2015 Gautier de Montmollin
+--  Copyright (c) 2014 .. 2016 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -83,6 +83,14 @@ package PDF_Out is
 
   type Real is digits System.Max_Digits;
 
+  type Rectangle is record
+    x_min, y_min,
+    width, height : Real;
+  end record;
+
+  function X_Max(r: Rectangle) return Real;
+  function Y_Max(r: Rectangle) return Real;
+
   ----------------------------
   -- (2) Document contents: --
   ----------------------------
@@ -132,17 +140,29 @@ package PDF_Out is
 
   procedure Rendering_Mode(pdf: in out PDF_Out_Stream; r: Text_Rendering_Mode);
 
-  --  If some PDF feature is missing in this package, you can insert
-  --  direct PDF code - at your own risk ;-).
+  ---------------
+  --  Graphics --
+  ---------------
+
+  procedure Image(pdf: in out PDF_Out_Stream; file_name: String; target: Rectangle);
+
+  -----------
+  --  Misc --
+  -----------
+
+  --  If some PDF feature is not yet implemented in this package,
+  --  you can insert direct PDF code - at your own risk ;-).
   procedure Insert_PDF_Code(pdf: in out PDF_Out_Stream; code: String);
+
+  ------------------
+  --  Page layout --
+  ------------------
 
   --  You need to override the Header and Footer methods
   --  for setting up your custom header and footer. By default they do nothing.
   procedure Page_Header(pdf : in out PDF_Out_Stream);
   procedure Page_Footer(pdf : in out PDF_Out_Stream);
 
-  --
-  --  Page layout procedures.
   --  They have to be called before New_Page in order to influence the next page.
   --  For the first page, call them before any output (typically right after Create).
   --
@@ -166,14 +186,6 @@ package PDF_Out is
 
   procedure Margins(pdf : out PDF_Out_Stream; new_margins: Margins_Type);
   function Margins(pdf : PDF_Out_Stream) return Margins_Type;
-
-  type Rectangle is record
-    x_min, y_min,
-    width, height : Real;
-  end record;
-
-  function X_Max(r: Rectangle) return Real;
-  function Y_Max(r: Rectangle) return Real;
 
   --  A4 is 21.0 x 29.7 cm
   A4_portrait : constant Rectangle:= (0.0, 0.0, 21.0 * one_cm, 29.7 * one_cm);
@@ -250,6 +262,17 @@ private
   pages_idx: constant:= 1;
   last_fix_obj_idx: constant:= 1;
 
+  type Dir_node;
+  type p_Dir_node is access Dir_node;
+
+  type Dir_node(name_len: Natural) is record
+    left, right      : p_Dir_node;
+    file_name        : String(1..name_len);
+    image_index      : Positive;
+    pdf_object_index : Natural:= 0;  --  0 = not yet insterted into the PDF stream
+    local_resource   : Boolean;      --  All True items to be listed into Resource dictionary
+  end record;
+
   ----------------------------------------
   -- Raw Streams, with 'Read and 'Write --
   ----------------------------------------
@@ -280,6 +303,8 @@ private
     objects       : Natural     := last_fix_obj_idx;
     object_offset : Offset_table;
     stream_obj_buf: Unbounded_String;
+    img_dir_tree  : p_Dir_node  := null;
+    img_count     : Natural     := 0;
   end record;
 
   type PDF_Out_Stream is abstract new PDF_Out_Pre_Root_Type with null record;
