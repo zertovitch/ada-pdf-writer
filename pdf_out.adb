@@ -125,7 +125,7 @@ package body PDF_Out is
   --
   function Img( x: Real; prec: Positive:= Real'Digits ) return String is
     s: String(1..30);
-    na,nb,np:Natural;
+    na,nb,np: Natural;
   begin
     RIO.Put(s,x,prec,0);
     na:= s'First;
@@ -154,13 +154,23 @@ package body PDF_Out is
     return s(na..nb);
   end Img;
 
+  function X_Max(r: Rectangle) return Real is
+  begin
+    return r.x_min + r.width;
+  end;
+
+  function Y_Max(r: Rectangle) return Real is
+  begin
+    return r.y_min + r.height;
+  end;
+
   function Img(box: Rectangle) return String is
   begin
     return
       Img(box.x_min) & ' ' &
       Img(box.y_min) & ' ' &
-      Img(box.x_max) & ' ' &
-      Img(box.y_max) & ' ';
+      Img(X_Max(box)) & ' ' &
+      Img(Y_Max(box)) & ' ';
   end Img;
 
   procedure New_fixed_object(pdf : in out PDF_Out_Stream'Class; idx: Positive) is
@@ -216,7 +226,7 @@ package body PDF_Out is
     WLd(pdf, "    0.5 0 0 rg");  --  red, nonstroking colour (Table 74)
     WLd(pdf, "    0.25 G") ;     --  25% gray stroking colour (Table 74)
     WLd(pdf, "    2 Tr");        --  Tr: Set rendering mode as "Fill, then stroke text" (Table 106)
-    WLd(pdf, "    20 " & Img(pdf.page_box.y_max - 56.0) & " Td");  -- 9.4.2 Text-Positioning Operators
+    WLd(pdf, "    20 539 Td");
     WLd(pdf, "    (Hello World !) Tj"); -- Tj: Show a text string (9.4.3 Text-Showing Operators)
     WLd(pdf, "    16 TL");       --  TL: set text leading (distance between lines, 9.3.5)
     WLd(pdf, "    T*");          --  T*: Move to the start of the next line (9.4.2)
@@ -288,7 +298,7 @@ package body PDF_Out is
       -- ^ PDF_Out_Stream'Class: make the call to Page_Header dispatching
     end if;
     pdf.zone:= in_page;
-    Text_XY(pdf, pdf.page_margins.left, pdf.page_box.y_max - pdf.page_margins.top);
+    Text_XY(pdf, pdf.page_margins.left, Y_Max(pdf.page_box) - pdf.page_margins.top);
   end New_Page;
 
   procedure Page_finish(pdf: in out PDF_Out_Stream) is
@@ -403,7 +413,7 @@ package body PDF_Out is
     end if;
   end New_Line;
 
-  procedure Text_XY(pdf: in out PDF_Out_Stream; x,y: Long_Float) is
+  procedure Text_XY(pdf: in out PDF_Out_Stream; x,y: Real) is
   begin
     --  This is just for resetting the text matrices (hence, position and orientation)
     --
@@ -513,13 +523,19 @@ package body PDF_Out is
   end Margins;
 
   procedure Page_Setup(pdf : in out PDF_Out_Stream; layout: Rectangle) is
+    mb_x_min, mb_y_min, mb_x_max, mb_y_max: Real;
   begin
     pdf.page_box:= layout;
+    mb_x_min:= Real'Min(pdf.maximum_box.x_min, layout.x_min);
+    mb_y_min:= Real'Min(pdf.maximum_box.y_min, layout.y_min);
+    mb_x_max:= Real'Max(X_Max(pdf.maximum_box), X_Max(layout));
+    mb_y_max:= Real'Max(Y_Max(pdf.maximum_box), Y_Max(layout));
     pdf.maximum_box:=
-      ( x_min => Real'Min(pdf.maximum_box.x_min, layout.x_min),
-        y_min => Real'Min(pdf.maximum_box.y_min, layout.y_min),
-        x_max => Real'Max(pdf.maximum_box.x_max, layout.x_max),
-        y_max => Real'Max(pdf.maximum_box.y_max, layout.y_max) );
+      ( x_min  => mb_x_min,
+        y_min  => mb_y_min,
+        width  => mb_x_max - mb_x_min,
+        height => mb_y_max - mb_y_min
+      );
   end Page_Setup;
 
   function Layout(pdf : PDF_Out_Stream) return Rectangle is

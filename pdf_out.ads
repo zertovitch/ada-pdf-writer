@@ -58,6 +58,8 @@ with Ada.Streams.Stream_IO;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
+with System;
+
 package PDF_Out is
 
   -----------------------------------------------------------------
@@ -79,7 +81,7 @@ package PDF_Out is
 
   Default_PDF_type: constant PDF_type:= PDF_1_3;
 
-  subtype Real is Long_Float;
+  type Real is digits System.Max_Digits;
 
   ----------------------------
   -- (2) Document contents: --
@@ -104,7 +106,7 @@ package PDF_Out is
   procedure New_Line(pdf: in out PDF_Out_Stream; Spacing : Positive := 1);
   procedure New_Page(pdf: in out PDF_Out_Stream);
   --
-  procedure Text_XY(pdf: in out PDF_Out_Stream; x,y: Long_Float);
+  procedure Text_XY(pdf: in out PDF_Out_Stream; x,y: Real);
 
   function Col(pdf: in PDF_Out_Stream) return Positive;
   function Line(pdf: in PDF_Out_Stream) return Positive;
@@ -167,12 +169,15 @@ package PDF_Out is
 
   type Rectangle is record
     x_min, y_min,
-    x_max, y_max : Real;
+    width, height : Real;
   end record;
+
+  function X_Max(r: Rectangle) return Real;
+  function Y_Max(r: Rectangle) return Real;
 
   --  A4 is 21.0 x 29.7 cm
   A4_portrait : constant Rectangle:= (0.0, 0.0, 21.0 * one_cm, 29.7 * one_cm);
-  A4_landscape: constant Rectangle:= (0.0, 0.0, A4_portrait.y_max, A4_portrait.x_max);
+  A4_landscape: constant Rectangle:= (0.0, 0.0, A4_portrait.height, A4_portrait.width);
 
   procedure Page_Setup(pdf : in out PDF_Out_Stream; layout: Rectangle);
 

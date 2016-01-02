@@ -7,7 +7,7 @@ package body Fancy_page is
   procedure Page_Header (pdf : in out Fancy_PDF) is
     pg_layout: constant PDF_Out.Rectangle:= Layout(pdf);
   begin
-    Text_XY(pdf, Left_Margin(pdf), pg_layout.y_max - Top_Margin(pdf) + pt_font);
+    Text_XY(pdf, Left_Margin(pdf), Y_Max(pg_layout) - Top_Margin(pdf) + pt_font);
     Rendering_Mode(pdf, fill_then_stroke);
     Insert_PDF_Code(pdf, "/F1 20 Tf"); -- !! to be changed for proper font selector
     Color(pdf, (0.0,0.0,0.8));
