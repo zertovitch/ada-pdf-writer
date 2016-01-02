@@ -2,6 +2,8 @@
 --  http://www.adobe.com/devnet/pdf/pdf_reference.html
 --
 
+with PDF_Out.Images;
+
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;
 
