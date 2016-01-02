@@ -60,6 +60,34 @@ package body PDF_Out is
     Size_test_a'Size = Size_test_b'Size and
     Size_test_a'Alignment = Size_test_b'Alignment;
 
+  procedure Block_Read(
+    file         : in     Ada.Streams.Stream_IO.File_Type;
+    buffer       :    out Byte_buffer;
+    actually_read:    out Natural
+  )
+  is
+    SE_Buffer   : Stream_Element_Array (1 .. buffer'Length);
+    for SE_Buffer'Address use buffer'Address;
+    pragma Import (Ada, SE_Buffer);
+    Last_Read   : Stream_Element_Offset;
+  begin
+    if workaround_possible then
+      Read(Stream(file).all, SE_Buffer, Last_Read);
+      actually_read:= Natural(Last_Read);
+    else
+      if End_Of_File(file) then
+        actually_read:= 0;
+      else
+        actually_read:=
+          Integer'Min( buffer'Length, Integer(Size(file) - Index(file) + 1) );
+        Byte_buffer'Read(
+          Stream(file),
+          buffer(buffer'First .. buffer'First + actually_read - 1)
+        );
+      end if;
+    end if;
+  end Block_Read;
+
   procedure Block_Write(
     stream : in out Ada.Streams.Root_Stream_Type'Class;
     buffer : in     Byte_buffer
@@ -78,7 +106,26 @@ package body PDF_Out is
       --   Test in the Zip-Ada project.
     end if;
   end Block_Write;
-  pragma Unreferenced (Block_Write);
+
+  -- Copy a whole file into a stream, using a temporary buffer
+  procedure Copy_file(
+    file_name  : String;
+    into       : in out Ada.Streams.Root_Stream_Type'Class;
+    buffer_size: Positive:= 1024*1024
+  )
+  is
+    f: File_Type;
+    buf: Byte_buffer(1..buffer_size);
+    actually_read: Natural;
+  begin
+    Open(f, In_File, file_name);
+    loop
+      Block_Read(f, buf, actually_read);
+      exit when actually_read = 0; -- this is expected
+      Block_Write(into, buf(1..actually_read));
+    end loop;
+    Close(f);
+  end Copy_file;
 
   procedure W(pdf : in out PDF_Out_Stream'Class; s: String) is
   begin
@@ -495,7 +542,7 @@ package body PDF_Out is
     image_index: Positive;  --  Index in the list of images
   begin
     PDF_Out.Images.Image_ref(pdf, file_name, image_index);
-    WLd(pdf, "    % q " &
+    WLd(pdf, "    q " &
       Img(target.width) & " 0 0 " & Img(target.height) &
       ' ' & Img(target.x_min) & ' ' & Img(target.y_min) & " cm " &  --  cm: Table 57
       Image_name(image_index) & " Do Q"

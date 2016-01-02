@@ -59,18 +59,25 @@ package body PDF_Out.Images is
   procedure Insert_unloaded_local_images( pdf: in out PDF_Out_Stream ) is
 
     procedure Insert_Image_as_XObject(file_name: String) is
-      width: Natural:= 0;
-      height: Natural:= 0;
+      width : Natural:= 140;  -- cheat!!
+      height: Natural:= 78;   -- cheat!!
+      file_size: Natural;
+      use Ada.Streams.Stream_IO;
+      file: File_Type;
     begin
+      Open(file, In_File, file_name);
+      file_size:= Integer(Size(file));
+      Close(file);
       New_object(pdf);
       WL(pdf,
         "<< /Type /XObject /Subtype /Image /Width " &
         Img(width) & " /Height " & Img(height) &
         " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Length " &
-        Img(width * height) & " /Filter /DCTDecode >>"
+        Img(file_size) & " /Filter /DCTDecode >>"
       );
       WL(pdf, "stream");
-      -- JPEG DATA HERE !!
+      Copy_file(file_name, pdf.pdf_stream.all);
+      WL(pdf, "");
       WL(pdf, "endstream");
       WL(pdf, "endobj");
     end Insert_Image_as_XObject;

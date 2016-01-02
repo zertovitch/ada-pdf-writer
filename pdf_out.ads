@@ -314,6 +314,11 @@ private
   procedure New_object(pdf : in out PDF_Out_Stream'Class);
   procedure WL(pdf : in out PDF_Out_Stream'Class; s: String);
   function Img(p: Integer) return String;
+  procedure Copy_file(
+    file_name  : String;
+    into       : in out Ada.Streams.Root_Stream_Type'Class;
+    buffer_size: Positive:= 1024*1024
+  );
 
   ----------------------
   -- Output to a file --
