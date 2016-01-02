@@ -33,6 +33,7 @@ procedure PDF_Out_Demo is
   procedure Large_demo is
 
     mem_page_nb: Natural:= 0;
+    curve_max: constant := 8;
 
     function Large_demo_contents return String is
       pdf: Fancy_PDF;
@@ -40,13 +41,26 @@ procedure PDF_Out_Demo is
       pdf.page_nb:= mem_page_nb;
       Create(pdf);
       Page_Setup(pdf, A4_portrait);
-      Put_Line(pdf, "This is a big demo for PDF_Out.");
+      Put_Line(pdf, "This is a big demo for PDF_Out. We begin with some Put_Line");
+      Put_Line(pdf, "We begin with some Put_Line and other Ada.Text_IO-like commands.");
+      Put_Line(pdf, "You can use a PDF stream just like a File_Type of Ada.Text_IO");
+      Put_Line(pdf, "and its standard subprograms.");
       New_Line(pdf);
+      Put_Line(pdf, "Of course you have much more with PDF_Out: high-quality fonts,");
+      Put_Line(pdf, "colors, amazing vector graphics, image inclusions, ...");
+      New_Line(pdf, 2);
       for r in 1..5 loop
         Color(pdf, (Real(r) * 0.2, 0.0, 0.0));
         Put_Line(pdf, "Variations of red...");
       end loop;
       Color(pdf, black);
+      for x in -curve_max..curve_max loop
+        Text_XY(pdf,
+          Left_Margin(pdf) + Real(curve_max + x) * one_cm,
+          Bottom_Margin(pdf) + ((Real(x)*0.4) ** 2) * one_cm
+        );
+        Put(pdf, Integer'Image(x));
+      end loop;
       New_Line(pdf);
       Page_Setup(pdf, A4_landscape);
       New_Page(pdf);
