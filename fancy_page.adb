@@ -10,9 +10,9 @@ package body Fancy_page is
     Text_XY(pdf, Left_Margin(pdf), Y_Max(pg_layout) - Top_Margin(pdf) + pt_font);
     Rendering_Mode(pdf, fill_then_stroke);
     Insert_PDF_Code(pdf, "/F1 20 Tf"); -- !! to be changed for proper font selector
-    Color(pdf, (0.0,0.0,0.8));
+    Color(pdf, (0.9,0.9,0.0));
     Stroking_Color(pdf, (0.6,0.0,0.0));
-    Put(pdf, "Fancy header");  --  Red outline, blue fill
+    Put(pdf, "Fancy header");  --  Red outline, yellow fill
     Rendering_Mode(pdf, fill);
     Color(pdf, black);
     Insert_PDF_Code(pdf, "/F1 16 Tf"); -- !! to be changed for proper font selector

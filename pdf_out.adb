@@ -185,6 +185,8 @@ package body PDF_Out is
     New_fixed_object(pdf, pdf.objects);
   end New_object;
 
+  producer: constant String:= "Ada PDF Writer " & version & " - ref: " & reference & " - " & web;
+
   procedure Write_PDF_header(pdf : in out PDF_Out_Stream'Class) is
   begin
     pdf.is_created:= True;
@@ -192,11 +194,9 @@ package body PDF_Out is
     case pdf.format is
       when PDF_1_3 =>
         WL(pdf, "%PDF-1.3");
-        Byte_buffer'Write(pdf.pdf_stream,
-          (16#25#, 16#C2#, 16#A5#, 16#C2#, 16#B1#, 16#C3#, 16#AB#)
-        );
-        WL(pdf, "");
+        Byte_buffer'Write(pdf.pdf_stream, (16#25#,16#C2#,16#A5#,16#C2#,16#B1#,16#C3#,16#AB#,10));
     end case;
+    WL(pdf, "%  --  Produced by " & producer);
   end Write_PDF_header;
 
   procedure New_stream(pdf : in out PDF_Out_Stream'Class) is
@@ -276,10 +276,8 @@ package body PDF_Out is
     --  Table 30 for options
     WL(pdf, "  <</Type /Page");
     WL(pdf, "    /Parent " & Img(pages_idx) & " 0 R");
-    WL(pdf, "    /Resources");
-    Test_Font(pdf); -- !!
-    WL(pdf, "    /Contents " & Img(pdf.objects+1) & " 0 R");
-    --  ^ The Contents stream object is coming just after this Page object
+    WL(pdf, "    /Contents " & Img(pdf.objects + 1) & " 0 R");   --  Contents stream object is n+1
+    WL(pdf, "    /Resources " & Img(pdf.objects + 2) & " 0 R");  --  Resources object is n+2
     WL(pdf, "    /MediaBox [" & Img(pdf.page_box) & ']');
     WL(pdf, "  >>");
     WL(pdf, "endobj");
@@ -316,7 +314,10 @@ package body PDF_Out is
     end if;
     pdf.zone:= nowhere;
     Finish_stream(pdf);
-    WL(pdf, "endobj");
+    WL(pdf, "endobj");  --  end of Contents
+    New_object(pdf);    --  Resources object
+    Test_Font(pdf); -- !!
+    WL(pdf, "endobj");  --  end of Resources
   end Page_finish;
 
   procedure Put(pdf: in out PDF_Out_Stream; num : Real) is
@@ -568,9 +569,7 @@ package body PDF_Out is
     begin
       New_object(pdf);
       info_idx:= pdf.objects;
-      WL(pdf, "  <<");
-      WL(pdf, "    /Producer (Ada PDF Writer " & version &
-              " - ref: " & reference & " - " & web & ")");
+      WL(pdf, "  << /Producer (" & producer & ')');
       WL(pdf, "  >>");
       WL(pdf, "endobj");
     end Info;

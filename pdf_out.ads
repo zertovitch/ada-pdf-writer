@@ -218,7 +218,7 @@ package PDF_Out is
   --------------------------------------------------------------
 
   version   : constant String:= "DRAFT"; -- 001 Preview 1
-  reference : constant String:= "xx-yyy-2015";
+  reference : constant String:= "xx-yyy-2016";
   web       : constant String:= "http://apdf.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
