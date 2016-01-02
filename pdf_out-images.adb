@@ -30,11 +30,6 @@ package body PDF_Out.Images is
     Insert(file_name, pdf.img_dir_tree);
   end Image_ref;
 
-  generic
-    with procedure Action_private( dn: in out Dir_node );
-    -- Dir_node is private: only known to us, contents subject to change
-  procedure Traverse_private( pdf: PDF_Out_Stream );
-
   procedure Traverse_private( pdf: PDF_Out_Stream ) is
 
     procedure Traverse( p: p_Dir_node ) is
@@ -61,9 +56,37 @@ package body PDF_Out.Images is
     Traverse_and_clear(pdf);
   end;
 
-  procedure Insert_Image_as_XObject(pdf: in out PDF_Out_Stream; image_index: Positive) is
+  procedure Insert_unloaded_local_images( pdf: in out PDF_Out_Stream ) is
+
+    procedure Insert_Image_as_XObject(file_name: String) is
+      width: Natural:= 0;
+      height: Natural:= 0;
+    begin
+      New_object(pdf);
+      WL(pdf,
+        "<< /Type /XObject /Subtype /Image /Width " &
+        Img(width) & " /Height " & Img(height) &
+        " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Length " &
+        Img(width * height) & " /Filter /DCTDecode >>"
+      );
+      WL(pdf, "stream");
+      -- JPEG DATA HERE !!
+      WL(pdf, "endstream");
+      WL(pdf, "endobj");
+    end Insert_Image_as_XObject;
+
+    procedure Insert_unloaded_local_image( dn: in out Dir_node ) is
+    begin
+      if dn.local_resource and then dn.pdf_object_index = 0 then
+        Insert_Image_as_XObject(dn.file_name);
+        dn.pdf_object_index:= pdf.objects;
+      end if;
+    end;
+
+    procedure Traverse_and_load is new Traverse_private(Insert_unloaded_local_image);
+
   begin
-    null; -- !!
-  end Insert_Image_as_XObject;
+    Traverse_and_load(pdf);
+  end;
 
 end PDF_Out.Images;

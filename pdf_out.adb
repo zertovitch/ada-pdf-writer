@@ -250,12 +250,11 @@ package body PDF_Out is
 
   procedure Test_Font(pdf: in out PDF_Out_Stream'Class) is
   begin
-    WL(pdf, "<< /Font");
-    WL(pdf, "  << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
-    WL(pdf, "     /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique >>");
-    WL(pdf, "     /F3 << /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>");
-    WL(pdf, "  >>");
-    WL(pdf, ">>");
+    WL(pdf, "  /Font");  --  font dictionary
+    WL(pdf, "    << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+    WL(pdf, "       /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique >>");
+    WL(pdf, "       /F3 << /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>");
+    WL(pdf, "    >>");
   end Test_Font;
 
   --  Internal, called by New_Page and Finish to finish current page
@@ -303,6 +302,25 @@ package body PDF_Out is
   end New_Page;
 
   procedure Page_finish(pdf: in out PDF_Out_Stream) is
+
+    appended_object_idx: Positive;
+
+    procedure Image_Item(dn: in out Dir_node) is
+      img_obj: Positive;
+    begin
+      if dn.local_resource then
+        if dn.pdf_object_index = 0 then
+          img_obj:= appended_object_idx;
+          appended_object_idx:= appended_object_idx + 1;
+        else
+          img_obj:= dn.pdf_object_index;  --  image has been loaded for a previous page
+        end if;
+        WL(pdf, Image_name(dn.image_index) & ' ' & Img(img_obj) & " 0 R");
+      end if;
+    end Image_Item;
+
+    procedure Image_List is new PDF_Out.Images.Traverse_private(Image_Item);
+
   begin
     if pdf.zone = nowhere then
       return; -- We are already "between pages"
@@ -318,9 +336,16 @@ package body PDF_Out is
     pdf.zone:= nowhere;
     Finish_stream(pdf);
     WL(pdf, "endobj");  --  end of Contents
-    New_object(pdf);    --  Resources object
+    New_object(pdf);    --  Resources Dictionary (7.8.3)
+    WL(pdf, "<<");
     Test_Font(pdf); -- !!
+    appended_object_idx:= pdf.objects + 1;  --  Images contents to be appended after this object
+    WL(pdf, "  /XObject <<");
+    Image_List(pdf);
+    WL(pdf, "  >>");
+    WL(pdf, ">>");
     WL(pdf, "endobj");  --  end of Resources
+    PDF_Out.Images.Insert_unloaded_local_images(pdf);
   end Page_finish;
 
   procedure Put(pdf: in out PDF_Out_Stream; num : Real) is
@@ -461,10 +486,20 @@ package body PDF_Out is
     --  Tr = Set rendering mode (Table 106)
   end;
 
+  function Image_name(i: Positive) return String is
+  begin
+    return "/AdaPDFImg" & Img(i);
+  end;
+
   procedure Image(pdf: in out PDF_Out_Stream; file_name: String; target: Rectangle) is
     image_index: Positive;  --  Index in the list of images
   begin
     PDF_Out.Images.Image_ref(pdf, file_name, image_index);
+    WLd(pdf, "    % q " &
+      Img(target.width) & " 0 0 " & Img(target.height) &
+      ' ' & Img(target.x_min) & ' ' & Img(target.y_min) & " cm " &  --  cm: Table 57
+      Image_name(image_index) & " Do Q"
+    );
   end;
 
   procedure Insert_PDF_Code(pdf: in out PDF_Out_Stream; code: String) is

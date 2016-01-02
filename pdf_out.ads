@@ -309,6 +309,12 @@ private
 
   type PDF_Out_Stream is abstract new PDF_Out_Pre_Root_Type with null record;
 
+  --  For child packages
+  function Image_name(i: Positive) return String;
+  procedure New_object(pdf : in out PDF_Out_Stream'Class);
+  procedure WL(pdf : in out PDF_Out_Stream'Class; s: String);
+  function Img(p: Integer) return String;
+
   ----------------------
   -- Output to a file --
   ----------------------

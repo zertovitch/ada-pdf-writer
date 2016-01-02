@@ -41,7 +41,7 @@ procedure PDF_Out_Demo is
       pdf.page_nb:= mem_page_nb;
       Create(pdf);
       Page_Setup(pdf, A4_portrait);
-      Put_Line(pdf, "This is a big demo for PDF_Out. We begin with some Put_Line");
+      Put_Line(pdf, "This is a big demo for PDF_Out.");
       Put_Line(pdf, "We begin with some Put_Line and other Ada.Text_IO-like commands.");
       Put_Line(pdf, "You can use a PDF stream just like a File_Type of Ada.Text_IO");
       Put_Line(pdf, "and its standard subprograms.");
