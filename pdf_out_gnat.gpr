@@ -8,7 +8,7 @@ project PDF_Out_Gnat is
       ("Debug", "Fast");
    Build_Mode : Build_Mode_Type := external ("Build_Mode", "Debug");
    for Main use ("pdf_out_demo.adb");
-   for Source_Dirs use (".");
+   for Source_Dirs use (".", "gid");
    for Exec_Dir use ".";
 
    case Build_Mode is
@@ -25,7 +25,7 @@ project PDF_Out_Gnat is
       case Build_Mode is
 
          when "Debug" =>
-            for Default_Switches ("ada") use ("-gnat95", "-gnatyhiknpfurb", "-gnato", "-fno-inline", "-fstack-check", "-gnatwa", "-g", "-gnatVa", "-gnatecdebug.pra");
+            for Default_Switches ("ada") use ("-gnat95", "-gnatyhiknpfub", "-gnato", "-fno-inline", "-fstack-check", "-gnatwa", "-g", "-gnatVa", "-gnatecdebug.pra");
 
          when "Fast" =>
             for Default_Switches ("ada") use ("-gnat95", "-O2", "-gnatn", "-gnatp", "-gnatwa", "-fno-strict-aliasing", "-funroll-loops", "-fpeel-loops", "-ftracer", "-funswitch-loops", "-fweb", "-frename-registers");

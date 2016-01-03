@@ -1,3 +1,5 @@
+with GID;
+
 package body PDF_Out.Images is
 
   procedure Image_ref(pdf: in out PDF_Out_Stream; file_name: String; image_index: out Positive) is
@@ -59,21 +61,21 @@ package body PDF_Out.Images is
   procedure Insert_unloaded_local_images( pdf: in out PDF_Out_Stream ) is
 
     procedure Insert_Image_as_XObject(file_name: String) is
-      width : Natural:= 140;  -- cheat!!
-      height: Natural:= 78;   -- cheat!!
       file_size: Natural;
       use Ada.Streams.Stream_IO;
       file: File_Type;
+      i: GID.Image_descriptor;
     begin
       Open(file, In_File, file_name);
       file_size:= Integer(Size(file));
+      GID.Load_image_header(i, Stream(file).all, try_tga => False);
       Close(file);
       New_object(pdf);
       WL(pdf,
         "<< /Type /XObject /Subtype /Image /Width " &
-        Img(width) & " /Height " & Img(height) &
-        " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Length " &
-        Img(file_size) & " /Filter /DCTDecode >>"
+        Img(GID.Pixel_width(i)) & " /Height " & Img(GID.Pixel_height(i)) &
+        " /ColorSpace /DeviceRGB /BitsPerComponent " & Img(GID.Bits_per_pixel(i) / 3) &
+        " /Length " & Img(file_size) & " /Filter /DCTDecode >>"
       );
       WL(pdf, "stream");
       Copy_file(file_name, pdf.pdf_stream.all);
