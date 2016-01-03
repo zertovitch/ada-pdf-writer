@@ -73,7 +73,8 @@ package PDF_Out is
   type PDF_Out_Stream is abstract tagged private;
 
   PDF_stream_not_created,
-  PDF_stream_not_closed : exception;
+  PDF_stream_not_closed,
+  Not_implemented: exception;
 
   type PDF_type is (
     PDF_1_3 -- PDF 1.3

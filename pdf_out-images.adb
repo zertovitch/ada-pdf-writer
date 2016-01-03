@@ -1,4 +1,5 @@
 with GID;
+with Ada.Exceptions; use Ada.Exceptions;
 
 package body PDF_Out.Images is
 
@@ -65,11 +66,19 @@ package body PDF_Out.Images is
       use Ada.Streams.Stream_IO;
       file: File_Type;
       i: GID.Image_descriptor;
+      use GID;
     begin
       Open(file, In_File, file_name);
       file_size:= Integer(Size(file));
       GID.Load_image_header(i, Stream(file).all, try_tga => False);
       Close(file);
+      if GID.Format(i) /= GID.JPEG then
+        Raise_Exception(
+          Not_implemented'Identity,
+          "So far only JPEG images can be inserted. This image is of type " &
+          GID.Detailed_format(i) & ", file name = " & file_name
+        );
+      end if;
       New_object(pdf);
       WL(pdf,
         "<< /Type /XObject /Subtype /Image /Width " &

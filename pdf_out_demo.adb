@@ -37,6 +37,7 @@ procedure PDF_Out_Demo is
 
     function Large_demo_contents return String is
       pdf: Fancy_PDF;
+      factor: Real;
     begin
       pdf.page_nb:= mem_page_nb;
       Create(pdf);
@@ -52,6 +53,16 @@ procedure PDF_Out_Demo is
       for r in 1..5 loop
         Color(pdf, (Real(r) * 0.2, 0.0, 0.0));
         Put_Line(pdf, "Variations of red...");
+      end loop;
+      for n in 1..4 loop
+        factor:= Real(n) * 0.03;
+        Image(pdf,
+          "bordu_2016_01_01_25pct.jpg",
+          (Left_Margin(pdf)   + Real(n)* 60.0,
+           Bottom_Margin(pdf) + Real(n)* 100.0 - 50.0,
+           factor * 1296.0,
+           factor * 864.0)
+        );
       end loop;
       Color(pdf, black);
       for x in -curve_max..curve_max loop
