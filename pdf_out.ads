@@ -121,6 +121,28 @@ package PDF_Out is
   function Line(pdf: in PDF_Out_Stream) return Positive;
   function Page(pdf: in PDF_Out_Stream) return Natural;
 
+  type Font_Type is
+     (--  The 14 standard fonts
+      Courier,
+      Courier_Bold,
+      Courier_Bold_Oblique,
+      Courier_Oblique,
+      Helvetica,
+      Helvetica_Bold,
+      Helvetica_Bold_Oblique,
+      Helvetica_Oblique,
+      Symbol,
+      Times_Bold,
+      Times_Bold_Italic,
+      Times_Italic,
+      Times_Roman,
+      Zapf_Dingbats,
+      --  Fonts imported into the PDF document
+      External_Font
+     );
+
+  subtype Standard_Font_Type is Font_Type range Courier .. Zapf_Dingbats;
+
   type Color_Type is record
     red, green, blue: Real;
   end record;
@@ -180,8 +202,11 @@ package PDF_Out is
     left, right, top, bottom: Real;
   end record;
 
-  one_cm: constant:= 72.0 / 2.54;
-  cm_2_5: constant:= one_cm * 2.5;
+  --  Some distances in Points
+
+  one_cm   : constant:= 72.0 / 2.54;
+  cm_2_5   : constant:= one_cm * 2.5;
+  one_inch : constant:= 72.0;
 
   cm_2_5_margins: constant Margins_Type:= (cm_2_5, cm_2_5, cm_2_5, cm_2_5);
 
@@ -306,6 +331,9 @@ private
     stream_obj_buf: Unbounded_String;
     img_dir_tree  : p_Dir_node  := null;
     img_count     : Natural     := 0;
+    current_font  : Font_Type;
+    font_size     : Real;
+    ext_font_name : Unbounded_String;
   end record;
 
   type PDF_Out_Stream is abstract new PDF_Out_Pre_Root_Type with null record;

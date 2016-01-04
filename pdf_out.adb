@@ -271,7 +271,7 @@ package body PDF_Out is
   begin
     WLd(pdf, "10 10 210 210 re S"); -- rectangle, stroke
     WLd(pdf, "  BT");            --  Begin Text object (9.4). Text matrix and text line matrix:= I
-    WLd(pdf, "    /F1 24 Tf");   --  F1 font, 24 pt size (9.3 Text State Parameters and Operators)
+    WLd(pdf, "    /Ada_PDF_Std_Font_Helvetica 24 Tf");   --  F1 font, 24 pt size (9.3 Text State Parameters and Operators)
     WLd(pdf, "    0.5 0 0 rg");  --  red, nonstroking colour (Table 74)
     WLd(pdf, "    0.25 G") ;     --  25% gray stroking colour (Table 74)
     WLd(pdf, "    2 Tr");        --  Tr: Set rendering mode as "Fill, then stroke text" (Table 106)
@@ -280,7 +280,7 @@ package body PDF_Out is
     WLd(pdf, "    16 TL");       --  TL: set text leading (distance between lines, 9.3.5)
     WLd(pdf, "    T*");          --  T*: Move to the start of the next line (9.4.2)
     WLd(pdf, "    20 20 220 220 re S"); -- rectangle, stroke (within text region)
-    WLd(pdf, "    /F2 12 Tf");
+    WLd(pdf, "    /Ada_PDF_Std_Font_Helvetica-Oblique 12 Tf");
     WLd(pdf, "    0 Tr");        --  Tr: Set rendering mode as default: "Fill text" (Table 106)
     WLd(pdf, "    0 g");         --  black (default)
     WLd(pdf, "    (Subtitle here.) Tj T*");
@@ -295,12 +295,40 @@ package body PDF_Out is
 
   test_page_mode: constant Boolean:= False;
 
+  function Standard_Font_Name(f: Standard_Font_Type) return String is
+  begin
+    case f is
+      when Courier                 => return "Courier";
+      when Courier_Bold            => return "Courier-Bold";
+      when Courier_Bold_Oblique    => return "Courier-BoldOblique";
+      when Courier_Oblique         => return "Courier-Oblique";
+      when Helvetica               => return "Helvetica";
+      when Helvetica_Bold          => return "Helvetica-Bold";
+      when Helvetica_Bold_Oblique  => return "Helvetica-BoldOblique";
+      when Helvetica_Oblique       => return "Helvetica-Oblique";
+      when Symbol                  => return "Symbol";
+      when Times_Bold              => return "Times-Bold";
+      when Times_Bold_Italic       => return "Times-BoldItalic";
+      when Times_Italic            => return "Times-Italic";
+      when Times_Roman             => return "Times-Roman";
+      when Zapf_Dingbats           => return "ZapfDingbats";
+    end case;
+  end Standard_Font_Name;
+
+  function Standard_Font_Dictionary_Name(f: Standard_Font_Type) return String is
+  begin
+    return "/Ada_PDF_Std_Font_" & Standard_Font_Name(f);
+  end Standard_Font_Dictionary_Name;
+
   procedure Test_Font(pdf: in out PDF_Out_Stream'Class) is
   begin
-    WL(pdf, "  /Font");  --  font dictionary
-    WL(pdf, "    << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
-    WL(pdf, "       /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique >>");
-    WL(pdf, "       /F3 << /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>");
+    WL(pdf, "  /Font <<");  --  font dictionary
+    for f in Standard_Font_Type loop
+      WL(pdf,
+        "    " & Standard_Font_Dictionary_Name(f) &
+        " << /Type /Font /Subtype /Type1 /BaseFont /" & Standard_Font_Name(f) & " >>"
+      );
+    end loop;
     WL(pdf, "    >>");
   end Test_Font;
 
@@ -338,7 +366,7 @@ package body PDF_Out is
       Test_Page(pdf);
     else
       WLd(pdf, "  BT");            --  Begin Text object (9.4)
-      WLd(pdf, "    /F1 11 Tf");   --  F1 font (9.3 Text State Parameters and Operators)
+      WLd(pdf, "    /Ada_PDF_Std_Font_Helvetica 11 Tf");  --  Tf: 9.3 Text State Parameters and Operators
       WLd(pdf, "    14.6 TL");     --  TL: set text leading (distance between lines, 9.3.5)
       pdf.zone:= in_header;
       Page_Header(PDF_Out_Stream'Class(pdf));
@@ -535,7 +563,7 @@ package body PDF_Out is
 
   function Image_name(i: Positive) return String is
   begin
-    return "/AdaPDFImg" & Img(i);
+    return "/Ada_PDF_Img" & Img(i);
   end;
 
   procedure Image(pdf: in out PDF_Out_Stream; file_name: String; target: Rectangle) is
