@@ -295,8 +295,9 @@ package body PDF_Out is
 
   test_page_mode: constant Boolean:= False;
 
+  --  9.6.2.2  Standard Type 1 Fonts (Standard 14 Fonts)
   function Standard_Font_Name(f: Standard_Font_Type) return String is
-  begin
+  begin  --  Code generation: see pw_work.xls, Fonts (Std)
     case f is
       when Courier                 => return "Courier";
       when Courier_Bold            => return "Courier-Bold";
@@ -315,12 +316,17 @@ package body PDF_Out is
     end case;
   end Standard_Font_Name;
 
+  function Font_Dictionary_Name(font_name: String) return String is
+  begin
+    return "/Ada_PDF_Std_Font_" & font_name;  --  Gives the local resource name for any font.
+  end Font_Dictionary_Name;
+
   function Standard_Font_Dictionary_Name(f: Standard_Font_Type) return String is
   begin
-    return "/Ada_PDF_Std_Font_" & Standard_Font_Name(f);
+    return Font_Dictionary_Name(Standard_Font_Name(f));
   end Standard_Font_Dictionary_Name;
 
-  procedure Test_Font(pdf: in out PDF_Out_Stream'Class) is
+  procedure Font_Dictionary(pdf: in out PDF_Out_Stream'Class) is
   begin
     WL(pdf, "  /Font <<");  --  font dictionary
     for f in Standard_Font_Type loop
@@ -330,7 +336,36 @@ package body PDF_Out is
       );
     end loop;
     WL(pdf, "    >>");
-  end Test_Font;
+  end Font_Dictionary;
+
+  function Current_Font_Name(pdf: PDF_Out_Stream) return String is
+  begin
+    if pdf.current_font in Standard_Font_Type then
+      return Standard_Font_Name(pdf.current_font);
+    else
+      return To_String(pdf.ext_font_name);
+    end if;
+  end Current_Font_Name;
+
+  procedure Insert_PDF_Font_Selection_Code(pdf: in out PDF_Out_Stream) is
+  begin
+    WLd(pdf,  --  Tf: 9.3 Text State Parameters and Operators
+      "    " & Font_Dictionary_Name(Current_Font_Name(pdf)) &
+      ' ' & Img(pdf.font_size) & " Tf"
+    );
+  end Insert_PDF_Font_Selection_Code;
+
+  procedure Select_Font(pdf: in out PDF_Out_Stream; font: Standard_Font_Type) is
+  begin
+    pdf.current_font:= font;
+    Insert_PDF_Font_Selection_Code(pdf);
+  end;
+
+  procedure Select_Font_Size(pdf: in out PDF_Out_Stream; size: Real) is
+  begin
+    pdf.font_size:= size;
+    Insert_PDF_Font_Selection_Code(pdf);
+  end;
 
   --  Internal, called by New_Page and Finish to finish current page
   --
@@ -366,7 +401,7 @@ package body PDF_Out is
       Test_Page(pdf);
     else
       WLd(pdf, "  BT");            --  Begin Text object (9.4)
-      WLd(pdf, "    /Ada_PDF_Std_Font_Helvetica 11 Tf");  --  Tf: 9.3 Text State Parameters and Operators
+      Insert_PDF_Font_Selection_Code(pdf);
       WLd(pdf, "    14.6 TL");     --  TL: set text leading (distance between lines, 9.3.5)
       pdf.zone:= in_header;
       Page_Header(PDF_Out_Stream'Class(pdf));
@@ -413,7 +448,7 @@ package body PDF_Out is
     WL(pdf, "endobj");  --  end of Contents
     New_object(pdf);    --  Resources Dictionary (7.8.3)
     WL(pdf, "<<");
-    Test_Font(pdf); -- !!
+    Font_Dictionary(pdf);
     appended_object_idx:= pdf.objects + 1;  --  Images contents to be appended after this object
     WL(pdf, "  /XObject <<");
     Image_List(pdf);

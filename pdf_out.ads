@@ -143,6 +143,9 @@ package PDF_Out is
 
   subtype Standard_Font_Type is Font_Type range Courier .. Zapf_Dingbats;
 
+  procedure Select_Font(pdf: in out PDF_Out_Stream; font: Standard_Font_Type);
+  procedure Select_Font_Size(pdf: in out PDF_Out_Stream; size: Real);
+
   type Color_Type is record
     red, green, blue: Real;
   end record;
@@ -331,8 +334,8 @@ private
     stream_obj_buf: Unbounded_String;
     img_dir_tree  : p_Dir_node  := null;
     img_count     : Natural     := 0;
-    current_font  : Font_Type;
-    font_size     : Real;
+    current_font  : Font_Type   := Helvetica;
+    font_size     : Real        := 11.0;
     ext_font_name : Unbounded_String;
   end record;
 

@@ -12,7 +12,8 @@ package body Fancy_page is
   begin
     Text_XY(pdf, Left_Margin(pdf), Y_Max(pg_layout) - Top_Margin(pdf) * 0.2 - pt_font * 0.5);
     Rendering_Mode(pdf, fill_then_stroke);
-    Insert_PDF_Code(pdf, "/Ada_PDF_Std_Font_Helvetica 20 Tf"); -- !! to be changed for proper font selector
+    Select_Font(pdf, Helvetica);
+    Select_Font_Size(pdf, 20.0);
     Color(pdf, (0.9,0.9,0.0));
     Stroking_Color(pdf, (0.6,0.0,0.0));
     Put(pdf, "Fancy header");  --  Red outline, yellow fill
@@ -25,7 +26,7 @@ package body Fancy_page is
     --
     Rendering_Mode(pdf, fill);
     Color(pdf, black);
-    Insert_PDF_Code(pdf, "/Ada_PDF_Std_Font_Helvetica 11 Tf"); -- !! to be changed for proper font selector
+    Select_Font_Size(pdf, 11.0);
   end Page_Header;
 
   procedure Page_Footer (pdf : in out Fancy_PDF) is
