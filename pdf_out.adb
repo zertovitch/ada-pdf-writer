@@ -1,7 +1,3 @@
---  All technical references are to PDF 1.7 format, ISO 32000-1:2008 standard
---  http://www.adobe.com/devnet/pdf/pdf_reference.html
---
-
 with PDF_Out.Images;
 
 with Ada.Unchecked_Deallocation;
@@ -213,13 +209,18 @@ package body PDF_Out is
     return r.y_min + r.height;
   end;
 
-  function Img(box: Rectangle) return String is
+  type Abs_Rel_Mode is (absolute, relative);
+
+  function Img(box: Rectangle; mode: Abs_Rel_Mode) return String is
   begin
-    return
-      Img(box.x_min) & ' ' &
-      Img(box.y_min) & ' ' &
-      Img(X_Max(box)) & ' ' &
-      Img(Y_Max(box)) & ' ';
+    case mode is
+      when absolute =>
+        return Img(box.x_min) & ' ' & Img(box.y_min) & ' ' &
+               Img(X_Max(box)) & ' ' & Img(Y_Max(box)) & ' ';
+      when relative =>
+        return Img(box.x_min) & ' ' & Img(box.y_min) & ' ' &
+               Img(box.width) & ' ' & Img(box.height) & ' ';
+    end case;
   end Img;
 
   procedure New_fixed_object(pdf : in out PDF_Out_Stream'Class; idx: Positive) is
@@ -269,7 +270,7 @@ package body PDF_Out is
   --
   procedure Test_Page(pdf: in out PDF_Out_Stream'Class) is
   begin
-    WLd(pdf, "10 10 210 210 re S"); -- rectangle, stroke
+    WLd(pdf, "10 10 200 200 re S"); -- rectangle, stroke
     WLd(pdf, "  BT");            --  Begin Text object (9.4). Text matrix and text line matrix:= I
     WLd(pdf, "    /Ada_PDF_Std_Font_Helvetica 24 Tf");   --  F1 font, 24 pt size (9.3 Text State Parameters and Operators)
     WLd(pdf, "    0.5 0 0 rg");  --  red, nonstroking colour (Table 74)
@@ -279,13 +280,13 @@ package body PDF_Out is
     WLd(pdf, "    (Hello World !) Tj"); -- Tj: Show a text string (9.4.3 Text-Showing Operators)
     WLd(pdf, "    16 TL");       --  TL: set text leading (distance between lines, 9.3.5)
     WLd(pdf, "    T*");          --  T*: Move to the start of the next line (9.4.2)
-    WLd(pdf, "    20 20 220 220 re S"); -- rectangle, stroke (within text region)
+    WLd(pdf, "    20 20 200 200 re S"); -- rectangle, stroke (within text region)
     WLd(pdf, "    /Ada_PDF_Std_Font_Helvetica-Oblique 12 Tf");
     WLd(pdf, "    0 Tr");        --  Tr: Set rendering mode as default: "Fill text" (Table 106)
     WLd(pdf, "    0 g");         --  black (default)
     WLd(pdf, "    (Subtitle here.) Tj T*");
     WLd(pdf, "  ET");           --  End Text
-    WLd(pdf, "30 30 230 230 re S"); -- rectangle, stroke
+    WLd(pdf, "30 30 200 200 re S"); -- rectangle, stroke
     WLd(pdf, "  BT");
     WLd(pdf, "    5 5 Td (Second text chunk here.) Tj T*");
     WLd(pdf, "  ET");
@@ -390,7 +391,7 @@ package body PDF_Out is
     WL(pdf, "    /Parent " & Img(pages_idx) & " 0 R");
     WL(pdf, "    /Contents " & Img(pdf.objects + 1) & " 0 R");   --  Contents stream object is n+1
     WL(pdf, "    /Resources " & Img(pdf.objects + 2) & " 0 R");  --  Resources object is n+2
-    WL(pdf, "    /MediaBox [" & Img(pdf.page_box) & ']');
+    WL(pdf, "    /MediaBox [" & Img(pdf.page_box, absolute) & ']');
     WL(pdf, "  >>");
     WL(pdf, "endobj");
     --  Page contents object:
@@ -402,7 +403,7 @@ package body PDF_Out is
     else
       WLd(pdf, "  BT");            --  Begin Text object (9.4)
       Insert_PDF_Font_Selection_Code(pdf);
-      WLd(pdf, "    14.6 TL");     --  TL: set text leading (distance between lines, 9.3.5)
+      WLd(pdf, "    14.6 TL");     --  TL: set text leading (distance between lines, 9.3.5) !! hardcoded
       pdf.zone:= in_header;
       Page_Header(PDF_Out_Stream'Class(pdf));
       -- ^ PDF_Out_Stream'Class: make the call to Page_Header dispatching
@@ -612,9 +613,60 @@ package body PDF_Out is
     );
   end;
 
+  --  Vector graphics
+  --    Table 59 - Path Construction Operators (8.5.2)
+  --    Table 60 - Path-Painting Operators
+
+  procedure Stroke(pdf: in out PDF_Out_Stream; what: Rectangle) is
+  begin
+    WLd(pdf, "    " & Img(what, relative) & " re s");
+  end;
+
+inside_path_rule_char: constant array(Inside_path_rule) of Character:= (
+    Nonzero_Winding_Number => ' ',
+    Even_Odd               => '*'
+  );
+
+  procedure Fill(pdf: in out PDF_Out_Stream; what: Rectangle; rule: Inside_path_rule) is
+  begin
+    WLd(pdf, "    " & Img(what, relative) & " re f" & inside_path_rule_char(rule));
+  end;
+
+  procedure Fill_then_stroke(pdf: in out PDF_Out_Stream; what: Rectangle; rule: Inside_path_rule) is
+  begin
+    WLd(pdf, "    " & Img(what, relative) & " re b" & inside_path_rule_char(rule));
+  end;
+
   procedure Insert_PDF_Code(pdf: in out PDF_Out_Stream; code: String) is
   begin
     WLd(pdf, "    " & code);
+  end;
+
+  --  Table 317 - Entries in the document information dictionary (14.3.3)
+
+  procedure Title(pdf: in out PDF_Out_Stream; s: String) is
+  begin
+    pdf.doc_title:= To_Unbounded_String(s);
+  end;
+
+  procedure Author(pdf: in out PDF_Out_Stream; s: String) is
+  begin
+    pdf.doc_author:= To_Unbounded_String(s);
+  end;
+
+  procedure Subject(pdf: in out PDF_Out_Stream; s: String) is
+  begin
+    pdf.doc_subject:= To_Unbounded_String(s);
+  end;
+
+  procedure Keywords(pdf: in out PDF_Out_Stream; s: String) is
+  begin
+    pdf.doc_keywords:= To_Unbounded_String(s);
+  end;
+
+  procedure Creator_Application(pdf: in out PDF_Out_Stream; s: String) is
+  begin
+    pdf.doc_creator:= To_Unbounded_String(s);
   end;
 
   procedure Page_Header(pdf : in out PDF_Out_Stream) is
@@ -724,6 +776,11 @@ package body PDF_Out is
       New_object(pdf);
       info_idx:= pdf.objects;
       WL(pdf, "  << /Producer (" & producer & ')');
+      WL(pdf, "     /Title (" & To_String(pdf.doc_title) & ')');
+      WL(pdf, "     /Author (" & To_String(pdf.doc_author) & ')');
+      WL(pdf, "     /Subject (" & To_String(pdf.doc_subject) & ')');
+      WL(pdf, "     /Keywords (" & To_String(pdf.doc_keywords) & ')');
+      WL(pdf, "     /Creator (" & To_String(pdf.doc_creator) & ')');
       WL(pdf, "  >>");
       WL(pdf, "endobj");
     end Info;
@@ -741,7 +798,7 @@ package body PDF_Out is
       if pdf.last_page > 0 then
         WL(pdf, "    /Count " & Img(pdf.last_page));
       end if;
-      WL(pdf, "    /MediaBox [" & Img(pdf.maximum_box) & ']'
+      WL(pdf, "    /MediaBox [" & Img(pdf.maximum_box, absolute) & ']'
       );
       --  7.7.3.3 Page Objects - MediaBox
       --  Boundaries of the physical medium on which the page shall be displayed or printed

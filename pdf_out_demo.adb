@@ -41,10 +41,15 @@ procedure PDF_Out_Demo is
     begin
       pdf.page_nb:= mem_page_nb;
       Create(pdf);
+      Title(pdf, "Big demo for Ada PDF Writer");
+      Author(pdf, "Zerte");
+      Keywords(pdf, "Ada, PDF");
+      Title(pdf, "Big demo for Ada PDF Writer");
+      Creator_Application(pdf, "PDF_Out_Demo");
       Page_Setup(pdf, A4_portrait);
       Top_Margin(pdf, one_cm * 4.0);
       --
-      Put_Line(pdf, "This is a big demo for PDF_Out.");
+      Put_Line(pdf, "This is a big demo for Ada PDF Writer (PDF_Out package).");
       Put_Line(pdf, "We begin with some Put_Line and other Ada.Text_IO-like commands.");
       Put_Line(pdf, "You can use a PDF stream just like a File_Type of Ada.Text_IO");
       Put_Line(pdf, "and its standard subprograms.");

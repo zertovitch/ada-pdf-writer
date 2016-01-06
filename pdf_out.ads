@@ -50,6 +50,8 @@
 --  Header and footer are set up by overriding the corresponding methods.
 --
 --  Note: the standard PDF measurement unit is a "point", set as 1/72 inch.
+--  All technical references are to PDF 1.7 format, ISO 32000-1:2008 standard
+--  http://www.adobe.com/devnet/pdf/pdf_reference.html
 --
 --------------------------------------------------------------------------
 
@@ -172,6 +174,16 @@ package PDF_Out is
 
   procedure Image(pdf: in out PDF_Out_Stream; file_name: String; target: Rectangle);
 
+  --  Vector graphics
+
+  type Inside_path_rule is (Nonzero_Winding_Number, Even_Odd);
+  --  Rule to determine how to fill areas within a path.
+  --  See 8.5.3.3.2 and 8.5.3.3.3 of PDF specification
+
+  procedure Stroke(pdf: in out PDF_Out_Stream; what: Rectangle);
+  procedure Fill(pdf: in out PDF_Out_Stream; what: Rectangle; rule: Inside_path_rule);
+  procedure Fill_then_stroke(pdf: in out PDF_Out_Stream; what: Rectangle; rule: Inside_path_rule);
+
   -----------
   --  Misc --
   -----------
@@ -179,6 +191,13 @@ package PDF_Out is
   --  If some PDF feature is not yet implemented in this package,
   --  you can insert direct PDF code - at your own risk ;-).
   procedure Insert_PDF_Code(pdf: in out PDF_Out_Stream; code: String);
+
+  --  Document information
+  procedure Title(pdf: in out PDF_Out_Stream; s: String);
+  procedure Author(pdf: in out PDF_Out_Stream; s: String);
+  procedure Subject(pdf: in out PDF_Out_Stream; s: String);
+  procedure Keywords(pdf: in out PDF_Out_Stream; s: String);
+  procedure Creator_Application(pdf: in out PDF_Out_Stream; s: String);
 
   ------------------
   --  Page layout --
@@ -337,6 +356,11 @@ private
     current_font  : Font_Type   := Helvetica;
     font_size     : Real        := 11.0;
     ext_font_name : Unbounded_String;
+    doc_title     : Unbounded_String;  --  Document information (14.3.3)
+    doc_author    : Unbounded_String;  --  Document information (14.3.3)
+    doc_subject   : Unbounded_String;  --  Document information (14.3.3)
+    doc_keywords  : Unbounded_String;  --  Document information (14.3.3)
+    doc_creator   : Unbounded_String;  --  Document information (14.3.3) : creator application
   end record;
 
   type PDF_Out_Stream is abstract new PDF_Out_Pre_Root_Type with null record;
