@@ -64,7 +64,7 @@ procedure PDF_Out_Demo is
       for n in 1..4 loop
         factor:= Real(n) * 0.03;
         Image(pdf,
-          "bordu_2016_01_01_25pct.jpg",
+          "demo/bordu_2016_01_01_25pct.jpg",
           (Left_Margin(pdf)   + Real(n)* 60.0,
            Bottom_Margin(pdf) + Real(n)* 100.0 - 50.0,
            factor * 1296.0,
@@ -97,7 +97,7 @@ procedure PDF_Out_Demo is
           x0: constant Real:= Left_Margin(pdf) * 2.0;
           y0: constant Real:= Bottom_Margin(pdf) + y;
         begin
-          Image(pdf, "bp_mask.jpg", (x0, y0, factor_bp * 835.0, factor_bp * 315.0));
+          Image(pdf, "demo/bp_mask.jpg", (x0, y0, factor_bp * 835.0, factor_bp * 315.0));
           Put_XY(pdf, x0 +  15.0, y0 + 120.0, date);
           Put_XY(pdf, x0 + 158.0, y0 + 120.0, from);
           Put_XY(pdf, x0 + 158.0, y0 +  87.0, to);

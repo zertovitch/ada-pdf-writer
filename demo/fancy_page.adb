@@ -24,7 +24,7 @@ package body Fancy_page is
     Color(pdf, (0.0,0.3,0.3));
     Put(pdf, "Ada PDF Writer Demo");  --  Green outline, cyan fill
     Image(pdf,
-      "ada_logo.jpg",
+      "demo/ada_logo.jpg",
       (X_Max(pg_layout) - ada_logo_width,
        Y_Max(pg_layout) - ada_logo_height,
        ada_logo_width,
