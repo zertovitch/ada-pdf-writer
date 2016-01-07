@@ -118,6 +118,7 @@ package PDF_Out is
   procedure New_Page(pdf: in out PDF_Out_Stream);
   --
   procedure Text_XY(pdf: in out PDF_Out_Stream; x,y: Real);
+  procedure Put_XY(pdf: in out PDF_Out_Stream; x,y: Real; str : String);
 
   function Col(pdf: in PDF_Out_Stream) return Positive;
   function Line(pdf: in PDF_Out_Stream) return Positive;

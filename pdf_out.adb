@@ -564,6 +564,12 @@ package body PDF_Out is
     pdf.current_col:= 1;
   end Text_XY;
 
+  procedure Put_XY(pdf: in out PDF_Out_Stream; x,y: Real; str : String) is
+  begin
+    Text_XY(pdf, x,y);
+    Put(pdf, str);
+  end Put_XY;
+
   function Col(pdf: in PDF_Out_Stream) return Positive is
   begin
     return pdf.current_col;

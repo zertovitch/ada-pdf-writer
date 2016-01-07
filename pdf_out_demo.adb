@@ -83,6 +83,33 @@ procedure PDF_Out_Demo is
       Page_Setup(pdf, A4_landscape);
       New_Page(pdf);
       Put_Line(pdf, "Just had a page break (and switched to landscape)...");
+      declare
+        z_from: constant String:= "(EXM) EXEMPLAR AIRPORT";
+        z_to  : constant String:= "(DEM) DEMO INTL AIRPORT";
+        z_date: constant String:= "08 JAN 2016";
+        --
+        procedure Boarding_pass(
+          y : Real;
+          passenger, from, to, date : String
+        )
+        is
+          factor_bp: constant:= 0.6;
+          x0: constant Real:= Left_Margin(pdf) * 2.0;
+          y0: constant Real:= Bottom_Margin(pdf) + y;
+        begin
+          Image(pdf, "bp_mask.jpg", (x0, y0, factor_bp * 835.0, factor_bp * 315.0));
+          Put_XY(pdf, x0 +  15.0, y0 + 120.0, date);
+          Put_XY(pdf, x0 + 158.0, y0 + 120.0, from);
+          Put_XY(pdf, x0 + 158.0, y0 +  87.0, to);
+          Put_XY(pdf, x0 + 158.0, y0 +  15.0, passenger);
+        end Boarding_pass;
+      begin
+        Boarding_pass(200.0, "ZERTE, JULES", z_from, z_to, z_date);
+        Boarding_pass(  0.0, "ZERTE, ROMEOTTE", z_from, z_to, z_date);
+      end;
+      --
+      --  Finishing
+      --
       mem_page_nb:= Page(pdf);
       Close(pdf);
       return Contents(pdf);
