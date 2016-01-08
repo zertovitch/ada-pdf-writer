@@ -23,6 +23,12 @@ procedure PDF_Out_Demo is
       Put(pdf, "... ");
     end loop;
     New_Line(pdf);
+    for i in 1..10 loop
+      Put(pdf, Real(i) * 0.1234, 3,4,0);
+    end loop;
+    New_Line(pdf);
+    Put_Line(pdf, '[' & Img(3.14159) & ']');
+    Put_Line(pdf, '[' & Img(3.141592653) & ']');
     Put(pdf, "Fun, isn't it ?");
     Page_Setup(pdf, A4_landscape);
     New_Page(pdf);
@@ -57,10 +63,12 @@ procedure PDF_Out_Demo is
       Put_Line(pdf, "Of course you have much more with PDF_Out: high-quality fonts,");
       Put_Line(pdf, "colors, amazing vector graphics, image inclusions, ...");
       New_Line(pdf, 2);
+      Line_Spacing(pdf, 2.0);
       for r in 1..5 loop
         Color(pdf, (Real(r) * 0.2, 0.0, 0.0));
         Put_Line(pdf, "Variations of red...");
       end loop;
+      Line_Spacing(pdf, default_line_spacing);
       for n in 1..4 loop
         factor:= Real(n) * 0.03;
         Image(pdf,
@@ -107,6 +115,35 @@ procedure PDF_Out_Demo is
         Boarding_pass(200.0, "ZERTE, JULES", z_from, z_to, z_date);
         Boarding_pass(  0.0, "ZERTE, ROMEOTTE", z_from, z_to, z_date);
       end;
+      --
+      --  Some vector graphics
+      --
+      New_Page(pdf);
+      --  Testing line widths
+      for i in 1..8 loop
+        Line_Width(pdf, Real(i));
+        Single_Line(
+          pdf,
+          (Left_Margin(pdf),         150.0 + 20.0 * Real(i)),
+          (Left_Margin(pdf) + 500.0, 350.0 + 20.0 * Real(i))
+        );
+      end loop;
+      --  Blue star
+      Line_Width(pdf, initial_line_width);
+      Stroking_Color(pdf, (0.0,1.0,0.0));
+      Color(pdf, (0.0,0.0,1.0));
+      --  Fill only: equivalent to
+      --    Insert_PDF_Code(pdf, "315 226 m 299 182 l 339 208 l 291 208 l 331 182 l f");
+      --
+      for r in reverse fill .. stroke loop
+        Move(pdf, (315.0, 226.0));
+        Line(pdf, (299.0, 182.0));
+        Line(pdf, (339.0, 208.0));
+        Line(pdf, (291.0, 208.0));
+        Line(pdf, (331.0, 182.0));
+        Finish_Path(pdf, r, nonzero_winding_number);
+      end loop;
+      Color(pdf, black);
       --
       --  Finishing
       --

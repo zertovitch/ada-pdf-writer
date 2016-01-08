@@ -55,7 +55,6 @@
 --
 --------------------------------------------------------------------------
 
-with Ada.Calendar;                      use Ada.Calendar;
 with Ada.Streams.Stream_IO;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with Ada.Text_IO;
@@ -85,6 +84,11 @@ package PDF_Out is
   Default_PDF_type: constant PDF_type:= PDF_1_3;
 
   type Real is digits System.Max_Digits;
+  package Real_IO is new Ada.Text_IO.Float_IO(Real);
+
+  type Point is record
+    x, y : Real;
+  end record;
 
   type Rectangle is record
     x_min, y_min,
@@ -98,21 +102,33 @@ package PDF_Out is
   -- (2) Document contents: --
   ----------------------------
 
-  procedure Put(pdf: in out PDF_Out_Stream; num : Real);
-  procedure Put(pdf    : in out PDF_Out_Stream;
+  procedure Put(pdf  : in out PDF_Out_Stream;
+                num  : in Real;
+                fore : in Ada.Text_IO.Field := Real_IO.Default_Fore;
+                aft  : in Ada.Text_IO.Field := Real_IO.Default_Aft;
+                exp  : in Ada.Text_IO.Field := Real_IO.Default_Exp
+            );
+  procedure Put(pdf   : in out PDF_Out_Stream;
                 num   : in Integer;
                 width : in Ada.Text_IO.Field := 0; -- ignored
                 base  : in Ada.Text_IO.Number_Base := 10
             );
   procedure Put(pdf: in out PDF_Out_Stream; str : String);
   procedure Put(pdf: in out PDF_Out_Stream; str : Unbounded_String);
-  procedure Put(pdf: in out PDF_Out_Stream; date: Time);
   --
-  procedure Put_Line(pdf: in out PDF_Out_Stream; num : Real);
-  procedure Put_Line(pdf: in out PDF_Out_Stream; num : Integer);
+  procedure Put_Line(pdf  : in out PDF_Out_Stream;
+                     num  : in Real;
+                     fore : in Ada.Text_IO.Field := Real_IO.Default_Fore;
+                     aft  : in Ada.Text_IO.Field := Real_IO.Default_Aft;
+                     exp  : in Ada.Text_IO.Field := Real_IO.Default_Exp
+            );
+  procedure Put_Line(pdf   : in out PDF_Out_Stream;
+                     num   : in Integer;
+                     width : in Ada.Text_IO.Field := 0; -- ignored
+                     base  : in Ada.Text_IO.Number_Base := 10
+            );
   procedure Put_Line(pdf: in out PDF_Out_Stream; str : String);
   procedure Put_Line(pdf: in out PDF_Out_Stream; str : Unbounded_String);
-  procedure Put_Line(pdf: in out PDF_Out_Stream; date: Time);
   --
   procedure New_Line(pdf: in out PDF_Out_Stream; Spacing : Positive := 1);
   procedure New_Page(pdf: in out PDF_Out_Stream);
@@ -146,8 +162,11 @@ package PDF_Out is
 
   subtype Standard_Font_Type is Font_Type range Courier .. Zapf_Dingbats;
 
-  procedure Select_Font(pdf: in out PDF_Out_Stream; font: Standard_Font_Type);
-  procedure Select_Font_Size(pdf: in out PDF_Out_Stream; size: Real);
+  procedure Font(pdf: in out PDF_Out_Stream; f: Standard_Font_Type);
+  procedure Font_Size(pdf: in out PDF_Out_Stream; size: Real);
+  procedure Line_Spacing(pdf: in out PDF_Out_Stream; factor: Real);  --  as multiple of font size
+  default_line_spacing: constant:= 1.2;
+  procedure Line_Spacing_Pt(pdf: in out PDF_Out_Stream; pt: Real);   --  in Point units
 
   type Color_Type is record
     red, green, blue: Real;
@@ -158,7 +177,7 @@ package PDF_Out is
   procedure Color(pdf: in out PDF_Out_Stream; c: Color_Type);
   procedure Stroking_Color(pdf: in out PDF_Out_Stream; c: Color_Type);
 
-  type Text_Rendering_Mode is (
+  type Rendering_Mode is (
     fill, stroke, fill_then_stroke, invisible,
     --  Same, but also add text to path for clipping.
     fill_and_add_to_path,
@@ -167,7 +186,7 @@ package PDF_Out is
     add_to_path
   );
 
-  procedure Rendering_Mode(pdf: in out PDF_Out_Stream; r: Text_Rendering_Mode);
+  procedure Text_Rendering_Mode(pdf: in out PDF_Out_Stream; r: Rendering_Mode);
 
   ---------------
   --  Graphics --
@@ -175,15 +194,37 @@ package PDF_Out is
 
   procedure Image(pdf: in out PDF_Out_Stream; file_name: String; target: Rectangle);
 
-  --  Vector graphics
+  -----------------------
+  --  Vector graphics  --
+  -----------------------
 
-  type Inside_path_rule is (Nonzero_Winding_Number, Even_Odd);
-  --  Rule to determine how to fill areas within a path.
+  initial_line_width: constant:= 1.0; --  See Table 52, 8.4.1
+  procedure Line_Width(pdf: in out PDF_Out_Stream; width: Real);
+
+  --  Draw a single line segment:
+  procedure Single_Line(pdf: in out PDF_Out_Stream; from, to: Point);
+
+  subtype Path_Rendering_Mode is Rendering_Mode range fill .. fill_then_stroke;
+
+  --  Draw a single rectangle:
+  procedure Draw(pdf: in out PDF_Out_Stream; what: Rectangle; rendering: Path_Rendering_Mode);
+
+  --  Paths:
+
+  type Inside_path_rule is (nonzero_winding_number, even_odd);
+  --  Rule to determine how to fill areas within a (non-trivial) path.
   --  See 8.5.3.3.2 and 8.5.3.3.3 of PDF specification
 
-  procedure Stroke(pdf: in out PDF_Out_Stream; what: Rectangle);
-  procedure Fill(pdf: in out PDF_Out_Stream; what: Rectangle; rule: Inside_path_rule);
-  procedure Fill_then_stroke(pdf: in out PDF_Out_Stream; what: Rectangle; rule: Inside_path_rule);
+  procedure Move(pdf: in out PDF_Out_Stream; to: Point);
+  procedure Line(pdf: in out PDF_Out_Stream; to: Point);
+  --  All lines and curves and the eventual filling inside the path
+  --  will be drawn when path is completed, with Finish_Path:
+
+  procedure Finish_Path(
+    pdf       : in out PDF_Out_Stream;
+    rendering :        Path_Rendering_Mode;  --  fill, stroke, or both
+    rule      :        Inside_path_rule
+  );
 
   -----------
   --  Misc --
@@ -192,6 +233,11 @@ package PDF_Out is
   --  If some PDF feature is not yet implemented in this package,
   --  you can insert direct PDF code - at your own risk ;-).
   procedure Insert_PDF_Code(pdf: in out PDF_Out_Stream; code: String);
+  --
+  --  Image functions for numbers, designed to take the least place
+  --  possible without loss of precision (useful for inserting PDF code).
+  function Img(p: Integer) return String;
+  function Img( x: Real; prec: Positive:= Real'Digits ) return String;
 
   --  Document information
   procedure Title(pdf: in out PDF_Out_Stream; s: String);
@@ -356,6 +402,7 @@ private
     img_count     : Natural     := 0;
     current_font  : Font_Type   := Helvetica;
     font_size     : Real        := 11.0;
+    line_spacing  : Real        := default_line_spacing;
     ext_font_name : Unbounded_String;
     doc_title     : Unbounded_String;  --  Document information (14.3.3)
     doc_author    : Unbounded_String;  --  Document information (14.3.3)
@@ -370,7 +417,6 @@ private
   function Image_name(i: Positive) return String;
   procedure New_object(pdf : in out PDF_Out_Stream'Class);
   procedure WL(pdf : in out PDF_Out_Stream'Class; s: String);
-  function Img(p: Integer) return String;
   procedure Copy_file(
     file_name  : String;
     into       : in out Ada.Streams.Root_Stream_Type'Class;

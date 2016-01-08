@@ -11,9 +11,9 @@ package body Fancy_page is
     ada_logo_height : constant:= 78.0 * factor;
   begin
     Text_XY(pdf, Left_Margin(pdf), Y_Max(pg_layout) - Top_Margin(pdf) * 0.2 - pt_font * 0.5);
-    Rendering_Mode(pdf, fill_then_stroke);
-    Select_Font(pdf, Helvetica);
-    Select_Font_Size(pdf, 18.7);
+    Text_Rendering_Mode(pdf, fill_then_stroke);
+    Font(pdf, Helvetica);
+    Font_Size(pdf, 18.7);
     Stroking_Color(pdf, (0.8,0.1,0.0));
     Color(pdf, (0.7,0.7,0.0));
     Put(pdf, "Fancy header");  --  Red outline, yellow fill
@@ -32,20 +32,20 @@ package body Fancy_page is
     );
     Stroking_Color(pdf, (0.0,0.0,0.3));  --  Dark blue
     Color(pdf, (0.0,0.1,0.6));  --  A bit less dark blue
-    Fill_then_stroke(pdf,
+    Draw(pdf,
       (Left_Margin(pdf),
        Y_Max(pg_layout) - Top_Margin(pdf) + pt_font,
        X_Max(pg_layout) - ada_logo_width - Left_Margin(pdf),
        one_cm * 0.2),
-       Nonzero_Winding_Number
+       fill_then_stroke
     );
     --
     --  Back to normal
     --
-    Rendering_Mode(pdf, fill);
+    Text_Rendering_Mode(pdf, fill);
     Color(pdf, black);
     Stroking_Color(pdf, black);
-    Select_Font_Size(pdf, 11.0);
+    Font_Size(pdf, 11.0);
   end Page_Header;
 
   procedure Page_Footer (pdf : in out Fancy_PDF) is

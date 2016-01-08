@@ -169,7 +169,7 @@ package body PDF_Out is
   --  Compact real number image, taken from TeXCAD (TeX_Number in tc.adb)
   --
   function Img( x: Real; prec: Positive:= Real'Digits ) return String is
-    s: String(1..30);
+    s: String(1 .. 20 + prec);
     na,nb,np: Natural;
   begin
     RIO.Put(s,x,prec,0);
@@ -223,16 +223,16 @@ package body PDF_Out is
     end case;
   end Img;
 
-  procedure New_fixed_object(pdf : in out PDF_Out_Stream'Class; idx: Positive) is
+  procedure New_fixed_index_object(pdf : in out PDF_Out_Stream'Class; idx: Positive) is
   begin
     pdf.object_offset(idx):= Buffer_index(pdf);
     WL(pdf, Img(idx) & " 0 obj");
-  end New_fixed_object;
+  end New_fixed_index_object;
 
   procedure New_object(pdf : in out PDF_Out_Stream'Class) is
   begin
     pdf.objects:= pdf.objects + 1;
-    New_fixed_object(pdf, pdf.objects);
+    New_fixed_index_object(pdf, pdf.objects);
   end New_object;
 
   producer: constant String:= "Ada PDF Writer " & version & " - ref: " & reference & " - " & web;
@@ -350,23 +350,36 @@ package body PDF_Out is
 
   procedure Insert_PDF_Font_Selection_Code(pdf: in out PDF_Out_Stream) is
   begin
-    WLd(pdf,  --  Tf: 9.3 Text State Parameters and Operators
-      "    " & Font_Dictionary_Name(Current_Font_Name(pdf)) &
-      ' ' & Img(pdf.font_size) & " Tf"
+    Insert_PDF_Code(pdf,
+      Font_Dictionary_Name(Current_Font_Name(pdf)) &
+      ' ' & Img(pdf.font_size) & " Tf " &  --  Tf: 9.3 Text State Parameters and Operators
+      Img(pdf.font_size * pdf.line_spacing) & " TL"  --  TL: set text leading (9.3.5)
     );
   end Insert_PDF_Font_Selection_Code;
 
-  procedure Select_Font(pdf: in out PDF_Out_Stream; font: Standard_Font_Type) is
+  procedure Font(pdf: in out PDF_Out_Stream; f: Standard_Font_Type) is
   begin
-    pdf.current_font:= font;
+    pdf.current_font:= f;
     Insert_PDF_Font_Selection_Code(pdf);
-  end;
+  end Font;
 
-  procedure Select_Font_Size(pdf: in out PDF_Out_Stream; size: Real) is
+  procedure Font_Size(pdf: in out PDF_Out_Stream; size: Real) is
   begin
     pdf.font_size:= size;
     Insert_PDF_Font_Selection_Code(pdf);
-  end;
+  end Font_Size;
+
+  procedure Line_Spacing(pdf: in out PDF_Out_Stream; factor: Real) is
+  begin
+    pdf.line_spacing:= factor;
+    Insert_PDF_Font_Selection_Code(pdf);
+  end Line_Spacing;
+
+  procedure Line_Spacing_Pt(pdf: in out PDF_Out_Stream; pt: Real) is
+  begin
+    pdf.line_spacing:= pt / pdf.font_size;
+    Insert_PDF_Font_Selection_Code(pdf);
+  end Line_Spacing_Pt;
 
   --  Internal, called by New_Page and Finish to finish current page
   --
@@ -403,7 +416,6 @@ package body PDF_Out is
     else
       WLd(pdf, "  BT");            --  Begin Text object (9.4)
       Insert_PDF_Font_Selection_Code(pdf);
-      WLd(pdf, "    14.6 TL");     --  TL: set text leading (distance between lines, 9.3.5) !! hardcoded
       pdf.zone:= in_header;
       Page_Header(PDF_Out_Stream'Class(pdf));
       -- ^ PDF_Out_Stream'Class: make the call to Page_Header dispatching
@@ -459,9 +471,29 @@ package body PDF_Out is
     PDF_Out.Images.Insert_unloaded_local_images(pdf);
   end Page_finish;
 
-  procedure Put(pdf: in out PDF_Out_Stream; num : Real) is
+  procedure Put(pdf  : in out PDF_Out_Stream;
+                num  : in Real;
+                fore : in Ada.Text_IO.Field := Real_IO.Default_Fore;
+                aft  : in Ada.Text_IO.Field := Real_IO.Default_Aft;
+                exp  : in Ada.Text_IO.Field := Real_IO.Default_Exp
+            )
+  is
   begin
-    null; -- !!
+    if exp = 0 then
+      declare
+        s: String(1 .. fore + 1 + aft);  --  "  123.45"
+      begin
+        Real_IO.Put(s, num, aft, exp);
+        Put(pdf, s);
+      end;
+    else
+      declare
+        s: String(1 .. fore + 1 + aft + 1 + exp);  --  "  1.234E-01"
+      begin
+        Real_IO.Put(s, num, aft, exp);
+        Put(pdf, s);
+      end;
+    end if;
   end Put;
 
   procedure Put(pdf   : in out PDF_Out_Stream;
@@ -503,20 +535,25 @@ package body PDF_Out is
     Put(pdf, To_String(str));
   end Put;
 
-  procedure Put(pdf: in out PDF_Out_Stream; date: Time) is
+  procedure Put_Line(pdf  : in out PDF_Out_Stream;
+                     num  : in Real;
+                     fore : in Ada.Text_IO.Field := Real_IO.Default_Fore;
+                     aft  : in Ada.Text_IO.Field := Real_IO.Default_Aft;
+                     exp  : in Ada.Text_IO.Field := Real_IO.Default_Exp
+            ) is
   begin
-    null; -- !!
-  end Put;
-
-  procedure Put_Line(pdf: in out PDF_Out_Stream; num : Real) is
-  begin
-    Put(pdf, num);
+    Put(pdf, num, fore, aft, exp);
     New_Line(pdf);
   end Put_Line;
 
-  procedure Put_Line(pdf: in out PDF_Out_Stream; num : Integer) is
+  procedure Put_Line(pdf   : in out PDF_Out_Stream;
+                     num   : in Integer;
+                     width : in Ada.Text_IO.Field := 0; -- ignored
+                     base  : in Ada.Text_IO.Number_Base := 10
+            )
+  is
   begin
-    Put(pdf, num);
+    Put(pdf, num, width, base);
     New_Line(pdf);
   end Put_Line;
 
@@ -529,12 +566,6 @@ package body PDF_Out is
   procedure Put_Line(pdf: in out PDF_Out_Stream; str : Unbounded_String) is
   begin
     Put_Line(pdf, To_String(str));
-  end Put_Line;
-
-  procedure Put_Line(pdf: in out PDF_Out_Stream; date: Time) is
-  begin
-    Put(pdf, date);
-    New_Line(pdf);
   end Put_Line;
 
   procedure New_Line(pdf: in out PDF_Out_Stream; Spacing : Positive := 1) is
@@ -559,7 +590,7 @@ package body PDF_Out is
     --
     WLd(pdf, "  ET");            --  End Text
     WLd(pdf, "  BT");            --  Begin Text object (9.4.1, Table 107)
-    WLd(pdf, "    " & Img(x) & ' ' & Img(y) & " Td");  --  Td: 9.4.2 Text-Positioning Operators
+    Insert_PDF_Code(pdf, Img(x) & ' ' & Img(y) & " Td");  --  Td: 9.4.2 Text-Positioning Operators
     pdf.current_line:= 1;
     pdf.current_col:= 1;
   end Text_XY;
@@ -587,19 +618,19 @@ package body PDF_Out is
 
   procedure Color(pdf: in out PDF_Out_Stream; c: Color_Type) is
   begin
-    WLd(pdf, "    " & Img(c.red) & ' ' & Img(c.green) & ' ' & Img(c.blue) & " rg");
+    Insert_PDF_Code(pdf, Img(c.red) & ' ' & Img(c.green) & ' ' & Img(c.blue) & " rg");
     --  rg = nonstroking colour (Table 74)
   end Color;
 
   procedure Stroking_Color(pdf: in out PDF_Out_Stream; c: Color_Type) is
   begin
-    WLd(pdf, "    " & Img(c.red) & ' ' & Img(c.green) & ' ' & Img(c.blue) & " RG");
+    Insert_PDF_Code(pdf, Img(c.red) & ' ' & Img(c.green) & ' ' & Img(c.blue) & " RG");
     --  RG = nonstroking colour (Table 74)
   end Stroking_Color;
 
-  procedure Rendering_Mode(pdf: in out PDF_Out_Stream; r: Text_Rendering_Mode) is
+  procedure Text_Rendering_Mode(pdf: in out PDF_Out_Stream; r: Rendering_Mode) is
   begin
-    WLd(pdf, "    " & Img(Text_Rendering_Mode'Pos(r)) & " Tr");
+    Insert_PDF_Code(pdf, Img(Rendering_Mode'Pos(r)) & " Tr");
     --  Tr = Set rendering mode (Table 106)
   end;
 
@@ -612,7 +643,7 @@ package body PDF_Out is
     image_index: Positive;  --  Index in the list of images
   begin
     PDF_Out.Images.Image_ref(pdf, file_name, image_index);
-    WLd(pdf, "    q " &
+    Insert_PDF_Code(pdf, "q " &
       Img(target.width) & " 0 0 " & Img(target.height) &
       ' ' & Img(target.x_min) & ' ' & Img(target.y_min) & " cm " &  --  cm: Table 57
       Image_name(image_index) & " Do Q"
@@ -620,32 +651,63 @@ package body PDF_Out is
   end;
 
   --  Vector graphics
-  --    Table 59 - Path Construction Operators (8.5.2)
-  --    Table 60 - Path-Painting Operators
 
-  procedure Stroke(pdf: in out PDF_Out_Stream; what: Rectangle) is
+  procedure Line_Width(pdf: in out PDF_Out_Stream; width: Real) is
   begin
-    WLd(pdf, "    " & Img(what, relative) & " re s");
+    Insert_PDF_Code(pdf, Img(width) & " w");
   end;
 
-inside_path_rule_char: constant array(Inside_path_rule) of Character:= (
+  procedure Single_Line(pdf: in out PDF_Out_Stream; from, to: Point) is
+  begin
+    Insert_PDF_Code(pdf,
+      Img(from.x) & ' ' & Img(from.y) & " m " &
+      Img(to.x) & ' ' & Img(to.y) & " l s"
+    );
+  end;
+
+  --    Table 59 - Path Construction Operators (8.5.2)
+  --    Table 60 - Path-Painting Operators (8.5.3.1)
+
+  inside_path_rule_char: constant array(Inside_path_rule) of Character:= (
     Nonzero_Winding_Number => ' ',
     Even_Odd               => '*'
   );
 
-  procedure Fill(pdf: in out PDF_Out_Stream; what: Rectangle; rule: Inside_path_rule) is
+  path_drawing_operator: constant array(Path_Rendering_Mode) of Character:= (
+    fill             => 'f',
+    stroke           => 's',
+    fill_then_stroke => 'b'
+  );
+
+  procedure Draw(pdf: in out PDF_Out_Stream; what: Rectangle; rendering: Path_Rendering_Mode) is
   begin
-    WLd(pdf, "    " & Img(what, relative) & " re f" & inside_path_rule_char(rule));
+    Insert_PDF_Code(pdf, Img(what, relative) & " re " & path_drawing_operator(rendering));
   end;
 
-  procedure Fill_then_stroke(pdf: in out PDF_Out_Stream; what: Rectangle; rule: Inside_path_rule) is
+  procedure Move(pdf: in out PDF_Out_Stream; to: Point) is
   begin
-    WLd(pdf, "    " & Img(what, relative) & " re b" & inside_path_rule_char(rule));
+    Insert_PDF_Code(pdf, Img(to.x) & ' ' & Img(to.y) & " m");
   end;
+
+  procedure Line(pdf: in out PDF_Out_Stream; to: Point) is
+  begin
+    Insert_PDF_Code(pdf, Img(to.x) & ' ' & Img(to.y) & " l");
+  end;
+
+  procedure Finish_Path(
+    pdf       : in out PDF_Out_Stream;
+    rendering :        Path_Rendering_Mode;
+    rule      :        Inside_path_rule
+  )
+  is
+  begin
+    --  Insert the s, f, f*, b, b* of Table 60 - Path-Painting Operators (8.5.3.1)
+    Insert_PDF_Code(pdf, path_drawing_operator(rendering) & inside_path_rule_char(rule));
+  end Finish_Path;
 
   procedure Insert_PDF_Code(pdf: in out PDF_Out_Stream; code: String) is
   begin
-    WLd(pdf, "    " & code);
+    WLd(pdf, "    " & code);  --  Indentation is just cosmetic...
   end;
 
   --  Table 317 - Entries in the document information dictionary (14.3.3)
@@ -793,18 +855,17 @@ inside_path_rule_char: constant array(Inside_path_rule) of Character:= (
 
     procedure Pages_dictionary is
     begin
-      New_fixed_object(pdf, pages_idx);
-      WL(pdf, "  <<");
-      WL(pdf, "    /Type /Pages");
-      W(pdf,  "    /Kids [");
+      New_fixed_index_object(pdf, pages_idx);
+      WL(pdf, "  << /Type /Pages");
+      W(pdf,  "     /Kids [");
       for p in 1..pdf.last_page loop
         W(pdf, Img(pdf.page_idx(p)) & " 0 R ");
       end loop;
       WL(pdf, "]");
       if pdf.last_page > 0 then
-        WL(pdf, "    /Count " & Img(pdf.last_page));
+        WL(pdf, "     /Count " & Img(pdf.last_page));
       end if;
-      WL(pdf, "    /MediaBox [" & Img(pdf.maximum_box, absolute) & ']'
+      WL(pdf, "     /MediaBox [" & Img(pdf.maximum_box, absolute) & ']'
       );
       --  7.7.3.3 Page Objects - MediaBox
       --  Boundaries of the physical medium on which the page shall be displayed or printed
@@ -819,11 +880,10 @@ inside_path_rule_char: constant array(Inside_path_rule) of Character:= (
     begin
       New_object(pdf);
       cat_idx:= pdf.objects;
-      WL(pdf, "  <<");
-      WL(pdf, "    /Type /Catalog");
-      WL(pdf, "    /Pages " & Img(pages_idx) & " 0 R");
+      WL(pdf, "  << /Type /Catalog");
+      WL(pdf, "     /Pages " & Img(pages_idx) & " 0 R");
       if pdf.last_page > 0 then
-        WL(pdf, "    /OpenAction [" & Img(pdf.page_idx(1)) & " 0 R /Fit]");
+        WL(pdf, "     /OpenAction [" & Img(pdf.page_idx(1)) & " 0 R /Fit]");
         --  ^ Open on page 1, fit the entire page within the window (Table 151)
       end if;
       WL(pdf, "  >>");
@@ -833,10 +893,9 @@ inside_path_rule_char: constant array(Inside_path_rule) of Character:= (
     procedure Trailer is
     begin
       WL(pdf, "trailer");
-      WL(pdf, "  <<");
-      WL(pdf, "    /Root " & Img(cat_idx) & " 0 R");
-      WL(pdf, "    /Size " & Img(pdf.objects+1));
-      WL(pdf, "    /Info " & Img(info_idx) & " 0 R");
+      WL(pdf, "  << /Root " & Img(cat_idx) & " 0 R");
+      WL(pdf, "     /Size " & Img(pdf.objects+1));
+      WL(pdf, "     /Info " & Img(info_idx) & " 0 R");
       WL(pdf, "  >>");
     end Trailer;
 
