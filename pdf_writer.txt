@@ -1,0 +1,99 @@
+Intro to PDF Writer 
+===================
+
+The PDF Writer consists of a package, PDF_Out,
+which produces PDF files - as "physical" files, or as
+other types of data streams.
+The creation of an PDF file is as simple as this
+small procedure:
+
+  with PDF_Out; use PDF_Out;
+   
+  procedure Small_demo is 
+    pdf: PDF_Out_File;
+  begin 
+    pdf.Create("Small.pdf");
+    pdf.Put_Line("Hello world !");
+    pdf.Close;
+  end;
+
+
+Contents
+========
+
+  PDF Writer
+  ============
+
+  - pdf_out.ads        : package specification
+  - pdf_out.adb        : package body
+  - pdf_out_demo.adb   : demo procedure
+  - pdf_out_gnat.gpr   : project file for the GNAT compiler
+  - pdf_writer.txt     : this file
+  - gid/*              : packages used by pdf_out.adb
+
+Warning & legal
+===============
+There is NO WARRANTY in this software. Read copyright notice in pdf_out.ads.
+
+Portability
+===========
+This software can be compiled for any target machine, and with any Ada 95 or later compiler.
+
+How to build PDF Writer and its demo
+======================================
+Here is how to build with GNAT/GCC:
+
+    - type "gprbuild -P pdf_out_gnat" in the command line
+or
+    - open the pdf_out_gnat.gpr file (will launch the GNAT Programming Studio (GPS)),
+      press F4 (Build)
+
+Here is how to build with ObjectAda (7.2.2):
+    - open the pdf_out_oa.prj file, press F7 (Build)
+
+As a result there is a pdf_out_demo[.exe] executable.
+  
+Type hierarchy
+==============
+In PDF_Out:
+
+  |- PDF_Out_Stream  : root type, abstract
+  \
+   |- PDF_Out_File   : type for writing to files (defined in PDF_Out)
+   |- PDF_Out_String : type for writing to strings (defined in PDF_Out)
+   |
+In your own extension, if needed:
+   |
+   |- (your own stream!)
+
+How to create properly PDF files or streams
+=============================================
+Most, if not all possibilities are in the Big_demo procedure
+nested in PDF_Out_Demo. So it is a good place to pick code...
+
+To summarize, you need to define the document contents in
+a certain order:
+
+1. Create
+
+2. Optional settings, before any output or next page:
+   | Define page layout (see Header, Footer, Page_Setup, ...)
+   | Font, Font_Size, ...
+
+3. | Put(pdf, data),
+   | New_Line(pdf), ... : other "Text_IO"-like (full list below)
+   | New_Page(pdf)
+
+4. Close
+
+5. (PDF_Out_String only) function Contents returns the full .pdf
+
+As you observed, you can write cell contents by setting for each cell
+the target row and column, with Write, or by using Put,
+Put_Line, New_Line, just like Ada.Text_IO. Both ways can be mixed
+ad libitum.
+
+Enjoy!
+
+Gautier de Montmollin
+gautier.de.montmollin, at: gmail dot com.

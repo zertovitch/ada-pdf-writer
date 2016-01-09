@@ -39,9 +39,9 @@
 --
 --  1. Create
 --
---  2. | Write(pdf, row, column, data):
---     | Put(pdf, data)               :
---     | New_Line(pdf),...            : other "Text_IO"-like (full list below)
+--  2. | Put(pdf, data),
+--     | New_Line(pdf), ... : other "Text_IO"-like (full list below)
+--     | New_Page(pdf)
 --
 --  3. Close
 --
@@ -64,10 +64,10 @@ with System;
 package PDF_Out is
 
   -----------------------------------------------------------------
-  -- The abstract PDF output stream root type.                 --
+  -- The abstract PDF output stream root type.                   --
   -- From this package, you can use the following derived types: --
-  --    * PDF_Out_File    : output in a file                   --
-  --    * PDF_Out_String  : output in a string                 --
+  --    * PDF_Out_File    : output in a file                     --
+  --    * PDF_Out_String  : output in a string                   --
   -- Of course you can define your own derived types.            --
   -----------------------------------------------------------------
 
@@ -245,6 +245,7 @@ package PDF_Out is
   --  If some PDF feature is not yet implemented in this package,
   --  you can insert direct PDF code - at your own risk ;-).
   procedure Insert_PDF_Code(pdf: in out PDF_Out_Stream; code: String);
+  pragma Inline(Insert_PDF_Code);
   --
   --  Image functions for numbers, designed to take the least place
   --  possible without loss of precision (useful for inserting PDF code).
@@ -336,7 +337,7 @@ package PDF_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "001, preview 1";
+  version   : constant String:= "001";
   reference : constant String:= "9-Jan-2016";
   web       : constant String:= "http://apdf.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
