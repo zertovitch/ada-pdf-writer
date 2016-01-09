@@ -397,14 +397,10 @@ package body PDF_Out is
     Insert_PDF_Font_Selection_Code(pdf);
   end Line_Spacing_Pt;
 
-  --  Internal, called by New_Page and Finish to finish current page
-  --
-  procedure Page_finish(pdf: in out PDF_Out_Stream);
-
   procedure New_Page(pdf: in out PDF_Out_Stream) is
   begin
     if pdf.zone /= nowhere then
-      Page_finish(pdf);
+      Finish_Page(pdf);
     end if;
     pdf.last_page:= pdf.last_page + 1;
     pdf.current_line:= 1;
@@ -440,7 +436,7 @@ package body PDF_Out is
     Text_XY(pdf, pdf.page_margins.left, Y_Max(pdf.page_box) - pdf.page_margins.top);
   end New_Page;
 
-  procedure Page_finish(pdf: in out PDF_Out_Stream) is
+  procedure Finish_Page(pdf: in out PDF_Out_Stream) is
 
     appended_object_idx: Positive;
 
@@ -485,7 +481,7 @@ package body PDF_Out is
     WL(pdf, ">>");
     WL(pdf, "endobj");  --  end of Resources
     PDF_Out.Images.Insert_unloaded_local_images(pdf);
-  end Page_finish;
+  end Finish_Page;
 
   procedure Put(pdf  : in out PDF_Out_Stream;
                 num  : in Real;
@@ -954,7 +950,7 @@ package body PDF_Out is
       -- No page ? Then make quickly a blank page
       New_Page(pdf);
     end if;
-    Page_finish(pdf);
+    Finish_Page(pdf);
     Info;
     Pages_dictionary;
     Catalog_dictionary;

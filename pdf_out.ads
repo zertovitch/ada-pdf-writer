@@ -138,6 +138,10 @@ package PDF_Out is
   --
   procedure New_Line(pdf: in out PDF_Out_Stream; Spacing : Positive := 1);
   procedure New_Page(pdf: in out PDF_Out_Stream);
+  --  Call to Finish_Page is optional, but can be necessary in some circumstances,
+  --  for instance for displaying the footer correctly before changing page
+  --  orientation or margins for the following pages.
+  procedure Finish_Page(pdf: in out PDF_Out_Stream);
   --
   procedure Text_XY(pdf: in out PDF_Out_Stream; x,y: Real);
   procedure Put_XY(pdf: in out PDF_Out_Stream; x,y: Real; str : String);
@@ -332,8 +336,8 @@ package PDF_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "DRAFT"; -- 001 Preview 1
-  reference : constant String:= "xx-yyy-2016";
+  version   : constant String:= "001, preview 1";
+  reference : constant String:= "9-Jan-2016";
   web       : constant String:= "http://apdf.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
@@ -354,10 +358,10 @@ private
 
   type Page_zone is (nowhere, in_page, in_header, in_footer);
 
-  type Offset_table is array(1..1000) of Ada.Streams.Stream_IO.Count;
+  type Offset_table is array(1..100_000) of Ada.Streams.Stream_IO.Count;
   -- !! size hardcoded
 
-  type Page_table is array(1..1000) of Positive; -- object ID's of pages
+  type Page_table is array(1..10_000) of Positive; -- object ID's of pages
   -- !! size hardcoded
 
   -- Some unique objects like Pages need to have a pre-determined index,

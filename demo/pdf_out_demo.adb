@@ -83,11 +83,12 @@ procedure PDF_Out_Demo is
       for x in -curve_max..curve_max loop
         Text_XY(pdf,
           Left_Margin(pdf) + Real(curve_max + x) * one_cm,
-          Bottom_Margin(pdf) + ((Real(x)*0.4) ** 2) * one_cm
+          Bottom_Margin(pdf) + (1.0 + (Real(x)*0.4) ** 2) * one_cm
         );
         Put(pdf, Integer'Image(x));
       end loop;
       New_Line(pdf);
+      Finish_Page(pdf);  --  Needed for having the footer right before changing orientation.
       Page_Setup(pdf, A4_landscape);
       New_Page(pdf);
       Put_Line(pdf, "Just had a page break (and switched to landscape)...");
@@ -112,8 +113,8 @@ procedure PDF_Out_Demo is
           Put_XY(pdf, x0 + 158.0, y0 +  15.0, passenger);
         end Boarding_pass;
       begin
-        Boarding_pass(200.0, "ZERTE, JULES", z_from, z_to, z_date);
-        Boarding_pass(  0.0, "ZERTE, ROMEOTTE", z_from, z_to, z_date);
+        Boarding_pass(205.0, "ZERTE, JULES", z_from, z_to, z_date);
+        Boarding_pass(  5.0, "ZERTE, ROMEOTTE", z_from, z_to, z_date);
       end;
       --
       --  Some vector graphics
@@ -143,10 +144,9 @@ procedure PDF_Out_Demo is
         Line(pdf, (331.0, 182.0));
         Finish_Path(pdf, True, r, nonzero_winding_number);
       end loop;
+      Finish_Page(pdf);  --  Needed for having the footer right before changing orientation.
       Page_Setup(pdf, A4_portrait);
       New_Page(pdf);
-      Stroking_Color(pdf, black);
-      Line_Width(pdf, initial_line_width);
       declare
         procedure Bezier_curves_demo(o: Point) is
           f: constant:= 0.3;
@@ -160,10 +160,13 @@ procedure PDF_Out_Demo is
         end;
         y0: Real:= 600.0;
       begin
+        Stroking_Color(pdf, black);
+        Line_Width(pdf, initial_line_width);
+        Font_Size(pdf, 10.0);
         for rend in Path_Rendering_Mode loop
           for rule in Inside_path_rule loop
             for close_it in reverse Boolean loop
-              Color(pdf, (0.1,1.0,1.0));
+              Color(pdf, (0.2,0.5,1.0));
               Bezier_curves_demo((0.0, y0-50.0));
               Finish_Path(pdf, close_it, rend, rule);
               Color(pdf, black);
