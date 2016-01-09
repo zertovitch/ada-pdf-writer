@@ -1,7 +1,8 @@
 with PDF_Out.Images;
 
-with Ada.Unchecked_Deallocation;
+with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.Strings.Fixed;
+with Ada.Unchecked_Deallocation;
 
 with Interfaces;                        use Interfaces;
 
@@ -199,6 +200,16 @@ package body PDF_Out is
     return s(na..nb);
   end Img;
 
+  function "+"(P1,P2: Point) return Point is
+  begin
+    return ( P1.x+P2.x, P1.y+P2.y );
+  end "+";
+
+  function "*"(f: Real; P: Point) return Point is
+  begin
+    return ( f * P.x, f * P.y );
+  end "*";
+
   function X_Max(r: Rectangle) return Real is
   begin
     return r.x_min + r.width;
@@ -210,6 +221,11 @@ package body PDF_Out is
   end;
 
   type Abs_Rel_Mode is (absolute, relative);
+
+  function Img(p: Point) return String is
+  begin
+    return Img(p.x) & ' ' & Img(p.y);
+  end;
 
   function Img(box: Rectangle; mode: Abs_Rel_Mode) return String is
   begin
@@ -674,9 +690,9 @@ package body PDF_Out is
   );
 
   path_drawing_operator: constant array(Path_Rendering_Mode) of Character:= (
-    fill             => 'f',
-    stroke           => 's',
-    fill_then_stroke => 'b'
+    fill             => 'F',
+    stroke           => 'S',
+    fill_then_stroke => 'B'
   );
 
   procedure Draw(pdf: in out PDF_Out_Stream; what: Rectangle; rendering: Path_Rendering_Mode) is
@@ -686,23 +702,37 @@ package body PDF_Out is
 
   procedure Move(pdf: in out PDF_Out_Stream; to: Point) is
   begin
-    Insert_PDF_Code(pdf, Img(to.x) & ' ' & Img(to.y) & " m");
+    Insert_PDF_Code(pdf, Img(to) & " m");
   end;
 
   procedure Line(pdf: in out PDF_Out_Stream; to: Point) is
   begin
-    Insert_PDF_Code(pdf, Img(to.x) & ' ' & Img(to.y) & " l");
+    Insert_PDF_Code(pdf, Img(to) & " l");
+  end;
+
+  procedure Cubic_Bezier(pdf: in out PDF_Out_Stream; control_1, control_2: Point; to: Point) is
+  begin
+    Insert_PDF_Code(pdf, Img(control_1) & ' ' & Img(control_2) & ' ' & Img(to) & " c");
   end;
 
   procedure Finish_Path(
-    pdf       : in out PDF_Out_Stream;
-    rendering :        Path_Rendering_Mode;
-    rule      :        Inside_path_rule
+    pdf        : in out PDF_Out_Stream;
+    close_path :        Boolean;
+    rendering  :        Path_Rendering_Mode;  --  fill, stroke, or both
+    rule       :        Inside_path_rule
   )
   is
+    cmd: String:= path_drawing_operator(rendering) & inside_path_rule_char(rule);
   begin
-    --  Insert the s, f, f*, b, b* of Table 60 - Path-Painting Operators (8.5.3.1)
-    Insert_PDF_Code(pdf, path_drawing_operator(rendering) & inside_path_rule_char(rule));
+    if close_path then
+      cmd:= To_Lower(cmd);
+    end if;
+    --  Insert the s, S, f, f*, b, b*, B, B* of Table 60 - Path-Painting Operators (8.5.3.1)
+    if cmd = "s*" or cmd = "S*" or cmd = "F " or cmd = "F*" then
+      Insert_PDF_Code(pdf, "n");  --  End the path object without filling or stroking it.
+    else
+      Insert_PDF_Code(pdf, cmd);
+    end if;
   end Finish_Path;
 
   procedure Insert_PDF_Code(pdf: in out PDF_Out_Stream; code: String) is

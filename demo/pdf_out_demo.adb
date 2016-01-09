@@ -129,7 +129,7 @@ procedure PDF_Out_Demo is
         );
       end loop;
       --  Blue star
-      Line_Width(pdf, initial_line_width);
+      Line_Width(pdf, 5.0);
       Stroking_Color(pdf, (0.0,1.0,0.0));
       Color(pdf, (0.0,0.0,1.0));
       --  Fill only: equivalent to
@@ -141,9 +141,42 @@ procedure PDF_Out_Demo is
         Line(pdf, (339.0, 208.0));
         Line(pdf, (291.0, 208.0));
         Line(pdf, (331.0, 182.0));
-        Finish_Path(pdf, r, nonzero_winding_number);
+        Finish_Path(pdf, True, r, nonzero_winding_number);
       end loop;
-      Color(pdf, black);
+      Page_Setup(pdf, A4_portrait);
+      New_Page(pdf);
+      Stroking_Color(pdf, black);
+      Line_Width(pdf, initial_line_width);
+      declare
+        procedure Bezier_curves_demo(o: Point) is
+          f: constant:= 0.3;
+        begin
+          Move(pdf, o + f * (350.0, 350.0));
+          Line(pdf, o + f * (350.0, 400.0));
+          Cubic_Bezier(pdf, o + f * (350.0, 475.0), o + f * (250.0, 475.0), o + f * (250.0, 400.0));
+          Cubic_Bezier(pdf, o + f * (250.0, 350.0), o + f * (325.0, 350.0), o + f * (325.0, 400.0));
+          Cubic_Bezier(pdf, o + f * (325.0, 437.5), o + f * (275.0, 437.5), o + f * (275.0, 400.0));
+          Cubic_Bezier(pdf, o + f * (275.0, 382.0), o + f * (300.0, 382.0), o + f * (300.0, 400.0));
+        end;
+        y0: Real:= 600.0;
+      begin
+        for rend in Path_Rendering_Mode loop
+          for rule in Inside_path_rule loop
+            for close_it in reverse Boolean loop
+              Color(pdf, (0.1,1.0,1.0));
+              Bezier_curves_demo((0.0, y0-50.0));
+              Finish_Path(pdf, close_it, rend, rule);
+              Color(pdf, black);
+              Put_XY(pdf, 150.0, y0+70.0,
+                "rend = " & Path_Rendering_Mode'Image(rend) &
+                ", rule = " & Inside_path_rule'Image(rule) &
+                ", close path = " & Boolean'Image(close_it)
+              );
+              y0 := y0 - 45.0;
+            end loop;
+          end loop;
+        end loop;
+      end;
       --
       --  Finishing
       --

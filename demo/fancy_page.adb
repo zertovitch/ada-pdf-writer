@@ -51,6 +51,7 @@ package body Fancy_page is
   procedure Page_Footer (pdf : in out Fancy_PDF) is
     pg_layout: constant PDF_Out.Rectangle:= Layout(pdf);
   begin
+    Color(pdf, black);
     Text_XY(pdf, Left_Margin(pdf), pg_layout.y_min + Bottom_Margin(pdf) - pt_font);
     Put(pdf, "Page" & Integer'Image(Page(pdf)) & " /" & Integer'Image(pdf.page_nb));
   end Page_Footer;

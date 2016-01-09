@@ -90,6 +90,12 @@ package PDF_Out is
     x, y : Real;
   end record;
 
+  function "+"(P1,P2: Point) return Point;
+  pragma Inline("+");
+
+  function "*"(f: Real; P: Point) return Point;
+  pragma Inline("*");
+
   type Rectangle is record
     x_min, y_min,
     width, height : Real;
@@ -217,13 +223,15 @@ package PDF_Out is
 
   procedure Move(pdf: in out PDF_Out_Stream; to: Point);
   procedure Line(pdf: in out PDF_Out_Stream; to: Point);
+  procedure Cubic_Bezier(pdf: in out PDF_Out_Stream; control_1, control_2: Point; to: Point);
   --  All lines and curves and the eventual filling inside the path
   --  will be drawn when path is completed, with Finish_Path:
 
   procedure Finish_Path(
-    pdf       : in out PDF_Out_Stream;
-    rendering :        Path_Rendering_Mode;  --  fill, stroke, or both
-    rule      :        Inside_path_rule
+    pdf        : in out PDF_Out_Stream;
+    close_path :        Boolean;
+    rendering  :        Path_Rendering_Mode;  --  fill, stroke, or both
+    rule       :        Inside_path_rule
   );
 
   -----------
