@@ -22,10 +22,11 @@ Contents
 ========
 
   PDF Writer
-  ============
+  ==========
 
   - pdf_out.ads        : package specification
   - pdf_out.adb        : package body
+  - pdf_out-*          : private children packages (needed but not relevant for users)
   - pdf_out_demo.adb   : demo procedure
   - pdf_out_gnat.gpr   : project file for the GNAT compiler
   - pdf_writer.txt     : this file
@@ -40,7 +41,7 @@ Portability
 This software can be compiled for any target machine, and with any Ada 95 or later compiler.
 
 How to build PDF Writer and its demo
-======================================
+====================================
 Here is how to build with GNAT/GCC:
 
     - type "gprbuild -P pdf_out_gnat" in the command line
@@ -67,7 +68,7 @@ In your own extension, if needed:
    |- (your own stream!)
 
 How to create properly PDF files or streams
-=============================================
+===========================================
 Most, if not all possibilities are in the Big_demo procedure
 nested in PDF_Out_Demo. So it is a good place to pick code...
 
