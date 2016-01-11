@@ -445,6 +445,7 @@ private
 
   type PDF_Out_File is new PDF_Out_Stream with record
     pdf_file   : PDF_file_acc:= null; -- access to the "physical" PDF file
+    file_name  : Unbounded_String;
   end record;
 
   -- Set the index on the file

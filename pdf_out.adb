@@ -976,6 +976,7 @@ package body PDF_Out is
     Reset(pdf, PDF_format);
     pdf.pdf_file:= new Ada.Streams.Stream_IO.File_Type;
     Create(pdf.pdf_file.all, Out_File, file_name);
+    pdf.file_Name:= To_Unbounded_String(file_Name);
     pdf.pdf_stream:= PDF_Raw_Stream_Class(Stream(pdf.pdf_file.all));
     Write_PDF_header(pdf);
   end Create;
@@ -985,7 +986,9 @@ package body PDF_Out is
       Ada.Unchecked_Deallocation(Ada.Streams.Stream_IO.File_Type, PDF_file_acc);
   begin
     Finish(PDF_Out_Stream(pdf));
-    Close(pdf.pdf_file.all);
+    if pdf.file_name /= "nul" then  --  Test needed for OA 7.2.2 (Close raises Use_Error)
+      Close(pdf.pdf_file.all);
+    end if;
     Dispose(pdf.pdf_file);
   end Close;
 
@@ -1019,8 +1022,7 @@ package body PDF_Out is
 
   procedure Read
     (Stream : in out Unbounded_Stream;
-     Item   : out Stream_Element_Array;
-     Last   : out Stream_Element_Offset) is
+     Item   : out Stream_Element_Array;     Last   : out Stream_Element_Offset) is
   begin
     -- Item is read from the stream. If (and only if) the stream is
     -- exhausted, Last will be < Item'Last. In that case, T'Read will

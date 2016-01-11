@@ -4,7 +4,7 @@ with PDF_Out;
 
 package Fancy_page is
 
-  type Fancy_PDF is new PDF_Out.PDF_Out_String with record
+  type Fancy_PDF is new PDF_Out.PDF_Out_File with record
     page_nb: Natural:= 0;  --  Total page number, obtained by running twice (à la TeX).
   end record;
 

@@ -6,7 +6,6 @@
 with PDF_Out;                         use PDF_Out;
 with Fancy_page;                      use Fancy_page;
 
-with Ada.Streams.Stream_IO;
 with Ada.Text_IO;
 
 procedure PDF_Out_Demo is
@@ -41,12 +40,12 @@ procedure PDF_Out_Demo is
     mem_page_nb: Natural:= 0;
     curve_max: constant := 8;
 
-    function Big_demo_contents return String is
-      pdf: Fancy_PDF;
+    procedure Big_demo_contents(name: String) is
       factor: Real;
+      pdf: Fancy_PDF;
     begin
       pdf.page_nb:= mem_page_nb;
-      Create(pdf);
+      Create(pdf, name);
       Title(pdf, "Big demo for Ada PDF Writer");
       Author(pdf, "Zerte");
       Keywords(pdf, "Ada, PDF");
@@ -185,18 +184,13 @@ procedure PDF_Out_Demo is
       --
       mem_page_nb:= Page(pdf);
       Close(pdf);
-      return Contents(pdf);
     end Big_demo_contents;
 
-    use Ada.Streams.Stream_IO;
-    f: File_Type;
-    --  Here page_nb is properly set (TeX-style processing):
-    first_pass: constant String:= Big_demo_contents;
-    pragma Unreferenced (first_pass);
   begin
-    Create(f, Out_File, "Big.pdf");
-    String'Write(Stream(f), Big_demo_contents);
-    Close(f);
+    --  Dry run: here page_nb is properly set (TeX-style processing):
+    Big_demo_contents("nul");
+    --  Real file:
+    Big_demo_contents("Big.pdf");
   end Big_demo;
 
   use Ada.Text_IO;
