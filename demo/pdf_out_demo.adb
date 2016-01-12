@@ -5,6 +5,7 @@
 
 with PDF_Out;                         use PDF_Out;
 with Fancy_page;                      use Fancy_page;
+with Insert_Mascot;
 
 with Ada.Text_IO;
 
@@ -179,6 +180,24 @@ procedure PDF_Out_Demo is
           end loop;
         end loop;
       end;
+      Finish_Page(pdf);  --  Needed for having the footer right before changing orientation.
+      Page_Setup(pdf, A4_landscape);
+      --
+      --  The Ada mascot !
+      --
+      New_Page(pdf);
+      Put(pdf, "Direct PDF vector graphics code inclusion - Ada Mascot: see http://joinadanow.com/#mascot");
+      for cx in 1..8 loop
+        for cy in 1..6 loop
+          Insert_Mascot(
+            pdf,
+            Real(cx) * 17.0,
+            Real(cy) * 17.0,
+            Left_Margin(pdf) + Real(cx*(cx-1)/2) * 20.0,
+            Bottom_Margin(pdf) + Real(cy*(cy-1)/2) * 20.0
+          );
+        end loop;
+      end loop;
       --
       --  Finishing
       --
@@ -188,7 +207,7 @@ procedure PDF_Out_Demo is
 
   begin
     --  Dry run: here page_nb is properly set (TeX-style processing):
-    Big_demo_contents("nul");
+    Big_demo_contents("Big.pdf");  --  Need a portable version of /dev/null (UNIX) or nul (Win.)
     --  Real file:
     Big_demo_contents("Big.pdf");
   end Big_demo;
