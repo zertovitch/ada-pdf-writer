@@ -191,10 +191,10 @@ procedure PDF_Out_Demo is
         for cy in 1..6 loop
           Insert_Mascot(
             pdf,
-            Real(cx) * 17.0,
-            Real(cy) * 17.0,
-            Left_Margin(pdf) + Real(cx*(cx-1)/2) * 20.0,
-            Bottom_Margin(pdf) + Real(cy*(cy-1)/2) * 20.0
+            w => Real(cx) * 17.0,
+            h => Real(cy) * 17.0,
+            xm => Left_Margin(pdf) + Real(cx*(cx-1)/2) * 20.0,
+            ym => Bottom_Margin(pdf) + Real(cy*(cy-1)/2) * 20.0
           );
         end loop;
       end loop;
