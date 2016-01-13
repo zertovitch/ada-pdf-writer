@@ -9,7 +9,7 @@ procedure Insert_Mascot(pdf : in out PDF_Out_Stream'Class; w, h, xm, ym: Real) i
   hf: constant:= 1.0 / 2810.0;
   NL: constant Character:= ASCII.LF;
 begin
-  Insert_PDF_Code(pdf, 
+  Insert_PDF_Code(pdf,
     "q q" & NL &  --  0 -1 2470 2809 rectclip
     Img(w * wf) & " 0 0 " & NL & Img(h * hf) & ' ' & Img(xm) & ' ' & Img(ym) & " cm" & NL &
     "0 g" & NL &

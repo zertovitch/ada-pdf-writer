@@ -430,6 +430,7 @@ private
   function Image_name(i: Positive) return String;
   procedure New_object(pdf : in out PDF_Out_Stream'Class);
   procedure WL(pdf : in out PDF_Out_Stream'Class; s: String);
+  pragma Inline(WL);
   procedure Copy_file(
     file_name  : String;
     into       : in out Ada.Streams.Root_Stream_Type'Class;

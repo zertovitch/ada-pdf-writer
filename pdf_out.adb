@@ -125,6 +125,7 @@ package body PDF_Out is
   end Copy_file;
 
   procedure W(pdf : in out PDF_Out_Stream'Class; s: String) is
+  pragma Inline(W);
   begin
     String'Write(pdf.pdf_stream, s);
   end;
@@ -139,11 +140,13 @@ package body PDF_Out is
   --  Delayed output, for internal PDF's "stream" object
 
   procedure Wd(pdf : in out PDF_Out_Stream'Class; s: String) is
+  pragma Inline(Wd);
   begin
     Append(pdf.stream_obj_buf, s);
   end;
 
   procedure WLd(pdf : in out PDF_Out_Stream'Class; s: String) is
+  pragma Inline(WLd);
   begin
     Wd(pdf, s & NL);
   end;
@@ -1022,7 +1025,7 @@ package body PDF_Out is
 
   procedure Read
     (Stream : in out Unbounded_Stream;
-     Item   : out Stream_Element_Array;     Last   : out Stream_Element_Offset) is
+     Item   : out Stream_Element_Array;     Last   : out Stream_Element_Offset) is
   begin
     -- Item is read from the stream. If (and only if) the stream is
     -- exhausted, Last will be < Item'Last. In that case, T'Read will
