@@ -166,7 +166,17 @@ package body PDF_Out is
     else
       return s(s'First+1..s'Last); -- Skip the *%"%! front space
     end if;
-  end;
+  end Img;
+
+  function Img(p: PDF_Index_Type) return String is
+    s: constant String:= PDF_Index_Type'Image(p);
+  begin
+    if p < 0 then
+      return s;
+    else
+      return s(s'First+1..s'Last); -- Skip the *%"%! front space
+    end if;
+  end Img;
 
   package RIO is new Ada.Text_IO.Float_IO(Real);
 
@@ -242,8 +252,19 @@ package body PDF_Out is
     end case;
   end Img;
 
-  procedure New_fixed_index_object(pdf : in out PDF_Out_Stream'Class; idx: Positive) is
+  procedure Dispose is new Ada.Unchecked_Deallocation(Offset_table, p_Offset_table);
+
+  procedure New_fixed_index_object(pdf : in out PDF_Out_Stream'Class; idx: PDF_Index_Type) is
+    new_table: p_Offset_table;
   begin
+    if pdf.object_offset = null then
+      pdf.object_offset:= new Offset_table(1..idx);
+    elsif pdf.object_offset'Last < idx then
+      new_table:= new Offset_table(1..idx*2);
+      new_table(1..pdf.object_offset'Last):= pdf.object_offset.all;
+      Dispose(pdf.object_offset);
+      pdf.object_offset:= new_table;
+    end if;
     pdf.object_offset(idx):= Buffer_index(pdf);
     WL(pdf, Img(idx) & " 0 obj");
   end New_fixed_index_object;
@@ -400,7 +421,10 @@ package body PDF_Out is
     Insert_PDF_Font_Selection_Code(pdf);
   end Line_Spacing_Pt;
 
+  procedure Dispose is new Ada.Unchecked_Deallocation(Page_table, p_Page_table);
+
   procedure New_Page(pdf: in out PDF_Out_Stream) is
+    new_table: p_Page_table;
   begin
     if pdf.zone /= nowhere then
       Finish_Page(pdf);
@@ -413,6 +437,14 @@ package body PDF_Out is
     --  Page descriptor object:
     --
     New_object(pdf);
+    if pdf.page_idx = null then
+      pdf.page_idx:= new Page_table(1..pdf.last_page);
+    elsif pdf.page_idx'Last < pdf.last_page then
+      new_table:= new Page_table(1..pdf.last_page*2);
+      new_table(1..pdf.page_idx'Last):= pdf.page_idx.all;
+      Dispose(pdf.page_idx);
+      pdf.page_idx:= new_table;
+    end if;
     pdf.page_idx(pdf.last_page):= pdf.objects;
     --  Table 30 for options
     WL(pdf, "  <</Type /Page");
@@ -441,10 +473,10 @@ package body PDF_Out is
 
   procedure Finish_Page(pdf: in out PDF_Out_Stream) is
 
-    appended_object_idx: Positive;
+    appended_object_idx: PDF_Index_Type;
 
     procedure Image_Item(dn: in out Dir_node) is
-      img_obj: Positive;
+      img_obj: PDF_Index_Type;
     begin
       if dn.local_resource then
         if dn.pdf_object_index = 0 then
@@ -628,7 +660,7 @@ package body PDF_Out is
 
   function Page(pdf: in PDF_Out_Stream) return Natural is
   begin
-    return pdf.last_page;
+    return Natural(pdf.last_page);  --  Issue if Integer is 16-bit and last_page > 2**15-1
   end Page;
 
   procedure Color(pdf: in out PDF_Out_Stream; c: Color_Type) is
@@ -645,7 +677,7 @@ package body PDF_Out is
 
   procedure Text_Rendering_Mode(pdf: in out PDF_Out_Stream; r: Rendering_Mode) is
   begin
-    Insert_PDF_Code(pdf, Img(Rendering_Mode'Pos(r)) & " Tr");
+    Insert_PDF_Code(pdf, Img(Integer(Rendering_Mode'Pos(r))) & " Tr");
     --  Tr = Set rendering mode (Table 106)
   end;
 
@@ -866,7 +898,7 @@ package body PDF_Out is
 
   procedure Finish(pdf : in out PDF_Out_Stream) is
 
-    info_idx, cat_idx: Positive;
+    info_idx, cat_idx: PDF_Index_Type;
 
     procedure Info is
     begin
@@ -962,6 +994,8 @@ package body PDF_Out is
     WL(pdf, "startxref"); -- offset of xref
     WL(pdf, Img(Integer(xref_offset)));
     WL(pdf, "%%EOF");
+    Dispose(pdf.page_idx);
+    Dispose(pdf.object_offset);
     pdf.is_closed:= True;
   end Finish;
 

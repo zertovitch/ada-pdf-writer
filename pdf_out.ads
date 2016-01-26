@@ -337,8 +337,8 @@ package PDF_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "001";
-  reference : constant String:= "9-Jan-2016";
+  version   : constant String:= "002, preview 1";
+  reference : constant String:= "26-Jan-2016";
   web       : constant String:= "http://apdf.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
@@ -359,16 +359,18 @@ private
 
   type Page_zone is (nowhere, in_page, in_header, in_footer);
 
-  type Offset_table is array(1..100_000) of Ada.Streams.Stream_IO.Count;
-  -- !! size hardcoded
+  type PDF_Index_Type is range -2**31 .. 2**31 - 1;
 
-  type Page_table is array(1..10_000) of Positive; -- object ID's of pages
-  -- !! size hardcoded
+  type Offset_table is array(PDF_Index_Type range <>) of Ada.Streams.Stream_IO.Count;
+  type p_Offset_table is access Offset_table;
+
+  type Page_table is array(PDF_Index_Type range <>) of PDF_Index_Type; -- object ID's of pages
+  type p_Page_table is access Page_table;
 
   -- Some unique objects like Pages need to have a pre-determined index,
   -- otherwise single Page objects don't know their parent's index.
-  pages_idx: constant:= 1;
-  last_fix_obj_idx: constant:= 1;
+  pages_idx: constant PDF_Index_Type:= 1;
+  last_fix_obj_idx: constant PDF_Index_Type:= 1;
 
   type Dir_node;
   type p_Dir_node is access Dir_node;
@@ -377,7 +379,7 @@ private
     left, right      : p_Dir_node;
     file_name        : String(1..name_len);
     image_index      : Positive;
-    pdf_object_index : Natural:= 0;  --  0 = not yet insterted into the PDF stream
+    pdf_object_index : PDF_Index_Type:= 0;  --  0 = not yet insterted into the PDF stream
     local_resource   : Boolean;      --  All True items to be listed into Resource dictionary
   end record;
 
@@ -401,15 +403,15 @@ private
     is_closed     : Boolean     := False;
     format        : PDF_type    := Default_PDF_type;
     zone          : Page_zone   := nowhere;
-    last_page     : Natural     := 0;
+    last_page     : PDF_Index_Type := 0;
     current_line  : Positive    := 1;  --  Mostly for Ada.Text_IO compatibility
     current_col   : Positive    := 1;  --  Mostly for Ada.Text_IO compatibility
-    page_idx      : Page_table;
+    page_idx      : p_Page_table := null;  --  page_idx(p): Object ID of page p
     page_box      : Rectangle   := A4_portrait;
     maximum_box   : Rectangle   := A4_portrait;
     page_margins  : Margins_Type:= cm_2_5_margins;
-    objects       : Natural     := last_fix_obj_idx;
-    object_offset : Offset_table;
+    objects       : PDF_Index_Type := last_fix_obj_idx;
+    object_offset : p_Offset_table := null;
     stream_obj_buf: Unbounded_String;
     img_dir_tree  : p_Dir_node  := null;
     img_count     : Natural     := 0;
