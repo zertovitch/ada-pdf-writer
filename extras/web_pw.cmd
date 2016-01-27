@@ -10,8 +10,8 @@ echo end Small_demo;>>small_demo.adb
 
 rem Call GNATMake without project file: we want the .ali here.
 
-gnatmake ..\demo\pdf_out_demo.adb -I.. -I..\gid -I..\demo
-gnatmake small_demo.adb -I.. -I..\gid
+gnatmake ..\demo\pdf_out_demo.adb -I.. -I..\gid -I..\demo -j3
+gnatmake small_demo.adb -I.. -I..\gid -j3
 
 rem Small_Demo without local references
 perl pw_html.pl small_demo -d -I.. -I..\gid -opw_html

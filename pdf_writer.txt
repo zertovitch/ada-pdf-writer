@@ -31,7 +31,7 @@ Contents
   - pdf_out_gnat.gpr   : project file for the GNAT compiler
   - pdf_out_oa.prj     : project file for the ObjectAda (7.2.2) compiler
   - pdf_writer.txt     : this file
-  - gid/*              : packages used by pdf_out.adb
+  - gid/*              : packages used by pdf_out.adb (this is the Generic Image Decoder)
 
 Warning & legal
 ===============
@@ -39,7 +39,8 @@ There is NO WARRANTY in this software. Read copyright notice in pdf_out.ads.
 
 Portability
 ===========
-This software can be compiled for any target machine, and with any Ada 95 or later compiler.
+This software can be compiled for any target machine, and with any compiler
+for Ada 95 or later language versions.
 
 How to build PDF Writer and its demo
 ====================================
@@ -50,7 +51,7 @@ or
     - open the pdf_out_gnat.gpr file (will launch the GNAT Programming Studio (GPS)),
       press F4 (Build)
 
-Here is how to build with ObjectAda (7.2.2):
+Here is how to build with ObjectAda (tested with v.7.2.2):
     - open the pdf_out_oa.prj file, press F7 (Build)
 
 As a result there is a pdf_out_demo[.exe] executable.
@@ -84,16 +85,13 @@ a certain order:
 
 3. | Put(pdf, data),
    | New_Line(pdf), ... : other "Text_IO"-like (full list below)
+   | Image(pdf, ...)    : raster images
+   | Move/Line/...      : vector graphics
    | New_Page(pdf)
 
 4. Close
 
 5. (PDF_Out_String only) function Contents returns the full .pdf
-
-As you observed, you can write cell contents by setting for each cell
-the target row and column, with Write, or by using Put,
-Put_Line, New_Line, just like Ada.Text_IO. Both ways can be mixed
-ad libitum.
 
 Enjoy!
 

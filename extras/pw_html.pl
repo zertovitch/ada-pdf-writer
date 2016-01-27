@@ -295,6 +295,7 @@ sub create_ada_frame_footer
   Ada PDF Writer: Ada package for writing PDF files (.pdf).
   Ada programming.</font>
   <hr>
+  <img src=\"../blog_16x16.png\" border=\"0\" height=\"16\" width=\"16\" align=\"absmiddle\" />
   <foNt face=\"Calibri, Arial\">Some news about <b>Ada PDF Writer</b> and other Ada projects
   <a target=_blank href=http://gautiersblog.blogspot.com/search/label/Ada>on Gautier's blog</a>.
   </foNt>

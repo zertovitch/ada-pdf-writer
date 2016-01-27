@@ -35,12 +35,14 @@
 -- (*) All Trademarks mentioned are properties of their respective owners.
 -------------------------------------------------------------------------------------
 --
---  Follow these steps to create an PDF document stream:
+--  Follow these steps to create a PDF document stream:
 --
 --  1. Create
 --
 --  2. | Put(pdf, data),
 --     | New_Line(pdf), ... : other "Text_IO"-like (full list below)
+--     | Image(pdf, ...)    : raster images
+--     | Move/Line/...      : vector graphics
 --     | New_Page(pdf)
 --
 --  3. Close
@@ -359,7 +361,15 @@ private
 
   type Page_zone is (nowhere, in_page, in_header, in_footer);
 
-  type PDF_Index_Type is range -2**31 .. 2**31 - 1;
+  min_bits: constant:= Integer'Max(32, System.Word_Size);
+  -- 13.3(8): A word is the largest amount of storage that can be
+  -- conveniently and efficiently manipulated by the hardware,
+  -- given the implementation's run-time model.
+
+  type PDF_Index_Type is range -2**(min_bits-1) .. 2**(min_bits-1) - 1;
+  --  We define an Integer type which is at least 32 bits, but n bits
+  --  on a native n > 32 bits architecture (no performance hit on 64+
+  --  bits architectures).
 
   type Offset_table is array(PDF_Index_Type range <>) of Ada.Streams.Stream_IO.Count;
   type p_Offset_table is access Offset_table;
