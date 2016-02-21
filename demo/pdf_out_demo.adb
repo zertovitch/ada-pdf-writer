@@ -3,8 +3,8 @@
 --  With Ada 2005 and later, you can also write "pdf.Write(...)" etc. everywhere.
 --
 
-with PDF_Out;                         use PDF_Out;
-with Fancy_page;                      use Fancy_page;
+with PDF_Out;                           use PDF_Out;
+with Fancy_page;                        use Fancy_page;
 with Insert_Mascot;
 
 with Ada.Text_IO;
@@ -44,6 +44,8 @@ procedure PDF_Out_Demo is
     procedure Big_demo_contents(name: String) is
       factor: Real;
       pdf: Fancy_PDF;
+      bordu: constant String:= "demo/bordu_2016_01_01_25pct.jpg";
+      target: Rectangle;
     begin
       pdf.page_nb:= mem_page_nb;
       Create(pdf, name);
@@ -71,12 +73,12 @@ procedure PDF_Out_Demo is
       Line_Spacing(pdf, default_line_spacing);
       for n in 1..4 loop
         factor:= Real(n) * 0.03;
+        target:= Get_pixel_dimensions(bordu);
         Image(pdf,
-          "demo/bordu_2016_01_01_25pct.jpg",
-          (Left_Margin(pdf)   + Real(n)* 60.0,
-           Bottom_Margin(pdf) + Real(n)* 100.0 - 50.0,
-           factor * 1296.0,
-           factor * 864.0)
+          bordu,
+          (Left_Margin(pdf), Bottom_Margin(pdf)) +
+          (Real(n)* 60.0, Real(n)* 100.0 - 50.0) +
+           factor * target
         );
       end loop;
       Color(pdf, black);

@@ -33,6 +33,18 @@ package body PDF_Out.Images is
     Insert(file_name, pdf.img_dir_tree);
   end Image_ref;
 
+  function Get_pixel_dimensions(image_file_name: String) return Rectangle is
+    use Ada.Streams.Stream_IO;
+    file: File_Type;
+    i: GID.Image_descriptor;
+    use GID;
+  begin
+    Open(file, In_File, image_file_name);
+    GID.Load_image_header(i, Stream(file).all, try_tga => False);
+    Close(file);
+    return (0.0, 0.0, Real(GID.Pixel_width(i)), Real(GID.Pixel_height(i)));
+  end Get_pixel_dimensions;
+
   procedure Traverse_private( pdf: PDF_Out_Stream ) is
 
     procedure Traverse( p: p_Dir_node ) is

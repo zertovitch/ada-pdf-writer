@@ -103,6 +103,13 @@ package PDF_Out is
     width, height : Real;
   end record;
 
+  function "+"(P: Point; r: Rectangle) return Rectangle;
+  pragma Inline("+");
+
+  --  Scaling. r.x_min and r.y_min are preserved.
+  function "*"(f: Real; r: Rectangle) return Rectangle;
+  pragma Inline("*");
+
   function X_Max(r: Rectangle) return Real;
   function Y_Max(r: Rectangle) return Real;
 
@@ -204,7 +211,13 @@ package PDF_Out is
   --  Graphics --
   ---------------
 
+  --  Insert an image from a file
   procedure Image(pdf: in out PDF_Out_Stream; file_name: String; target: Rectangle);
+
+  --  For calibrating the target rectangle in the Image procedure, you may need this:
+  function Get_pixel_dimensions(image_file_name: String) return Rectangle;
+  --  Caution: scaling is up to you: the rectangle is (0.0, 0.0, width, height)
+  --  with 1 pixel = 1pt
 
   -----------------------
   --  Vector graphics  --
@@ -339,8 +352,8 @@ package PDF_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "002, preview 1";
-  reference : constant String:= "26-Jan-2016";
+  version   : constant String:= "002, preview 2";
+  reference : constant String:= "21-Feb-2016";
   web       : constant String:= "http://apdf.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 

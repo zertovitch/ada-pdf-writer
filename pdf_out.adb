@@ -223,6 +223,16 @@ package body PDF_Out is
     return ( f * P.x, f * P.y );
   end "*";
 
+  function "+"(P: Point; r: Rectangle) return Rectangle is
+  begin
+    return ( P.x + r.x_min, P.y + r.y_min, r.width, r.height );
+  end "+";
+
+  function "*"(f: Real; r: Rectangle) return Rectangle is
+  begin
+    return ( r.x_min, r.y_min, f * r.width, f * r.height );
+  end "*";
+
   function X_Max(r: Rectangle) return Real is
   begin
     return r.x_min + r.width;
@@ -689,6 +699,9 @@ package body PDF_Out is
   procedure Image(pdf: in out PDF_Out_Stream; file_name: String; target: Rectangle) is
     image_index: Positive;  --  Index in the list of images
   begin
+    if pdf.zone = nowhere then
+      New_Page(pdf);
+    end if;
     PDF_Out.Images.Image_ref(pdf, file_name, image_index);
     Insert_PDF_Code(pdf, "q " &
       Img(target.width) & " 0 0 " & Img(target.height) &
@@ -696,6 +709,11 @@ package body PDF_Out is
       Image_name(image_index) & " Do Q"
     );
   end;
+
+  function Get_pixel_dimensions(image_file_name: String) return Rectangle is
+  begin
+    return PDF_Out.Images.Get_pixel_dimensions(image_file_name);
+  end Get_pixel_dimensions;
 
   --  Vector graphics
 
