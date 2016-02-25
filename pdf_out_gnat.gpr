@@ -25,7 +25,7 @@ project PDF_Out_Gnat is
       case Build_Mode is
 
          when "Debug" =>
-            for Default_Switches ("ada") use ("-gnat95", "-gnatyhiknpfub", "-gnato", "-fno-inline", "-fstack-check", "-g", "-gnatwa", "-gnateV", "-gnatVa", "-gnatecdebug.pra");
+            for Default_Switches ("ada") use ("-gnat95", "-gnatyhiknpfub", "-gnato", "-fno-inline", "-fstack-check", "-g", "-gnatwa", "-gnatVa", "-gnatecdebug.pra");
 
          when "Fast" =>
             for Default_Switches ("ada") use ("-gnat95", "-O2", "-gnatn", "-gnatp", "-gnatwa", "-fno-strict-aliasing", "-funroll-loops", "-fpeel-loops", "-ftracer", "-funswitch-loops", "-fweb", "-frename-registers");

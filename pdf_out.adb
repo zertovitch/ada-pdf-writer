@@ -142,6 +142,9 @@ package body PDF_Out is
   procedure Wd(pdf : in out PDF_Out_Stream'Class; s: String) is
   pragma Inline(Wd);
   begin
+    if pdf.zone = nowhere then
+      New_Page(pdf);
+    end if;
     Append(pdf.stream_obj_buf, s);
   end;
 
@@ -299,12 +302,12 @@ package body PDF_Out is
     WL(pdf, "%  --  Produced by " & producer);
   end Write_PDF_header;
 
-  procedure New_stream(pdf : in out PDF_Out_Stream'Class) is
+  procedure New_substream(pdf : in out PDF_Out_Stream'Class) is
   begin
     pdf.stream_obj_buf:= Null_Unbounded_String;
-  end New_stream;
+  end New_substream;
 
-  procedure Finish_stream(pdf : in out PDF_Out_Stream'Class) is
+  procedure Finish_substream(pdf : in out PDF_Out_Stream'Class) is
   begin
     WL(pdf, "  << /Length" & Integer'Image(Length(pdf.stream_obj_buf)) & " >>");
     --  Length could be alternatively stored in next object,
@@ -314,7 +317,7 @@ package body PDF_Out is
     WL(pdf, "stream");
     WL(pdf, To_String(pdf.stream_obj_buf));
     WL(pdf, "endstream");
-  end Finish_stream;
+  end Finish_substream;
 
   --  Internal - test page for experimenting PDF constructs (and how Adobe Reader reacts to them)
   --
@@ -467,10 +470,11 @@ package body PDF_Out is
     --  Page contents object:
     --
     New_object(pdf);
-    New_stream(pdf);
+    New_substream(pdf);
     if test_page_mode then
       Test_Page(pdf);
     else
+      pdf.zone:= in_page;
       WLd(pdf, "  BT");            --  Begin Text object (9.4)
       Insert_PDF_Font_Selection_Code(pdf);
       pdf.zone:= in_header;
@@ -514,7 +518,7 @@ package body PDF_Out is
       Wd(pdf,  "  ET");            --  End Text
     end if;
     pdf.zone:= nowhere;
-    Finish_stream(pdf);
+    Finish_substream(pdf);
     WL(pdf, "endobj");  --  end of Contents
     New_object(pdf);    --  Resources Dictionary (7.8.3)
     WL(pdf, "<<");
@@ -577,9 +581,6 @@ package body PDF_Out is
 
   procedure Put(pdf: in out PDF_Out_Stream; str : String) is
   begin
-    if pdf.zone = nowhere then
-      New_Page(pdf);
-    end if;
     if test_page_mode then
       null;  --  Nothing to do (test page instead)
     else
@@ -627,9 +628,6 @@ package body PDF_Out is
 
   procedure New_Line(pdf: in out PDF_Out_Stream; Spacing : Positive := 1) is
   begin
-    if pdf.zone = nowhere then
-      New_Page(pdf);
-    end if;
     pdf.current_line:= pdf.current_line + 1;
     pdf.current_col:= 1;
     if test_page_mode then
