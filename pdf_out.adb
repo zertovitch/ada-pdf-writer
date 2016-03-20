@@ -1012,6 +1012,7 @@ package body PDF_Out is
     WL(pdf, "%%EOF");
     Dispose(pdf.page_idx);
     Dispose(pdf.object_offset);
+    PDF_Out.Images.Clear_image_directory(pdf);
     pdf.is_closed:= True;
   end Finish;
 

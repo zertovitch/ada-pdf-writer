@@ -1,5 +1,6 @@
 with GID;
 with Ada.Exceptions; use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
 
 package body PDF_Out.Images is
 
@@ -59,6 +60,20 @@ package body PDF_Out.Images is
   begin
     Traverse(pdf.img_dir_tree);
   end Traverse_private;
+
+  procedure Clear_image_directory( pdf: in out PDF_Out_Stream ) is
+    procedure Clear( p: in out p_Dir_node ) is
+      procedure Dispose is new Ada.Unchecked_Deallocation(Dir_node, p_Dir_node);
+    begin
+      if p /= null then
+        Clear(p.left);
+        Clear(p.right);
+        Dispose(p);
+      end if;
+    end Clear;
+  begin
+    Clear(pdf.img_dir_tree);
+  end Clear_image_directory;
 
   procedure Clear_local_resource_flag( dn: in out Dir_node ) is
   begin

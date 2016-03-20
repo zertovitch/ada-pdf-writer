@@ -16,4 +16,6 @@ private package PDF_Out.Images is
 
   procedure Insert_unloaded_local_images( pdf: in out PDF_Out_Stream );
 
+  procedure Clear_image_directory( pdf: in out PDF_Out_Stream );
+
 end PDF_Out.Images;
