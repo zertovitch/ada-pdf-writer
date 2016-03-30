@@ -3,17 +3,30 @@ with PDF_Out;                           use PDF_Out;
 with Ada.Command_Line;                  use Ada.Command_Line;
 
 procedure Img2PDF is
-  factor: Real;
+  --
+  --  Hardcoded scan and page parameters:
+  --
   DPI: constant:= 300.0;
+  page: constant Rectangle:= A4_portrait;
+  --
+  left, bottom: Real;
   target: Rectangle;
   pdf: PDF_Out.PDF_Out_File;
 begin
   Create(pdf, "out.pdf");
   Creator_Application(pdf, "Img2PDF");
+  Page_Setup(pdf, page);
   for i in 1..Argument_Count loop
-    factor:= one_inch / DPI;
-    target:= Get_pixel_dimensions(Argument(i));
-    Image(pdf, Argument(i), (Left_Margin(pdf), Bottom_Margin(pdf)) + factor * target);
+    target:= (one_inch / DPI) * Get_pixel_dimensions(Argument(i));
+    left:= Left_Margin(pdf);
+    if left + target.width > page.width then
+      left:= 0.0;
+    end if;
+    bottom:= Bottom_Margin(pdf);
+    if bottom + target.height > page.height then
+      bottom:= 0.0;
+    end if;
+    Image(pdf, Argument(i), (left, bottom) + target);
     if i < Argument_Count then
       New_Page(pdf);
     end if;
