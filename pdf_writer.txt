@@ -4,8 +4,9 @@ Intro to PDF Writer
 The PDF Writer consists of a package, PDF_Out,
 which produces PDF files - as "physical" files, or as
 other types of data streams.
-The creation of an PDF file is as simple as this
-small procedure:
+
+The creation of a PDF file is as simple as this
+small procedure (Ada 2005+ object-oriented syntax):
 
   with PDF_Out; use PDF_Out;
    
