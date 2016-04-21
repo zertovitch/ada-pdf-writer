@@ -386,7 +386,9 @@ package body PDF_Out is
     for f in Standard_Font_Type loop
       WL(pdf,
         "    " & Standard_Font_Dictionary_Name(f) &
-        " << /Type /Font /Subtype /Type1 /BaseFont /" & Standard_Font_Name(f) & " >>"
+        " << /Type /Font /Subtype /Type1 /BaseFont /" & Standard_Font_Name(f) &
+        " /FirstChar 0 /LastChar 255 /Encoding /PDFDocEncoding " &  --  Superset of Latin-1 (?)
+        " >>"
       );
     end loop;
     WL(pdf, "    >>");
