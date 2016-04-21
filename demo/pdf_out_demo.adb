@@ -64,8 +64,9 @@ procedure PDF_Out_Demo is
       New_Line(pdf);
       Put_Line(pdf, "Of course you have much more with PDF_Out: high-quality fonts,");
       Put_Line(pdf, "colors, amazing vector graphics, image inclusions, ...");
+      New_Line(pdf);
+      Put_Line(pdf, "Testing Latin-1 characters: je répète, ganz schöne Umläute");
       New_Line(pdf, 2);
-      --  !! Put_Line(pdf, "Testing Latin-1 characters: je répète, ganz schöne Umläute");
       Line_Spacing(pdf, 2.0);
       for r in 1..5 loop
         Color(pdf, (Real(r) * 0.2, 0.0, 0.0));

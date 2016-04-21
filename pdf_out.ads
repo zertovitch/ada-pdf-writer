@@ -352,7 +352,7 @@ package PDF_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "002, preview 2";
+  version   : constant String:= "002, preview 3";
   reference : constant String:= "20-Mar-2016";
   web       : constant String:= "http://apdf.sf.net/";
   -- hopefully the latest version is at that URL...  ---^

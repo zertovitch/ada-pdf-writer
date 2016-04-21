@@ -387,7 +387,9 @@ package body PDF_Out is
       WL(pdf,
         "    " & Standard_Font_Dictionary_Name(f) &
         " << /Type /Font /Subtype /Type1 /BaseFont /" & Standard_Font_Name(f) &
-        " /FirstChar 0 /LastChar 255 /Encoding /PDFDocEncoding " &  --  Superset of Latin-1 (?)
+        --  7.9.2.2 Text String Type: "PDFDocEncoding can encode all of
+        --  the ISO Latin 1 character set and is documented in Annex D."
+        " /Encoding /PDFDocEncoding " &
         " >>"
       );
     end loop;
