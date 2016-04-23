@@ -389,7 +389,10 @@ package body PDF_Out is
         " << /Type /Font /Subtype /Type1 /BaseFont /" & Standard_Font_Name(f) &
         --  7.9.2.2 Text String Type: "PDFDocEncoding can encode all of
         --  the ISO Latin 1 character set and is documented in Annex D."
-        " /Encoding /PDFDocEncoding " &
+        --  PDFDocEncoding is recognized by the Chrome PDF viewer on Windows but...
+        --  *isn't* by Adobe Reader X, on Windows! So we resort to another ISO
+        --  Latin 1 superset: WinAnsiEncoding = Windows Code Page 1252 (Table D.1).
+        " /Encoding /WinAnsiEncoding " &
         " >>"
       );
     end loop;
