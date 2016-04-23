@@ -736,8 +736,8 @@ package body PDF_Out is
   --    Table 60 - Path-Painting Operators (8.5.3.1)
 
   inside_path_rule_char: constant array(Inside_path_rule) of Character:= (
-    Nonzero_Winding_Number => ' ',
-    Even_Odd               => '*'
+    nonzero_winding_number => ' ',
+    even_odd               => '*'
   );
 
   path_drawing_operator: constant array(Path_Rendering_Mode) of Character:= (
@@ -1034,7 +1034,7 @@ package body PDF_Out is
     Reset(pdf, PDF_format);
     pdf.pdf_file:= new Ada.Streams.Stream_IO.File_Type;
     Create(pdf.pdf_file.all, Out_File, file_name);
-    pdf.file_Name:= To_Unbounded_String(file_Name);
+    pdf.file_name:= To_Unbounded_String(file_name);
     pdf.pdf_stream:= PDF_Raw_Stream_Class(Stream(pdf.pdf_file.all));
     Write_PDF_header(pdf);
   end Create;
