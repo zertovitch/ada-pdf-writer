@@ -9,7 +9,7 @@
 
 -- Legal licensing note:
 
---  Copyright (c) 2014 .. 2016 Gautier de Montmollin
+--  Copyright (c) 2014 .. 2017 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -318,8 +318,19 @@ package PDF_Out is
 
   function Layout(pdf : PDF_Out_Stream) return Rectangle;
 
+  --  Set_Index and Index are not directly useful for PDF_Out users.
+
+  -- Set the index on the stream
+  procedure Set_Index (pdf: in out PDF_Out_Stream;
+                       to: Ada.Streams.Stream_IO.Positive_Count)
+  is abstract;
+
+  -- Return the index of the stream
+  function Index (pdf: PDF_Out_Stream) return Ada.Streams.Stream_IO.Count
+  is abstract;
+
   -----------------------------------------------------------------
-  -- Here, the derived stream types pre-defined in this package. --
+  -- Here are derived stream types, pre-defined in this package. --
   -----------------------------------------------------------------
   -- * Output to a file:
 
@@ -356,19 +367,6 @@ package PDF_Out is
   reference : constant String:= "23-Apr-2016";
   web       : constant String:= "http://apdf.sf.net/";
   -- hopefully the latest version is at that URL ^
-
-  ----------------------------------
-  -- End of the part for the user --
-  ----------------------------------
-
-  -- Set the index on the stream
-  procedure Set_Index (pdf: in out PDF_Out_Stream;
-                       to: Ada.Streams.Stream_IO.Positive_Count)
-  is abstract;
-
-  -- Return the index of the stream
-  function Index (pdf: PDF_Out_Stream) return Ada.Streams.Stream_IO.Count
-  is abstract;
 
 private
 
