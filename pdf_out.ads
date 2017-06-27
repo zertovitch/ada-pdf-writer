@@ -319,6 +319,7 @@ package PDF_Out is
   function Layout(pdf : PDF_Out_Stream) return Rectangle;
 
   --  Set_Index and Index are not directly useful for PDF_Out users.
+  --  They are private indeed, but they must be visible (RM 3.9.3(10)).
 
   -- Set the index on the stream
   procedure Set_Index (pdf: in out PDF_Out_Stream;
