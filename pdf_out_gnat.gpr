@@ -1,6 +1,6 @@
--- This is a GNAT, GCC or GNAT Programming Studio (GPS) project file
--- for the PDF Writer ( http://*.sf.net/ )
--- Build me with "gnatmake -P pdf_out_gnat", or open me with GPS
+--  This is a GNAT, GCC or GNAT Programming Studio (GPS) project file
+--  for the PDF Writer ( http://apdf.sf.net/ )
+--  Build me with "gprbuild -p -P pdf_out_gnat", or open me with GPS
 --
 project PDF_Out_Gnat is
 
@@ -37,7 +37,7 @@ project PDF_Out_Gnat is
    end Compiler;
 
    package Builder is
-      for Default_Switches ("ada") use ("-j2");
+      for Default_Switches ("ada") use ("-j0");  --   "If -j0 is used, then the maximum number of simultaneous compilation jobs is the number of core processors on the platform."
    end Builder;
 
    package Ide is

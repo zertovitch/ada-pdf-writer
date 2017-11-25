@@ -47,7 +47,7 @@ How to build PDF Writer and its demo
 ====================================
 Here is how to build with GNAT/GCC:
 
-    - type "gprbuild -P pdf_out_gnat" in the command line
+    - type "gprbuild -p -P pdf_out_gnat" in the command line
 or
     - open the pdf_out_gnat.gpr file (will launch the GNAT Programming Studio (GPS)),
       press F4 (Build)
