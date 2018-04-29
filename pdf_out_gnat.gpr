@@ -7,8 +7,12 @@ project PDF_Out_Gnat is
    type Build_Mode_Type is
       ("Debug", "Fast");
    Build_Mode : Build_Mode_Type := external ("Build_Mode", "Debug");
-   for Main use ("pdf_out_demo.adb", "img2pdf.adb");
-   for Source_Dirs use (".", "gid", "demo", "tools");
+   for Main use (
+     "pdf_out_demo.adb",     --  Demos
+     "img2pdf.adb",          --  Tools
+     "validation_test.adb"   --  Test
+   );
+   for Source_Dirs use (".", "gid", "demo", "tools", "test");
    for Exec_Dir use ".";
 
    case Build_Mode is
