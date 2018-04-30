@@ -441,6 +441,16 @@ package body PDF_Out is
     Insert_PDF_Font_Selection_Code(pdf);
   end Line_Spacing_Pt;
 
+  procedure End_text(pdf: in out PDF_Out_Stream) is
+  begin
+    WLd(pdf,  "  ET");
+  end End_text;
+
+  procedure Begin_text(pdf: in out PDF_Out_Stream) is
+  begin
+    WLd(pdf,  "  BT");
+  end Begin_text;
+
   procedure Dispose is new Ada.Unchecked_Deallocation(Page_table, p_Page_table);
 
   procedure New_Page(pdf: in out PDF_Out_Stream) is
@@ -482,7 +492,7 @@ package body PDF_Out is
       Test_Page(pdf);
     else
       pdf.zone:= in_page;
-      WLd(pdf, "  BT");            --  Begin Text object (9.4)
+      Begin_text(pdf); --  Begin Text object (9.4)
       Insert_PDF_Font_Selection_Code(pdf);
       pdf.zone:= in_header;
       Page_Header(PDF_Out_Stream'Class(pdf));
@@ -520,9 +530,9 @@ package body PDF_Out is
       null;  --  Nothing to do anymore with test page
     else
       pdf.zone:= in_footer;
+      --  PDF_Out_Stream'Class: make the call to Page_Header dispatching
       Page_Footer(PDF_Out_Stream'Class(pdf));
-      -- ^ PDF_Out_Stream'Class: make the call to Page_Header dispatching
-      Wd(pdf,  "  ET");            --  End Text
+      End_text(pdf);
     end if;
     pdf.zone:= nowhere;
     Finish_substream(pdf);
@@ -648,10 +658,10 @@ package body PDF_Out is
 
   procedure Text_XY(pdf: in out PDF_Out_Stream; x,y: Real) is
   begin
-    --  This is just for resetting the text matrices (hence, position and orientation)
-    --
-    WLd(pdf, "  ET");            --  End Text
-    WLd(pdf, "  BT");            --  Begin Text object (9.4.1, Table 107)
+    --  The following End_text, Begin_text is just for resetting the
+    --  text matrices (hence, position and orientation).
+    End_text(pdf);
+    Begin_text(pdf);  --  Begin Text object (9.4.1, Table 107)
     Insert_PDF_Code(pdf, Img(x) & ' ' & Img(y) & " Td");  --  Td: 9.4.2 Text-Positioning Operators
     pdf.current_line:= 1;
     pdf.current_col:= 1;
@@ -708,32 +718,34 @@ package body PDF_Out is
       New_Page(pdf);
     end if;
     PDF_Out.Images.Image_ref(pdf, file_name, image_index);
-    Insert_PDF_Code(pdf, "q " &
+    Insert_Graphics_PDF_Code(pdf, "q " &
       Img(target.width) & " 0 0 " & Img(target.height) &
       ' ' & Img(target.x_min) & ' ' & Img(target.y_min) & " cm " &  --  cm: Table 57
       Image_name(image_index) & " Do Q"
     );
-  end;
+  end Image;
 
   function Get_pixel_dimensions(image_file_name: String) return Rectangle is
   begin
     return PDF_Out.Images.Get_pixel_dimensions(image_file_name);
   end Get_pixel_dimensions;
 
-  --  Vector graphics
+  -----------------------
+  --  Vector graphics  --
+  -----------------------
 
   procedure Line_Width(pdf: in out PDF_Out_Stream; width: Real) is
   begin
-    Insert_PDF_Code(pdf, Img(width) & " w");
-  end;
+    Insert_Graphics_PDF_Code(pdf, Img(width) & " w");
+  end Line_Width;
 
   procedure Single_Line(pdf: in out PDF_Out_Stream; from, to: Point) is
   begin
-    Insert_PDF_Code(pdf,
+    Insert_Graphics_PDF_Code(pdf,
       Img(from.x) & ' ' & Img(from.y) & " m " &
       Img(to.x) & ' ' & Img(to.y) & " l s"
     );
-  end;
+  end Single_Line;
 
   --    Table 59 - Path Construction Operators (8.5.2)
   --    Table 60 - Path-Painting Operators (8.5.3.1)
@@ -751,22 +763,22 @@ package body PDF_Out is
 
   procedure Draw(pdf: in out PDF_Out_Stream; what: Rectangle; rendering: Path_Rendering_Mode) is
   begin
-    Insert_PDF_Code(pdf, Img(what, relative) & " re " & path_drawing_operator(rendering));
+    Insert_Graphics_PDF_Code(pdf, Img(what, relative) & " re " & path_drawing_operator(rendering));
   end;
 
   procedure Move(pdf: in out PDF_Out_Stream; to: Point) is
   begin
-    Insert_PDF_Code(pdf, Img(to) & " m");
+    Insert_Graphics_PDF_Code(pdf, Img(to) & " m");
   end;
 
   procedure Line(pdf: in out PDF_Out_Stream; to: Point) is
   begin
-    Insert_PDF_Code(pdf, Img(to) & " l");
+    Insert_Graphics_PDF_Code(pdf, Img(to) & " l");
   end;
 
   procedure Cubic_Bezier(pdf: in out PDF_Out_Stream; control_1, control_2: Point; to: Point) is
   begin
-    Insert_PDF_Code(pdf, Img(control_1) & ' ' & Img(control_2) & ' ' & Img(to) & " c");
+    Insert_Graphics_PDF_Code(pdf, Img(control_1) & ' ' & Img(control_2) & ' ' & Img(to) & " c");
   end;
 
   procedure Finish_Path(
@@ -783,16 +795,29 @@ package body PDF_Out is
     end if;
     --  Insert the s, S, f, f*, b, b*, B, B* of Table 60 - Path-Painting Operators (8.5.3.1)
     if cmd = "s*" or cmd = "S*" or cmd = "F " or cmd = "F*" then
-      Insert_PDF_Code(pdf, "n");  --  End the path object without filling or stroking it.
+      Insert_Graphics_PDF_Code(pdf, "n");  --  End the path object without filling or stroking it.
     else
-      Insert_PDF_Code(pdf, cmd);
+      Insert_Graphics_PDF_Code(pdf, cmd);
     end if;
   end Finish_Path;
+
+  -----------------------------
+  --  Direct code insertion  --
+  -----------------------------
 
   procedure Insert_PDF_Code(pdf: in out PDF_Out_Stream; code: String) is
   begin
     WLd(pdf, "    " & code);  --  Indentation is just cosmetic...
   end;
+
+  procedure Insert_Graphics_PDF_Code(pdf: in out PDF_Out_Stream; code: String) is
+  begin
+    --  !! To do: use a text/graphics switch to simplify
+    --     the empty begin text / end text sequences (BT ET).
+    End_text(pdf);
+    Insert_PDF_Code(pdf,code);
+    Begin_text(pdf);
+  end Insert_Graphics_PDF_Code;
 
   --  Table 317 - Entries in the document information dictionary (14.3.3)
 

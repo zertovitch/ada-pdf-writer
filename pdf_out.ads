@@ -253,16 +253,25 @@ package PDF_Out is
     rule       :        Inside_path_rule
   );
 
-  -----------
-  --  Misc --
-  -----------
+  ------------
+  --  Misc  --
+  ------------
 
   --  If some PDF feature is not yet implemented in this package,
   --  you can insert direct PDF code - at your own risk ;-).
+  --  NB: the state of this PDF Writer is usually in text-writing
+  --  mode; if you want to insert graphics code, please use the
+  --  Insert_Graphics_PDF_Code below.
+  --
   procedure Insert_PDF_Code(pdf: in out PDF_Out_Stream; code: String);
   pragma Inline(Insert_PDF_Code);
+
+  --  This is for direct graphics PDF code insertion (text-writing mode
+  --  will be switched off for the graphics output).
   --
-  --  Image functions for numbers, designed to take the least place
+  procedure Insert_Graphics_PDF_Code(pdf: in out PDF_Out_Stream; code: String);
+
+  --  Image functions for numbers, designed to take the least room
   --  possible without loss of precision (useful for inserting PDF code).
   function Img(p: Integer) return String;
   function Img( x: Real; prec: Positive:= Real'Digits ) return String;
@@ -364,8 +373,8 @@ package PDF_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "003";
-  reference : constant String:= "25-Nov-2017";
+  version   : constant String:= "004, preview 1";
+  reference : constant String:= "(in 2018)";
   web       : constant String:= "http://apdf.sf.net/";
   -- hopefully the latest version is at that URL ^
 
