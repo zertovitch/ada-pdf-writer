@@ -271,10 +271,11 @@ package PDF_Out is
   --
   procedure Insert_Graphics_PDF_Code(pdf: in out PDF_Out_Stream; code: String);
 
-  --  Image functions for numbers, designed to take the least room
-  --  possible without loss of precision (useful for inserting PDF code).
+  --  Image (representation in digits) functions for numbers, designed to
+  --  take the least possible room, albeit without loss of precision.
+  --  Useful for inserting PDF code.
   function Img(p: Integer) return String;
-  function Img( x: Real; prec: Positive:= Real'Digits ) return String;
+  function Img(x: Real; prec: Positive:= Real'Digits) return String;
 
   --  Document information
   procedure Title(pdf: in out PDF_Out_Stream; s: String);

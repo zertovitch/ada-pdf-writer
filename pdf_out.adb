@@ -185,7 +185,7 @@ package body PDF_Out is
 
   --  Compact real number image, taken from TeXCAD (TeX_Number in tc.adb)
   --
-  function Img( x: Real; prec: Positive:= Real'Digits ) return String is
+  function Img(x: Real; prec: Positive:= Real'Digits) return String is
     s: String(1 .. 20 + prec);
     na,nb,np: Natural;
   begin
@@ -764,22 +764,27 @@ package body PDF_Out is
   procedure Draw(pdf: in out PDF_Out_Stream; what: Rectangle; rendering: Path_Rendering_Mode) is
   begin
     Insert_Graphics_PDF_Code(pdf, Img(what, relative) & " re " & path_drawing_operator(rendering));
-  end;
+  end Draw;
 
   procedure Move(pdf: in out PDF_Out_Stream; to: Point) is
   begin
-    Insert_Graphics_PDF_Code(pdf, Img(to) & " m");
-  end;
+    Insert_Graphics_PDF_Code(pdf, Img(to) & " m");  --  m operator (Table 59)
+  end Move;
 
   procedure Line(pdf: in out PDF_Out_Stream; to: Point) is
   begin
     Insert_Graphics_PDF_Code(pdf, Img(to) & " l");
-  end;
+  end Line;
 
   procedure Cubic_Bezier(pdf: in out PDF_Out_Stream; control_1, control_2: Point; to: Point) is
   begin
-    Insert_Graphics_PDF_Code(pdf, Img(control_1) & ' ' & Img(control_2) & ' ' & Img(to) & " c");
-  end;
+    Insert_Graphics_PDF_Code(
+      pdf,
+      Img(control_1) & ' ' &
+      Img(control_2) & ' ' &
+      Img(to) & " c"
+    );
+  end Cubic_Bezier;
 
   procedure Finish_Path(
     pdf        : in out PDF_Out_Stream;
