@@ -22,13 +22,12 @@ begin
       when 1 =>  --  Simple vector graphics
         pdf.Draw ((10.0*one_cm, 24.7*one_cm, 5.0*one_cm, 5.0*one_cm), stroke);
       when 2 =>
-        Stroking_Color(pdf, black);
-        Line_Width(pdf, 5.0 * initial_line_width);
+        pdf.Line_Width(5.0 * initial_line_width);
         --  Move starts a [sub]path
-        Move(pdf, o + f * (350.0, 350.0));
-        --  Validator doesn't like text-mode stuff within a path
-        Line(pdf, o + f * (350.0, 400.0));
-        Finish_Path(pdf, True, stroke, nonzero_winding_number);
+        pdf.Move(o + f * (350.0, 350.0));
+        --  The online validator doesn't like text-mode stuff within a path
+        pdf.Line(o + f * (350.0, 400.0));
+        pdf.Finish_Path(True, stroke, nonzero_winding_number);
     end case;
     pdf.Close;
   end loop;

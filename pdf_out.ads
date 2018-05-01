@@ -431,25 +431,25 @@ private
   type PDF_Out_Pre_Root_Type is tagged record
     pdf_stream    : PDF_Raw_Stream_Class;
     start_index   : Ada.Streams.Stream_IO.Count;
-    is_created    : Boolean     := False;
-    is_closed     : Boolean     := False;
-    format        : PDF_type    := Default_PDF_type;
-    zone          : Page_zone   := nowhere;
-    last_page     : PDF_Index_Type := 0;
-    current_line  : Positive    := 1;  --  Mostly for Ada.Text_IO compatibility
-    current_col   : Positive    := 1;  --  Mostly for Ada.Text_IO compatibility
-    page_idx      : p_Page_table := null;  --  page_idx(p): Object ID of page p
-    page_box      : Rectangle   := A4_portrait;
-    maximum_box   : Rectangle   := A4_portrait;
-    page_margins  : Margins_Type:= cm_2_5_margins;
-    objects       : PDF_Index_Type := last_fix_obj_idx;
-    object_offset : p_Offset_table := null;
+    is_created    : Boolean           := False;
+    is_closed     : Boolean           := False;
+    format        : PDF_type          := Default_PDF_type;
+    zone          : Page_zone         := nowhere;
+    last_page     : PDF_Index_Type    := 0;
+    current_line  : Positive          := 1;  --  Mostly for Ada.Text_IO compatibility
+    current_col   : Positive          := 1;  --  Mostly for Ada.Text_IO compatibility
+    page_idx      : p_Page_table      := null;  --  page_idx(p): Object ID of page p
+    page_box      : Rectangle         := A4_portrait;
+    maximum_box   : Rectangle         := A4_portrait;
+    page_margins  : Margins_Type      := cm_2_5_margins;
+    objects       : PDF_Index_Type    := last_fix_obj_idx;
+    object_offset : p_Offset_table    := null;
     stream_obj_buf: Unbounded_String;
-    img_dir_tree  : p_Dir_node  := null;
-    img_count     : Natural     := 0;
-    current_font  : Font_Type   := Helvetica;
-    font_size     : Real        := 11.0;
-    line_spacing  : Real        := default_line_spacing;
+    img_dir_tree  : p_Dir_node        := null;
+    img_count     : Natural           := 0;
+    current_font  : Font_Type         := Helvetica;
+    font_size     : Real              := 11.0;
+    line_spacing  : Real              := default_line_spacing;
     ext_font_name : Unbounded_String;
     doc_title     : Unbounded_String;  --  Document information (14.3.3)
     doc_author    : Unbounded_String;  --  Document information (14.3.3)
