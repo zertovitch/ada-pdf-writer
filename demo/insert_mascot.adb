@@ -9,9 +9,12 @@ procedure Insert_Mascot(pdf : in out PDF_Out_Stream'Class; w, h, xm, ym: Real) i
   hf: constant:= 1.0 / 2810.0;
   NL: constant Character:= ASCII.LF;
 begin
-  Insert_Graphics_PDF_Code(pdf,
-    "q q" & NL &  --  0 -1 2470 2809 rectclip
+  pdf.Insert_Graphics_PDF_Code(
+    --  Summary of PDF operators: Table 51 in PDF reference.
+    "q q" & NL &
+    --  0 -1 2470 2809 rectclip
     Img(w * wf) & " 0 0 " & NL & Img(h * hf) & ' ' & Img(xm) & ' ' & Img(ym) & " cm" & NL &
+    --  g is gray nonstroking operations (Table 74 - Colour Operators)
     "0 g" & NL &
     "1509.273 1806.575 m 1509.273 1806.575 1519.93 1925.047 1753.895 1933.286" & NL &
     " c 1951.145 1921.543 2089.344 1730.485 2136.234 1669.383 c 2136.234 1669.383" & NL &

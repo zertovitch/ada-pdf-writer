@@ -10,10 +10,13 @@ procedure Validation_test is
   pdf: PDF_Out_File;
   box: Rectangle;
 begin
-  Create (pdf, "validation_test.pdf");
-  Page_Setup (pdf, A4_portrait);
-  --  Vector graphics
+  pdf.Create ("validation_test.pdf");
+  pdf.Page_Setup (A4_portrait);
+  --
+  --  Simple vector graphics
+  --
   box:= (10.0*one_cm, 24.7*one_cm, 5.0*one_cm, 5.0*one_cm);
-  Draw (pdf, box, stroke);
-  Close (pdf);
+  pdf.Draw (box, stroke);
+
+  pdf.Close;
 end Validation_test;

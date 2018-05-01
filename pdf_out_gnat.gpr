@@ -5,19 +5,31 @@
 project PDF_Out_Gnat is
 
    type Build_Mode_Type is
-      ("Debug", "Fast");
+      ("Debug", 
+			 "Fast",
+       --  Check_95 mode is for checking that the *library* is strictly
+       --  Ada-95-compliant, for being compiled by the broadest set of compilers.
+       --  The demos, tools and tests may use some Ada 2005 & 2012 features.
+       "Check_95"  
+			 );
    Build_Mode : Build_Mode_Type := external ("Build_Mode", "Debug");
-   for Main use (
-     "pdf_out_demo.adb",     --  Demos
-     "img2pdf.adb",          --  Tools
-     "validation_test.adb"   --  Test
-   );
-   for Source_Dirs use (".", "gid", "demo", "tools", "test");
+   case Build_Mode is
+      when "Check_95" =>
+         for Source_Dirs use (".", "gid");
+         for Main use ();
+      when others =>
+         for Source_Dirs use (".", "gid", "demo", "tools", "test");
+         for Main use (
+           "pdf_out_demo.adb",     --  Demos
+           "img2pdf.adb",          --  Tools
+           "validation_test.adb"   --  Test
+         );
+   end case;
    for Exec_Dir use ".";
 
    case Build_Mode is
 
-      when "Debug" =>
+      when "Debug" | "Check_95" =>
          for Object_Dir use "obj_debug";
 
       when "Fast" =>
@@ -28,15 +40,20 @@ project PDF_Out_Gnat is
 
       case Build_Mode is
 
+         when "Check_95" => for Default_Switches ("ada") use (
+              "-gnat95", "-gnatwa",
+							"-gnato", "-gnatVa"
+              );
+
          when "Debug" =>
-            for Default_Switches ("ada") use ("-gnat95", 
+            for Default_Switches ("ada") use (
               "-gnatyaknpr",  --  Style: check all casings: a:attribute, k:keywords, n:package Standard identifiers, p:pragma, r:identifier references
               "-gnatybfhiu",  --  Style: check b:no blanks at end of lines, f:no ff/vtabs, h: no htabs, i:if-then layout, u:no unnecessary blank lines
               "-gnatyx",      --  Style: check x:no extra parens
               "-gnato", "-fno-inline", "-fstack-check", "-g", "-gnatwa", "-gnatVa", "-gnatec=" & project'Project_Dir & "debug.pra");
 
          when "Fast" =>
-            for Default_Switches ("ada") use ("-gnat95", "-O2", "-gnatn", "-gnatp", "-gnatwa", "-fno-strict-aliasing", "-funroll-loops", "-fpeel-loops", "-ftracer", "-funswitch-loops", "-fweb", "-frename-registers");
+            for Default_Switches ("ada") use ("-O2", "-gnatn", "-gnatp", "-gnatwa", "-fno-strict-aliasing", "-funroll-loops", "-fpeel-loops", "-ftracer", "-funswitch-loops", "-fweb", "-frename-registers");
       end case;
    end Compiler;
 
