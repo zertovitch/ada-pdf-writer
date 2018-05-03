@@ -410,7 +410,7 @@ package body PDF_Out is
 
   procedure Insert_PDF_Font_Selection_Code(pdf: in out PDF_Out_Stream) is
   begin
-    Insert_PDF_Code(pdf,
+    Insert_Text_PDF_Code(pdf,
       Font_Dictionary_Name(Current_Font_Name(pdf)) &
       ' ' & Img(pdf.font_size) & " Tf " &  --  Tf: 9.3 Text State Parameters and Operators
       Img(pdf.font_size * pdf.line_spacing) & " TL"  --  TL: set text leading (9.3.5)
@@ -448,10 +448,26 @@ package body PDF_Out is
 
   procedure Begin_text(pdf: in out PDF_Out_Stream) is
   begin
-    WLd(pdf,  "  BT");
+    WLd(pdf,  "  BT");  --  Begin Text object (9.4.1, Table 107)
   end Begin_text;
 
   procedure Dispose is new Ada.Unchecked_Deallocation(Page_table, p_Page_table);
+
+  procedure Flip_to (pdf: in out PDF_Out_Stream; new_state: Text_or_graphics) is
+  begin
+    if pdf.zone = nowhere then
+      New_Page(pdf);
+    end if;
+    --  WLd(pdf,  " % Text_or_graphics before: " & pdf.text_switch'Image);
+    if pdf.text_switch /= new_state then
+      pdf.text_switch := new_state;
+      case new_state is
+        when text     => Begin_text(pdf);
+        when graphics => End_text(pdf);
+      end case;
+    end if;
+    --  WLd(pdf,  " % Text_or_graphics after: " & pdf.text_switch'Image);
+  end Flip_to;
 
   procedure New_Page(pdf: in out PDF_Out_Stream) is
     new_table: p_Page_table;
@@ -492,11 +508,10 @@ package body PDF_Out is
       Test_Page(pdf);
     else
       pdf.zone:= in_page;
-      Begin_text(pdf); --  Begin Text object (9.4)
       Insert_PDF_Font_Selection_Code(pdf);
       pdf.zone:= in_header;
+      -- PDF_Out_Stream'Class: make the call to Page_Header dispatching
       Page_Header(PDF_Out_Stream'Class(pdf));
-      -- ^ PDF_Out_Stream'Class: make the call to Page_Header dispatching
     end if;
     pdf.zone:= in_page;
     Text_XY(pdf, pdf.page_margins.left, Y_Max(pdf.page_box) - pdf.page_margins.top);
@@ -532,7 +547,7 @@ package body PDF_Out is
       pdf.zone:= in_footer;
       --  PDF_Out_Stream'Class: make the call to Page_Header dispatching
       Page_Footer(PDF_Out_Stream'Class(pdf));
-      End_text(pdf);
+      Flip_to (pdf, graphics);
     end if;
     pdf.zone:= nowhere;
     Finish_substream(pdf);
@@ -601,7 +616,7 @@ package body PDF_Out is
     if test_page_mode then
       null;  --  Nothing to do (test page instead)
     else
-      WLd(pdf, "    (" & str & ") Tj");
+      Insert_Text_PDF_Code(pdf, '(' & str & ") Tj");
     end if;
   end Put;
 
@@ -651,17 +666,18 @@ package body PDF_Out is
       null;  --  Nothing to do (test page instead)
     else
       for i in 1..Spacing loop
-        WLd(pdf, "    T*");
+        Insert_Text_PDF_Code(pdf, "T*");
       end loop;
     end if;
   end New_Line;
 
   procedure Text_XY(pdf: in out PDF_Out_Stream; x,y: Real) is
   begin
-    --  The following End_text, Begin_text is just for resetting the
-    --  text matrices (hence, position and orientation).
+    Flip_to (pdf, text);
+    --  The following explicit End_text, Begin_text are just
+    --  for resetting the text matrices (hence, position and orientation).
     End_text(pdf);
-    Begin_text(pdf);  --  Begin Text object (9.4.1, Table 107)
+    Begin_text(pdf);
     Insert_PDF_Code(pdf, Img(x) & ' ' & Img(y) & " Td");  --  Td: 9.4.2 Text-Positioning Operators
     pdf.current_line:= 1;
     pdf.current_col:= 1;
@@ -702,7 +718,7 @@ package body PDF_Out is
 
   procedure Text_Rendering_Mode(pdf: in out PDF_Out_Stream; r: Rendering_Mode) is
   begin
-    Insert_PDF_Code(pdf, Img(Integer(Rendering_Mode'Pos(r))) & " Tr");
+    Insert_Text_PDF_Code(pdf, Img(Integer(Rendering_Mode'Pos(r))) & " Tr");
     --  Tr = Set rendering mode (Table 106)
   end;
 
@@ -815,13 +831,16 @@ package body PDF_Out is
     WLd(pdf, "    " & code);  --  Indentation is just cosmetic...
   end;
 
+  procedure Insert_Text_PDF_Code(pdf: in out PDF_Out_Stream; code: String) is
+  begin
+    Flip_to (pdf, text);
+    Insert_PDF_Code(pdf,code);
+  end Insert_Text_PDF_Code;
+
   procedure Insert_Graphics_PDF_Code(pdf: in out PDF_Out_Stream; code: String) is
   begin
-    --  !! To do: use a text/graphics switch to simplify
-    --     the empty begin text / end text sequences (BT ET).
-    End_text(pdf);
+    Flip_to (pdf, graphics);
     Insert_PDF_Code(pdf,code);
-    Begin_text(pdf);
   end Insert_Graphics_PDF_Code;
 
   --  Table 317 - Entries in the document information dictionary (14.3.3)
@@ -997,8 +1016,9 @@ package body PDF_Out is
       WL(pdf, "  << /Type /Catalog");
       WL(pdf, "     /Pages " & Img(pages_idx) & " 0 R");
       if pdf.last_page > 0 then
+        --  Open the document on page 1, fit the
+        --  entire page within the window (Table 151):
         WL(pdf, "     /OpenAction [" & Img(pdf.page_idx(1)) & " 0 R /Fit]");
-        --  ^ Open on page 1, fit the entire page within the window (Table 151)
       end if;
       WL(pdf, "  >>");
       WL(pdf, "endobj");
@@ -1029,13 +1049,13 @@ package body PDF_Out is
             s10(n):= '0';
           end if;
         end loop;
-        WL(pdf, s10 & " 00000 n "); -- <- trailing space needed!
+        WL(pdf, s10 & " 00000 n ");  --   <-- the trailing space is needed!
       end loop;
     end XRef;
 
   begin
     if pdf.last_page = 0 then
-      -- No page ? Then make quickly a blank page
+      --  No page ? Then make quickly a blank page.
       New_Page(pdf);
     end if;
     Finish_Page(pdf);

@@ -231,7 +231,8 @@ package PDF_Out is
 
   subtype Path_Rendering_Mode is Rendering_Mode range fill .. fill_then_stroke;
 
-  --  Draw a single rectangle:
+  --  Draw simple figures.
+  --  Rectangle:
   procedure Draw(pdf: in out PDF_Out_Stream; what: Rectangle; rendering: Path_Rendering_Mode);
 
   --  Paths:
@@ -257,14 +258,22 @@ package PDF_Out is
   --  Misc  --
   ------------
 
-  --  If some PDF feature is not yet implemented in this package,
-  --  you can insert direct PDF code - at your own risk ;-).
-  --  NB: the state of this PDF Writer is usually in text-writing
-  --  mode; if you want to insert graphics code, please use the
-  --  Insert_Graphics_PDF_Code below.
+  --  In the likely case some PDF feature is not yet implemented in
+  --  this package, you can insert direct PDF code - at your own risk ;-).
+  --
+  --  NB: the state the PDF machine is either in text-writing
+  --  mode, or graphics mode. To make outputs compliant with the PDF
+  --  standard, if you want to insert general or graphics code, please
+  --  use the Insert_Graphics_PDF_Code below. For text-related stuff,
+  --  use Insert_Text_PDF_Code.
   --
   procedure Insert_PDF_Code(pdf: in out PDF_Out_Stream; code: String);
   pragma Inline(Insert_PDF_Code);
+
+  --  This is for direct text PDF code insertion (text-writing mode
+  --  will be switched on). In PDF language these are the T... commands.
+  --
+  procedure Insert_Text_PDF_Code(pdf: in out PDF_Out_Stream; code: String);
 
   --  This is for direct graphics PDF code insertion (text-writing mode
   --  will be switched off for the graphics output).
@@ -374,14 +383,12 @@ package PDF_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "004, preview 1";
+  version   : constant String:= "004, preview 2";
   reference : constant String:= "(in 2018)";
   web       : constant String:= "http://apdf.sf.net/";
   -- hopefully the latest version is at that URL ^
 
 private
-
-  type Page_zone is (nowhere, in_page, in_header, in_footer);
 
   min_bits: constant:= Integer'Max(32, System.Word_Size);
   -- 13.3(8): A word is the largest amount of storage that can be
@@ -415,6 +422,9 @@ private
     local_resource   : Boolean;      --  All True items to be listed into Resource dictionary
   end record;
 
+  type Page_zone is (nowhere, in_page, in_header, in_footer);
+  type Text_or_graphics is (text, graphics);
+
   ----------------------------------------
   -- Raw Streams, with 'Read and 'Write --
   ----------------------------------------
@@ -435,6 +445,7 @@ private
     is_closed     : Boolean           := False;
     format        : PDF_type          := Default_PDF_type;
     zone          : Page_zone         := nowhere;
+    text_switch   : Text_or_graphics  := graphics;
     last_page     : PDF_Index_Type    := 0;
     current_line  : Positive          := 1;  --  Mostly for Ada.Text_IO compatibility
     current_col   : Positive          := 1;  --  Mostly for Ada.Text_IO compatibility
