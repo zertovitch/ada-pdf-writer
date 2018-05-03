@@ -263,7 +263,7 @@ package PDF_Out is
   --
   --  NB: the state the PDF machine is either in text-writing
   --  mode, or graphics mode. To make outputs compliant with the PDF
-  --  standard, if you want to insert general or graphics code, please
+  --  standard, if you want to insert graphics code, please
   --  use the Insert_Graphics_PDF_Code below. For text-related stuff,
   --  use Insert_Text_PDF_Code.
   --

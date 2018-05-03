@@ -128,31 +128,36 @@ package body PDF_Out is
   pragma Inline(W);
   begin
     String'Write(pdf.pdf_stream, s);
-  end;
+  end W;
 
   NL: constant Character:= ASCII.LF;
 
   procedure WL(pdf : in out PDF_Out_Stream'Class; s: String) is
   begin
     W(pdf, s & NL);
-  end;
+  end WL;
+
+  procedure No_Nowhere(pdf : in out PDF_Out_Stream'Class) is
+  begin
+    if pdf.zone = nowhere then
+      New_Page(pdf);
+    end if;
+  end No_Nowhere;
 
   --  Delayed output, for internal PDF's "stream" object
 
   procedure Wd(pdf : in out PDF_Out_Stream'Class; s: String) is
   pragma Inline(Wd);
   begin
-    if pdf.zone = nowhere then
-      New_Page(pdf);
-    end if;
+    No_Nowhere (pdf);
     Append(pdf.stream_obj_buf, s);
-  end;
+  end Wd;
 
   procedure WLd(pdf : in out PDF_Out_Stream'Class; s: String) is
   pragma Inline(WLd);
   begin
     Wd(pdf, s & NL);
-  end;
+  end WLd;
 
   --  External stream index
 
@@ -441,23 +446,21 @@ package body PDF_Out is
     Insert_PDF_Font_Selection_Code(pdf);
   end Line_Spacing_Pt;
 
-  procedure End_text(pdf: in out PDF_Out_Stream) is
-  begin
-    WLd(pdf,  "  ET");
-  end End_text;
-
-  procedure Begin_text(pdf: in out PDF_Out_Stream) is
+  procedure Begin_text(pdf: in out PDF_Out_Stream'Class) is
   begin
     WLd(pdf,  "  BT");  --  Begin Text object (9.4.1, Table 107)
   end Begin_text;
 
+  procedure End_text(pdf: in out PDF_Out_Stream'Class) is
+  begin
+    WLd(pdf,  "  ET");
+  end End_text;
+
   procedure Dispose is new Ada.Unchecked_Deallocation(Page_table, p_Page_table);
 
-  procedure Flip_to (pdf: in out PDF_Out_Stream; new_state: Text_or_graphics) is
+  procedure Flip_to (pdf: in out PDF_Out_Stream'Class; new_state: Text_or_graphics) is
   begin
-    if pdf.zone = nowhere then
-      New_Page(pdf);
-    end if;
+    No_Nowhere (pdf);
     --  WLd(pdf,  " % Text_or_graphics before: " & pdf.text_switch'Image);
     if pdf.text_switch /= new_state then
       pdf.text_switch := new_state;
@@ -539,7 +542,7 @@ package body PDF_Out is
 
   begin
     if pdf.zone = nowhere then
-      return; -- We are already "between pages"
+      return;  --  We are already "between pages"
     end if;
     if test_page_mode then
       null;  --  Nothing to do anymore with test page
@@ -730,9 +733,7 @@ package body PDF_Out is
   procedure Image(pdf: in out PDF_Out_Stream; file_name: String; target: Rectangle) is
     image_index: Positive;  --  Index in the list of images
   begin
-    if pdf.zone = nowhere then
-      New_Page(pdf);
-    end if;
+    No_Nowhere (pdf);
     PDF_Out.Images.Image_ref(pdf, file_name, image_index);
     Insert_Graphics_PDF_Code(pdf, "q " &
       Img(target.width) & " 0 0 " & Img(target.height) &
