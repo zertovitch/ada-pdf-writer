@@ -94,6 +94,14 @@ a certain order:
 
 5. (PDF_Out_String only) function Contents returns the full .pdf
 
+Thanks to...
+============
+
+Giuseppe Cannone, for testing with third-party online validator
+   ( https://www.pdf-online.com/osa/validate.aspx ) and related
+   patch to the PDF Writer.
+
+--
 Enjoy!
 
 Gautier de Montmollin
