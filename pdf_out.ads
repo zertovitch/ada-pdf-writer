@@ -9,7 +9,7 @@
 
 -- Legal licensing note:
 
---  Copyright (c) 2014 .. 2017 Gautier de Montmollin
+--  Copyright (c) 2014 .. 2018 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -383,8 +383,8 @@ package PDF_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "004, preview 2";
-  reference : constant String:= "(in 2018)";
+  version   : constant String:= "004";
+  reference : constant String:= "06-May-2018";
   web       : constant String:= "http://apdf.sf.net/";
   -- hopefully the latest version is at that URL ^
 

@@ -30,7 +30,7 @@ Contents
   - pdf_out-*          : private children packages (needed but not relevant for users)
   - pdf_out_demo.adb   : demo procedure
   - pdf_out_gnat.gpr   : project file for the GNAT compiler
-  - pdf_out_oa.prj     : project file for the ObjectAda (7.2.2) compiler
+  - pdf_out_oa.prj     : project file for the ObjectAda (9.2) compiler
   - pdf_writer.txt     : this file
   - gid/*              : packages used by pdf_out.adb (this is the Generic Image Decoder)
 

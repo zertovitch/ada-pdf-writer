@@ -16,7 +16,7 @@ begin
   --  validator doesn't give locations of eventual errors.
   --
   for test in 1 .. 2 loop
-    pdf.Create ("validation test" & test'Image & ".pdf");
+    pdf.Create ("validation test" & Integer'Image (test) & ".pdf");
     pdf.Page_Setup (A4_portrait);
     case test is
       when 1 =>  --  Simple vector graphics
