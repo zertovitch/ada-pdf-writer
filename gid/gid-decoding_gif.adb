@@ -1,5 +1,7 @@
--- A GIF stream is made of several "blocks".
--- The image itself is contained in an Image Descriptor block.
+--  GIF Decoder by André van Splunter
+--
+--  A GIF stream is made of several "blocks".
+--  The image itself is contained in an Image Descriptor block.
 --
 with GID.Buffering, GID.Color_tables;
 
@@ -138,7 +140,7 @@ package body GID.Decoding_GIF is
         begin
           return 16 * (16 * x) + x;  --  this is 257 * x, = 16#0101# * x
           --  Numbers 8-bit -> no OA warning at instanciation. Returns x if type Primary_color_range is mod 2**8.
-        end;
+        end Times_257;
         full_opaque: constant Primary_color_range:= Primary_color_range'Last;
       begin
         if transparency and then b = Transp_color then
@@ -239,10 +241,13 @@ package body GID.Decoding_GIF is
         end if;
       end Next_Pixel;
 
-      -- The string table
+      --  The string table
       Prefix : array ( 0..4096 ) of Natural:= (others => 0);
       Suffix : array ( 0..4096 ) of Natural:= (others => 0);
-      Stack  : array ( 0..1024 ) of Natural;
+      --  Top of Stack was 1024 until files from
+      --    https://www.kaggle.com/c/carvana-image-masking-challenge
+      --  broke it (July 2017)...
+      Stack  : array ( 0..2048 ) of Natural;
 
       -- Special codes (specific to GIF's flavour of LZW)
       ClearCode : constant Natural:= 2 ** CurrSize; -- Reset code
@@ -364,16 +369,17 @@ package body GID.Decoding_GIF is
 
     -- Here we have several specialized instances of GIF_Decode,
     -- with parameters known at compile-time -> optimizing compilers
-    -- will skip expensive tests about interlacing, transparency.
+    -- will do expensive tests about interlacing and transparency at compile-time,
+    -- not at run-time.
     --
     procedure GIF_Decode_interlaced_transparent_8 is
-      new GIF_Decode(True, True, 255);
+      new GIF_Decode(interlaced => True,  transparency => True,  pixel_mask => 255);
     procedure GIF_Decode_straight_transparent_8 is
-      new GIF_Decode(False, True, 255);
+      new GIF_Decode(interlaced => False, transparency => True,  pixel_mask => 255);
     procedure GIF_Decode_interlaced_opaque_8 is
-      new GIF_Decode(True, False, 255);
+      new GIF_Decode(interlaced => True,  transparency => False, pixel_mask => 255);
     procedure GIF_Decode_straight_opaque_8 is
-      new GIF_Decode(False, False, 255);
+      new GIF_Decode(interlaced => False, transparency => False, pixel_mask => 255);
     --
     procedure Skip_sub_blocks is
       temp: U8;
@@ -434,7 +440,7 @@ package body GID.Decoding_GIF is
           case label is
             when 16#F9# => -- See: 23. Graphic Control Extension
               if full_trace then
-                Ada.Text_IO.Put_Line(" - Graphic Control Extension");
+                Ada.Text_IO.Put_Line(" - 16#F9#: Graphic Control Extension");
               end if;
               Get_Byte(image.buffer, temp );
               if temp /= 4 then
@@ -459,7 +465,7 @@ package body GID.Decoding_GIF is
               Get_Byte(image.buffer, temp );
             when 16#FE# => -- See: 24. Comment Extension
               if full_trace then
-                Ada.Text_IO.Put_Line(" - Comment Extension");
+                Ada.Text_IO.Put_Line(" - 16#FE#: Comment Extension");
                 sub_blocks_sequence:
                 loop
                   Get_Byte(image.buffer, temp ); -- load sub-block length byte
@@ -477,24 +483,31 @@ package body GID.Decoding_GIF is
               end if;
             when 16#01# => -- See: 25. Plain Text Extension
               if full_trace then
-                Ada.Text_IO.Put_Line(" - Plain Text Extension");
+                Ada.Text_IO.Put_Line(" - 16#01#: Plain Text Extension");
               end if;
               Skip_sub_blocks;
             when 16#FF# => -- See: 26. Application Extension
               if full_trace then
-                Ada.Text_IO.Put_Line(" - Application Extension");
+                Ada.Text_IO.Put_Line(" - 16#FF#: Application Extension");
               end if;
               Skip_sub_blocks;
             when others =>
               if full_trace then
-                Ada.Text_IO.Put_Line(" - Unused:" & U8'Image(label));
+                Ada.Text_IO.Put_Line(" - Unused extension:" & U8'Image(label));
               end if;
               Skip_sub_blocks;
           end case;
+        when ASCII.NUL =>
+          --  Occurs in some buggy GIFs (2016).
+          --  Seems a 2nd zero, the 1st marking the end of sub-block list.
+          if full_trace then
+            Ada.Text_IO.Put_Line(" - Wrong separator, skip and hope for the better...");
+          end if;
         when others =>
           Raise_Exception(
             error_in_image_data'Identity,
-            "Unknown GIF separator: " & separator
+            "Unknown GIF separator: [" & separator &
+            "] code:" & Integer'Image(Character'Pos(separator))
           );
       end case;
     end loop;
