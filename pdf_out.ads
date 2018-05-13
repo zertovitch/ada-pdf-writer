@@ -187,8 +187,16 @@ package PDF_Out is
   default_line_spacing: constant:= 1.2;
   procedure Line_Spacing_Pt(pdf: in out PDF_Out_Stream; pt: Real);   --  in Point units
 
+  --------------
+  --  Colors  --
+  --------------
+
+  --  0.0 = minimum intensity
+  --  1.0 = maximum intensity.
+  subtype Color_Value is Real range 0.0 .. 1.0;
+
   type Color_Type is record
-    red, green, blue: Real;
+    red, green, blue: Color_Value;
   end record;
 
   black: constant Color_Type:= (0.0,0.0,0.0);

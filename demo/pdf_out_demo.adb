@@ -69,7 +69,7 @@ procedure PDF_Out_Demo is
       New_Line(pdf, 2);
       Line_Spacing(pdf, 2.0);
       for r in 1..5 loop
-        Color(pdf, (Real(r) * 0.2, 0.0, 0.0));
+        Color(pdf, (Real(r) * 0.19999, 0.0, 0.0));
         Put_Line(pdf, "Variations of red...");
       end loop;
       Line_Spacing(pdf, default_line_spacing);
