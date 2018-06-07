@@ -94,6 +94,9 @@ procedure PDF_Out_Demo is
       New_Line(pdf);
       Finish_Page(pdf);  --  Needed for having the footer right before changing orientation.
       Page_Setup(pdf, A4_landscape);
+      ----------------------------------
+      --  Ada Airlines boarding pass  --
+      ----------------------------------
       New_Page(pdf);
       Put_Line(pdf, "Just had a page break (and switched to landscape)...");
       declare
@@ -120,9 +123,27 @@ procedure PDF_Out_Demo is
         Boarding_pass(205.0, "ZERTE, JULES", z_from, z_to, z_date);
         Boarding_pass(  5.0, "ZERTE, ROMEOTTE", z_from, z_to, z_date);
       end;
-      --
-      --  Some vector graphics
-      --
+      ------------------------------
+      --  Testing standard fonts  --
+      ------------------------------
+      New_Page (pdf);
+      for std_fnt in Standard_Font_Type loop
+        Font_Size (pdf, 10.0);
+        Font (pdf, Helvetica);
+        Put (pdf, "Displaying standard font: " & Standard_Font_Type'Image (std_fnt) & ' ');
+        Font (pdf, std_fnt);
+        Font_Size (pdf, 8.0);
+        Put (pdf, "Hello! (8pt) ");
+        Font_Size (pdf, 16.0);
+        Put (pdf, "Hello! (16pt) ");
+        Font_Size (pdf, 24.0);
+        Put (pdf, "Hello! (24pt) ");
+        New_Line (pdf);
+      end loop;
+      Font_Size (pdf, 11.0);
+      ------------------------------------------------------
+      --  Some vector graphics - lines and closed shapes  --
+      ------------------------------------------------------
       New_Page(pdf);
       --  Testing line widths
       for i in 1..8 loop
@@ -150,6 +171,9 @@ procedure PDF_Out_Demo is
       end loop;
       Finish_Page(pdf);  --  Needed for having the footer right before changing orientation.
       Page_Setup(pdf, A4_portrait);
+      ----------------------------------------------------------------------
+      --  More advanced vector graphics - various ways of closing shapes  --
+      ----------------------------------------------------------------------
       New_Page(pdf);
       declare
         procedure Bezier_curves_demo(o: Point) is
@@ -186,9 +210,9 @@ procedure PDF_Out_Demo is
       end;
       Finish_Page(pdf);  --  Needed for having the footer right before changing orientation.
       Page_Setup(pdf, A4_landscape);
-      --
-      --  The Ada mascot !
-      --
+      ------------------------
+      --  The Ada mascot !  --
+      ------------------------
       New_Page(pdf);
       Put(pdf, "Direct PDF vector graphics code inclusion - Ada Mascot: see http://joinadanow.com/#mascot");
       for cx in 1..8 loop
@@ -202,9 +226,9 @@ procedure PDF_Out_Demo is
           );
         end loop;
       end loop;
-      --
-      --  The Ada mascot !
-      --
+      ------------------------------------------------------------------
+      --  Bar code from Ada Bar Codes - http://ada-bar-codes.sf.net/  --
+      ------------------------------------------------------------------
       New_Page(pdf);
       Put(pdf, "Direct PDF vector graphics code inclusion - a bar code from: http://ada-bar-codes.sf.net/");
       --

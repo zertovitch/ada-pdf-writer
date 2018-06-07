@@ -51,6 +51,7 @@ package body Fancy_page is
   procedure Page_Footer (pdf : in out Fancy_PDF) is
     pg_layout: constant PDF_Out.Rectangle:= Layout(pdf);
   begin
+    --  Footer line through the page:
     Line_Width(pdf, 1.0);
     Stroking_Color(pdf, black);
     Single_Line(pdf,
@@ -59,8 +60,10 @@ package body Fancy_page is
       (X_Max(pg_layout) - Right_Margin(pdf),
        pg_layout.y_min + Bottom_Margin(pdf))
     );
-    Color(pdf, black);
-    Font_Size(pdf, 11.0);
+    --  Page numbering:
+    Color (pdf, black);
+    Font (pdf, Helvetica);
+    Font_Size (pdf, 11.0);
     Text_XY(pdf, Left_Margin(pdf), pg_layout.y_min + Bottom_Margin(pdf) - pt_font);
     Put(pdf, "Page" & Integer'Image(Page(pdf)) & " /" & Integer'Image(pdf.page_nb));
   end Page_Footer;
