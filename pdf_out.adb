@@ -385,6 +385,9 @@ package body PDF_Out is
     return Font_Dictionary_Name(Standard_Font_Name(f));
   end Standard_Font_Dictionary_Name;
 
+  --  7.8.3 Resource Dictionaries (any resources required by a page).
+  --  Table 33: Font: A dictionary that maps resource names to font dictionaries.
+  --
   procedure Font_Dictionary(pdf: in out PDF_Out_Stream'Class) is
   begin
     WL(pdf, "  /Font <<");  --  font dictionary
@@ -495,11 +498,14 @@ package body PDF_Out is
       pdf.page_idx:= new_table;
     end if;
     pdf.page_idx(pdf.last_page):= pdf.objects;
-    --  Table 30 for options
+    --  Table 30 (7.7.3.3 Page Objects) for options
     WL(pdf, "  <</Type /Page");
     WL(pdf, "    /Parent " & Img(pages_idx) & " 0 R");
-    WL(pdf, "    /Contents " & Img(pdf.objects + 1) & " 0 R");   --  Contents stream object is n+1
-    WL(pdf, "    /Resources " & Img(pdf.objects + 2) & " 0 R");  --  Resources object is n+2
+    --  Contents stream object is object number n+1 (our choice):
+    WL(pdf, "    /Contents " & Img(pdf.objects + 1) & " 0 R");
+    --  Resources: a dictionary containing any resources required by the page.
+    --  Resources object is object number n+2 (our choice):
+    WL(pdf, "    /Resources " & Img(pdf.objects + 2) & " 0 R");
     WL(pdf, "    /MediaBox [" & Img(pdf.page_box, absolute) & ']');
     WL(pdf, "  >>");
     WL(pdf, "endobj");
@@ -554,11 +560,14 @@ package body PDF_Out is
     end if;
     pdf.zone:= nowhere;
     Finish_substream(pdf);
-    WL(pdf, "endobj");  --  end of Contents
-    New_object(pdf);    --  Resources Dictionary (7.8.3)
+    WL(pdf, "endobj");  --  end of page contents.
+    --  Resources Dictionary (7.8.3) for the page just finished:
+    New_object(pdf);
     WL(pdf, "<<");
+    --  Font resources:
     Font_Dictionary(pdf);
     appended_object_idx:= pdf.objects + 1;  --  Images contents to be appended after this object
+    --  Image resources:
     WL(pdf, "  /XObject <<");
     Image_List(pdf);
     WL(pdf, "  >>");

@@ -52,6 +52,7 @@
 --  Header and footer are set up by overriding the corresponding methods.
 --
 --  Note: the standard PDF measurement unit is a "point", set as 1/72 inch.
+--
 --  All technical references are to PDF 1.7 format, ISO 32000-1:2008 standard
 --  http://www.adobe.com/devnet/pdf/pdf_reference.html
 --
