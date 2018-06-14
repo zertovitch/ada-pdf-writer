@@ -38,7 +38,6 @@ package body PDF_Out.Images is
     use Ada.Streams.Stream_IO;
     file: File_Type;
     i: GID.Image_descriptor;
-    use GID;
   begin
     Open(file, In_File, image_file_name);
     GID.Load_image_header(i, Stream(file).all, try_tga => False);
