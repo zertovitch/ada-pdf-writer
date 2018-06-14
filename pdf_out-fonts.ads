@@ -7,6 +7,7 @@ private package PDF_Out.Fonts is
   function Font_Dictionary_Name (font_name: String) return String;
 
   --  Font dictionary name within a page, for standard fonts
+  --  Example: /Ada_PDF_Std_Font_Courier-Oblique
   --
   function Standard_Font_Dictionary_Name (f: Standard_Font_Type) return String;
 
