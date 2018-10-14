@@ -30,17 +30,21 @@ Contents
   - pdf_out-*          : private children packages (needed but not relevant for users)
   - pdf_out_demo.adb   : demo procedure
   - pdf_out_gnat.gpr   : project file for the GNAT compiler
-  - pdf_out_oa.prj     : project file for the ObjectAda (9.2) compiler
+  - pdf_out_oa.prj     : project file for the ObjectAda (10+) compiler
   - pdf_writer.txt     : this file
   - gid/*              : packages used by pdf_out.adb (this is the Generic Image Decoder)
 
-Warning & legal
-===============
-There is NO WARRANTY in this software. Read copyright notice in pdf_out.ads.
+
+License / Warning / Legal stuff
+===============================
+
+There is NO WARRANTY in the PDF Writer software.
+PDF Writer is licensed under the MIT License.
+You find the full license and copyright notice in pdf_out.ads.
 
 Portability
 ===========
-This software can be compiled for any target machine, and with any compiler
+PDF Writer can be compiled for any target machine, and with any compiler
 for Ada 95 or later language versions.
 
 How to build PDF Writer and its demo
@@ -52,7 +56,7 @@ or
     - open the pdf_out_gnat.gpr file (will launch the GNAT Programming Studio (GPS)),
       press F4 (Build)
 
-Here is how to build with ObjectAda (tested with v.7.2.2):
+Here is how to build with ObjectAda (10+):
     - open the pdf_out_oa.prj file, press F7 (Build)
 
 As a result there is a pdf_out_demo[.exe] executable.
