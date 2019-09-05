@@ -15,4 +15,4 @@ begin
   end loop;
   pdf.Put_Line ("This is the last page." & Integer'Image(pdf.Page));
   pdf.Close;
-end;
+end Page_test;

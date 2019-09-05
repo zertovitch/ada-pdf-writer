@@ -37,4 +37,4 @@ begin
     end if;
   end loop;
   Close(pdf);
-end;
+end Img2PDF;

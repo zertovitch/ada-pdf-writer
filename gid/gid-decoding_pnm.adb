@@ -12,7 +12,7 @@ package body GID.Decoding_PNM is
 
     procedure Row_start(y: Natural) is
     begin
-      Set_X_Y(0, image.height-1-y);
+      Set_X_Y(0, Integer (image.height) - 1 - y);
     end Row_start;
 
     type Pixel is record
@@ -45,10 +45,10 @@ package body GID.Decoding_PNM is
             Times_257(Primary_color_range(pix.color.green)),
             Times_257(Primary_color_range(pix.color.blue)),
             Times_257(Primary_color_range(pix.alpha))
-            -- Times_257 makes max intensity FF go to FFFF
+            --  Times_257 makes max intensity FF go to FFFF
           );
         when others =>
-          raise invalid_primary_color_range;
+          raise invalid_primary_color_range with "PNM: color range not supported";
       end case;
     end Output_Pixel;
 
@@ -58,15 +58,15 @@ package body GID.Decoding_PNM is
 
     procedure Get_Mono_Text_Picture is
     begin
-      for y in 0..image.height-1 loop
+      for y in 0 .. Integer (image.height) - 1 loop
         Row_start(y);
-        for x in 0..image.width-1 loop
+        for x in 0 .. Integer (image.width) - 1 loop
           pix.color.red   := U8((1-Get_Integer(image.stream, single_char => True)) * 255);
           pix.color.green := pix.color.red;
           pix.color.blue  := pix.color.red;
           Output_Pixel;
         end loop;
-        Feedback(((y+1)*100)/image.height);
+        Feedback(((y+1)*100) / Integer (image.height));
       end loop;
     end Get_Mono_Text_Picture;
 
@@ -76,15 +76,15 @@ package body GID.Decoding_PNM is
 
     procedure Get_Grey_Text_Picture is
     begin
-      for y in 0..image.height-1 loop
+      for y in 0 .. Integer (image.height) - 1 loop
         Row_start(y);
-        for x in 0..image.width-1 loop
+        for x in 0 .. Integer (image.width) - 1 loop
           pix.color.red   := U8(Get_Integer(image.stream));
           pix.color.green := pix.color.red;
           pix.color.blue  := pix.color.red;
           Output_Pixel;
         end loop;
-        Feedback(((y+1)*100)/image.height);
+        Feedback(((y+1)*100) / Integer (image.height));
       end loop;
     end Get_Grey_Text_Picture;
 
@@ -94,15 +94,15 @@ package body GID.Decoding_PNM is
 
     procedure Get_RGB_Text_Picture is
     begin
-      for y in 0..image.height-1 loop
+      for y in 0 .. Integer (image.height) - 1 loop
         Row_start(y);
-        for x in 0..image.width-1 loop
+        for x in 0 .. Integer (image.width) - 1 loop
           pix.color.red   := U8(Get_Integer(image.stream));
           pix.color.green := U8(Get_Integer(image.stream));
           pix.color.blue  := U8(Get_Integer(image.stream));
           Output_Pixel;
         end loop;
-        Feedback(((y+1)*100)/image.height);
+        Feedback(((y+1)*100) / Integer (image.height));
       end loop;
     end Get_RGB_Text_Picture;
 
@@ -113,9 +113,9 @@ package body GID.Decoding_PNM is
     procedure Get_Mono_Binary_Picture is
       bbf: U8;  --  Bit buffer
     begin
-      for y in 0..image.height-1 loop
+      for y in 0 .. Integer (image.height) - 1 loop
         Row_start(y);
-        for x in 0..image.width-1 loop
+        for x in 0 .. Integer (image.width) - 1 loop
           if x mod 8 = 0 then
             Get_Byte(image.buffer, bbf);
           end if;
@@ -125,7 +125,7 @@ package body GID.Decoding_PNM is
           pix.color.blue  := pix.color.red;
           Output_Pixel;
         end loop;
-        Feedback(((y+1)*100)/image.height);
+        Feedback(((y+1)*100) / Integer (image.height));
       end loop;
     end Get_Mono_Binary_Picture;
 
@@ -135,15 +135,15 @@ package body GID.Decoding_PNM is
 
     procedure Get_Grey_Binary_Picture is
     begin
-      for y in 0..image.height-1 loop
+      for y in 0 .. Integer (image.height) - 1 loop
         Row_start(y);
-        for x in 0..image.width-1 loop
+        for x in 0 .. Integer (image.width) - 1 loop
           Get_Byte(image.buffer, pix.color.red);
           pix.color.green := pix.color.red;
           pix.color.blue  := pix.color.red;
           Output_Pixel;
         end loop;
-        Feedback(((y+1)*100)/image.height);
+        Feedback(((y+1)*100) / Integer(image.height));
       end loop;
     end Get_Grey_Binary_Picture;
 
@@ -153,15 +153,15 @@ package body GID.Decoding_PNM is
 
     procedure Get_RGB_Binary_Picture is
     begin
-      for y in 0..image.height-1 loop
+      for y in 0 .. Integer (image.height) - 1 loop
         Row_start(y);
-        for x in 0..image.width-1 loop
+        for x in 0.. Integer (image.width) - 1 loop
           Get_Byte(image.buffer, pix.color.red);
           Get_Byte(image.buffer, pix.color.green);
           Get_Byte(image.buffer, pix.color.blue);
           Output_Pixel;
         end loop;
-        Feedback(((y+1)*100)/image.height);
+        Feedback(((y+1)*100) / Integer (image.height));
       end loop;
     end Get_RGB_Binary_Picture;
 
@@ -240,5 +240,16 @@ package body GID.Decoding_PNM is
   begin
     return Integer'Value(Get_Token(stream, needs_EOL, single_char));
   end Get_Integer;
+
+  function Get_Positive_32(
+    stream      : Stream_Access;
+    needs_EOL   : Boolean:= False;
+    single_char : Boolean:= False
+  )
+  return Positive_32
+  is
+  begin
+    return Positive_32'Value(Get_Token(stream, needs_EOL, single_char));
+  end Get_Positive_32;
 
 end GID.Decoding_PNM;

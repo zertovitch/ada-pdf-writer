@@ -1,6 +1,8 @@
 with PDF_Out.Fonts,
      PDF_Out.Images;
 
+with GID;
+
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
@@ -13,13 +15,13 @@ package body PDF_Out is
 
   package CIO is new Ada.Text_IO.Integer_IO(Ada.Streams.Stream_IO.Count);
 
-  -- Very low level part which deals with transferring data endian-proof,
-  -- and floats in the IEEE format. This is needed for having PDF Writer
-  -- totally portable on all systems and processor architectures.
+  --  Very low level part which deals with transferring data endian-proof,
+  --  and floats in the IEEE format. This is needed for having PDF Writer
+  --  totally portable on all systems and processor architectures.
 
   type Byte_buffer is array (Integer range <>) of Unsigned_8;
 
-  -- Put numbers with correct endianess as bytes:
+  --  Put numbers with correct endianess as bytes:
   generic
     type Number is mod <>;
     size: Positive;
@@ -47,10 +49,10 @@ package body PDF_Out is
   end Intel_16;
   pragma Unreferenced (Intel_16);
 
-  -- Workaround for the severe xxx'Read xxx'Write performance
-  -- problems in the GNAT and ObjectAda compilers (as in 2009)
-  -- This is possible if and only if Byte = Stream_Element and
-  -- arrays types are both packed and aligned the same way.
+  --  Workaround for the severe xxx'Read xxx'Write performance
+  --  problems in the GNAT and ObjectAda compilers (as in 2009)
+  --  This is possible if and only if Byte = Stream_Element and
+  --  arrays types are both packed and aligned the same way.
   --
   subtype Size_test_a is Byte_buffer(1..19);
   subtype Size_test_b is Ada.Streams.Stream_Element_Array(1..19);
@@ -100,12 +102,12 @@ package body PDF_Out is
       Ada.Streams.Write(stream, SE_Buffer);
     else
       Byte_buffer'Write(stream'Access, buffer);
-      -- ^ This was 30x to 70x slower on GNAT 2009
-      --   Test in the Zip-Ada project.
+      --  ^ This was 30x to 70x slower on GNAT 2009
+      --    Test in the Zip-Ada project.
     end if;
   end Block_Write;
 
-  -- Copy a whole file into a stream, using a temporary buffer
+  --  Copy a whole file into a stream, using a temporary buffer
   procedure Copy_file(
     file_name  : String;
     into       : in out Ada.Streams.Root_Stream_Type'Class;
@@ -245,19 +247,19 @@ package body PDF_Out is
   function X_Max(r: Rectangle) return Real is
   begin
     return r.x_min + r.width;
-  end;
+  end X_Max;
 
   function Y_Max(r: Rectangle) return Real is
   begin
     return r.y_min + r.height;
-  end;
+  end Y_Max;
 
   type Abs_Rel_Mode is (absolute, relative);
 
   function Img(p: Point) return String is
   begin
     return Img(p.x) & ' ' & Img(p.y);
-  end;
+  end Img;
 
   function Img(box: Rectangle; mode: Abs_Rel_Mode) return String is
   begin
@@ -294,7 +296,9 @@ package body PDF_Out is
     New_fixed_index_object(pdf, pdf.objects);
   end New_object;
 
-  producer: constant String:= "Ada PDF Writer " & version & " - ref: " & reference & " - " & web;
+  producer: constant String :=
+    "Ada PDF Writer " & version & ", ref: " & reference & ", " & web &
+    ", using GID (Generic Image Decoder) version " & GID.version;
 
   procedure Write_PDF_header(pdf : in out PDF_Out_Stream'Class) is
   begin
@@ -458,7 +462,7 @@ package body PDF_Out is
       pdf.zone:= in_page;
       Insert_PDF_Font_Selection_Code(pdf);
       pdf.zone:= in_header;
-      -- PDF_Out_Stream'Class: make the call to Page_Header dispatching
+      --  PDF_Out_Stream'Class: make the call to Page_Header dispatching
       Page_Header(PDF_Out_Stream'Class(pdf));
     end if;
     pdf.zone:= in_page;
@@ -553,7 +557,7 @@ package body PDF_Out is
       declare
         use Ada.Strings.Fixed;
         s: String(1..50 + 0*width);
-        -- "0*width" is just to skip a warning about width being unused
+        --  "0*width" is just to skip a warning about width being unused
         package IIO is new Ada.Text_IO.Integer_IO(Integer);
       begin
         IIO.Put(s, num, Base => base);
@@ -671,12 +675,12 @@ package body PDF_Out is
   begin
     Insert_Text_PDF_Code(pdf, Img(Integer(Rendering_Mode'Pos(r))) & " Tr");
     --  Tr = Set rendering mode (Table 106)
-  end;
+  end Text_Rendering_Mode;
 
   function Image_name(i: Positive) return String is
   begin
     return "/Ada_PDF_Img" & Img(i);
-  end;
+  end Image_name;
 
   procedure Image(pdf: in out PDF_Out_Stream; file_name: String; target: Rectangle) is
     image_index: Positive;  --  Index in the list of images
@@ -778,7 +782,7 @@ package body PDF_Out is
   procedure Insert_PDF_Code(pdf: in out PDF_Out_Stream; code: String) is
   begin
     WLd(pdf, "    " & code);  --  Indentation is just cosmetic...
-  end;
+  end Insert_PDF_Code;
 
   procedure Insert_Text_PDF_Code(pdf: in out PDF_Out_Stream; code: String) is
   begin
@@ -797,37 +801,37 @@ package body PDF_Out is
   procedure Title(pdf: in out PDF_Out_Stream; s: String) is
   begin
     pdf.doc_title:= To_Unbounded_String(s);
-  end;
+  end Title;
 
   procedure Author(pdf: in out PDF_Out_Stream; s: String) is
   begin
     pdf.doc_author:= To_Unbounded_String(s);
-  end;
+  end Author;
 
   procedure Subject(pdf: in out PDF_Out_Stream; s: String) is
   begin
     pdf.doc_subject:= To_Unbounded_String(s);
-  end;
+  end Subject;
 
   procedure Keywords(pdf: in out PDF_Out_Stream; s: String) is
   begin
     pdf.doc_keywords:= To_Unbounded_String(s);
-  end;
+  end Keywords;
 
   procedure Creator_Application(pdf: in out PDF_Out_Stream; s: String) is
   begin
     pdf.doc_creator:= To_Unbounded_String(s);
-  end;
+  end Creator_Application;
 
   procedure Page_Header(pdf : in out PDF_Out_Stream) is
   begin
     null;  --  Default header is empty.
-  end;
+  end Page_Header;
 
   procedure Page_Footer(pdf : in out PDF_Out_Stream) is
   begin
     null;  --  Default footer is empty.
-  end;
+  end Page_Footer;
 
   procedure Left_Margin(pdf : out PDF_Out_Stream; pts: Real) is
   begin
@@ -907,13 +911,13 @@ package body PDF_Out is
   is
     dummy_pdf_with_defaults: PDF_Out_Pre_Root_Type;
   begin
-    -- Check if we are trying to re-use a half-finished object (ouch!):
+    --  Check if we are trying to re-use a half-finished object (ouch!):
     if pdf.is_created and not pdf.is_closed then
       raise PDF_stream_not_closed;
     end if;
-    -- We will reset everything with defaults, except this:
+    --  We will reset everything with defaults, except this:
     dummy_pdf_with_defaults.format:= PDF_format;
-    -- Now we reset pdf:
+    --  Now we reset pdf:
     PDF_Out_Pre_Root_Type(pdf):= dummy_pdf_with_defaults;
   end Reset;
 
@@ -1052,16 +1056,16 @@ package body PDF_Out is
     Dispose(pdf.pdf_file);
   end Close;
 
-  -- Set the index on the file
-  procedure Set_Index (pdf: in out PDF_Out_File;
-                       To: Ada.Streams.Stream_IO.Positive_Count)
+  --  Set the index on the file
+  overriding procedure Set_Index (pdf: in out PDF_Out_File;
+                                  to :        Ada.Streams.Stream_IO.Positive_Count)
   is
   begin
-    Ada.Streams.Stream_IO.Set_Index(pdf.pdf_file.all, To);
+    Ada.Streams.Stream_IO.Set_Index(pdf.pdf_file.all, to);
   end Set_Index;
 
-  -- Return the index of the file
-  function Index (pdf: PDF_Out_File) return Ada.Streams.Stream_IO.Count
+  --  Return the index of the file
+  overriding function Index (pdf: PDF_Out_File) return Ada.Streams.Stream_IO.Count
   is
   begin
     return Ada.Streams.Stream_IO.Index(pdf.pdf_file.all);
@@ -1078,22 +1082,22 @@ package body PDF_Out is
   ------------------------
   -- Output to a string --
   ------------------------
-  -- Code reused from Zip_Streams
+  --  Code reused from Zip_Streams
 
-  procedure Read
+  overriding procedure Read
     (Stream : in out Unbounded_Stream;
      Item   : out Stream_Element_Array;     Last   : out Stream_Element_Offset) is
   begin
-    -- Item is read from the stream. If (and only if) the stream is
-    -- exhausted, Last will be < Item'Last. In that case, T'Read will
-    -- raise an End_Error exception.
+    --  Item is read from the stream. If (and only if) the stream is
+    --  exhausted, Last will be < Item'Last. In that case, T'Read will
+    --  raise an End_Error exception.
     --
-    -- Cf: RM 13.13.1(8), RM 13.13.1(11), RM 13.13.2(37) and
-    -- explanations by Tucker Taft
+    --  Cf: RM 13.13.1(8), RM 13.13.1(11), RM 13.13.2(37) and
+    --  explanations by Tucker Taft
     --
     Last:= Item'First - 1;
-    -- if Item is empty, the following loop is skipped; if Stream.Loc
-    -- is already indexing out of Stream.Unb, that value is also appropriate
+    --  if Item is empty, the following loop is skipped; if Stream.Loc
+    --  is already indexing out of Stream.Unb, that value is also appropriate
     for i in Item'Range loop
       Item(i) := Character'Pos (Element(Stream.Unb, Stream.Loc));
       Stream.Loc := Stream.Loc + 1;
@@ -1104,7 +1108,7 @@ package body PDF_Out is
       null; -- what could be read has been read; T'Read will raise End_Error
   end Read;
 
-  procedure Write
+  overriding procedure Write
     (Stream : in out Unbounded_Stream;
      Item   : Stream_Element_Array) is
   begin
@@ -1162,16 +1166,16 @@ package body PDF_Out is
     return To_String(pdf.pdf_memory.Unb);
   end Contents;
 
-  -- Set the index on the PDF string stream
-  procedure Set_Index (pdf: in out PDF_Out_String;
-                       To: Ada.Streams.Stream_IO.Positive_Count)
+  --  Set the index on the PDF string stream
+  overriding procedure Set_Index (pdf: in out PDF_Out_String;
+                                  to :        Ada.Streams.Stream_IO.Positive_Count)
   is
   begin
-    Set_Index(pdf.pdf_memory, Integer(To));
+    Set_Index(pdf.pdf_memory, Integer(to));
   end Set_Index;
 
-  -- Return the index of the PDF string stream
-  function Index (pdf: PDF_Out_String) return Ada.Streams.Stream_IO.Count
+  --  Return the index of the PDF string stream
+  overriding function Index (pdf: PDF_Out_String) return Ada.Streams.Stream_IO.Count
   is
   begin
     return Ada.Streams.Stream_IO.Count(Index(pdf.pdf_memory));

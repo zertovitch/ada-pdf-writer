@@ -187,7 +187,7 @@ procedure PDF_Out_Demo is
           Cubic_Bezier(pdf, o + f * (250.0, 350.0), o + f * (325.0, 350.0), o + f * (325.0, 400.0));
           Cubic_Bezier(pdf, o + f * (325.0, 437.5), o + f * (275.0, 437.5), o + f * (275.0, 400.0));
           Cubic_Bezier(pdf, o + f * (275.0, 382.0), o + f * (300.0, 382.0), o + f * (300.0, 400.0));
-        end;
+        end Bezier_curves_demo;
         y0: Real:= 600.0;
       begin
         Stroking_Color(pdf, black);

@@ -8,7 +8,7 @@ package Fancy_page is
     page_nb: Natural:= 0;  --  Total page number, obtained by running twice (à la TeX).
   end record;
 
-  procedure Page_Header(pdf : in out Fancy_PDF);
-  procedure Page_Footer(pdf : in out Fancy_PDF);
+  overriding procedure Page_Header(pdf : in out Fancy_PDF);
+  overriding procedure Page_Footer(pdf : in out Fancy_PDF);
 
 end Fancy_page;

@@ -77,13 +77,13 @@ package body PDF_Out.Images is
   procedure Clear_local_resource_flag( dn: in out Dir_node ) is
   begin
     dn.local_resource:= False;
-  end;
+  end Clear_local_resource_flag;
 
   procedure Clear_local_resource_flags( pdf: PDF_Out_Stream ) is
     procedure Traverse_and_clear is new Traverse_private(Clear_local_resource_flag);
   begin
     Traverse_and_clear(pdf);
-  end;
+  end Clear_local_resource_flags;
 
   procedure Insert_unloaded_local_images( pdf: in out PDF_Out_Stream ) is
 
@@ -125,12 +125,12 @@ package body PDF_Out.Images is
         Insert_Image_as_XObject(dn.file_name);
         dn.pdf_object_index:= pdf.objects;
       end if;
-    end;
+    end Insert_unloaded_local_image;
 
     procedure Traverse_and_load is new Traverse_private(Insert_unloaded_local_image);
 
   begin
     Traverse_and_load(pdf);
-  end;
+  end Insert_unloaded_local_images;
 
 end PDF_Out.Images;

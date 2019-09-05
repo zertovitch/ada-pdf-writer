@@ -258,4 +258,4 @@ begin
     "2048.668 1372.469 m S" & NL &
     "Q Q"
   );
-end;
+end Insert_Mascot;

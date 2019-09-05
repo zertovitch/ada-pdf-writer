@@ -1,7 +1,5 @@
 with GID.Buffering;
 
-with Ada.Exceptions;
-
 package body GID.Color_tables is
 
   procedure Convert(c, d: in U8; rgb: out RGB_color) is
@@ -28,14 +26,14 @@ package body GID.Color_tables is
       for i in palette'Range loop
         case image.format is
           when BMP =>
-            -- order is BGRx
+            --  order is BGRx
             U8'Read(image.stream, palette(i).blue);
             U8'Read(image.stream, palette(i).green);
             U8'Read(image.stream, palette(i).red);
             U8'Read(image.stream, c);
-            -- x discarded
+            --  x discarded
           when GIF | PNG =>
-            -- buffered; order is RGB
+            --  buffered; order is RGB
             Get_Byte(image.buffer, palette(i).red);
             Get_Byte(image.buffer, palette(i).green);
             Get_Byte(image.buffer, palette(i).blue);
@@ -58,11 +56,9 @@ package body GID.Color_tables is
                 null;
             end case;
           when others =>
-            Ada.Exceptions.Raise_Exception(
-              unsupported_image_subformat'Identity,
+            raise unsupported_image_subformat with
               "Palette loading not implemented for " &
-              Image_format_type'Image(image.format)
-            );
+              Image_format_type'Image(image.format);
         end case;
       end loop;
     end;

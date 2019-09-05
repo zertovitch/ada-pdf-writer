@@ -7,7 +7,7 @@
 -- Version / date / download info: see the version, reference, web strings
 --   defined at the end of the public part of this package.
 
--- Legal licensing note:
+--  Legal licensing note:
 
 --  Copyright (c) 2014 .. 2018 Gautier de Montmollin
 
@@ -29,10 +29,10 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
--- NB: this is the MIT License, as found 12-Sep-2007 on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found 12-Sep-2007 on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
--- (*) All Trademarks mentioned are properties of their respective owners.
+--  (*) All Trademarks mentioned are properties of their respective owners.
 -------------------------------------------------------------------------------------
 --
 --  Follow these steps to create a PDF document stream:
@@ -161,7 +161,7 @@ package PDF_Out is
   function Page(pdf: in PDF_Out_Stream) return Natural;
 
   type Font_Type is
-     (--  The 14 standard fonts
+     ( --  The 14 standard fonts
       Courier,
       Courier_Bold,
       Courier_Bold_Oblique,
@@ -349,19 +349,19 @@ package PDF_Out is
   --  Set_Index and Index are not directly useful for PDF_Out users.
   --  They are private indeed, but they must be visible (RM 3.9.3(10)).
 
-  -- Set the index on the stream
+  --  Set the index on the stream
   procedure Set_Index (pdf: in out PDF_Out_Stream;
                        to: Ada.Streams.Stream_IO.Positive_Count)
   is abstract;
 
-  -- Return the index of the stream
+  --  Return the index of the stream
   function Index (pdf: PDF_Out_Stream) return Ada.Streams.Stream_IO.Count
   is abstract;
 
   -----------------------------------------------------------------
   -- Here are derived stream types, pre-defined in this package. --
   -----------------------------------------------------------------
-  -- * Output to a file:
+  --  * Output to a file:
 
   type PDF_Out_File is new PDF_Out_Stream with private;
 
@@ -375,7 +375,7 @@ package PDF_Out is
 
   function Is_Open(pdf : in PDF_Out_File) return Boolean;
 
-  -- * Output to a string (to be compressed, packaged, transmitted, ... ):
+  --  * Output to a string (to be compressed, packaged, transmitted, ... ):
 
   type PDF_Out_String is new PDF_Out_Stream with private;
 
@@ -395,14 +395,14 @@ package PDF_Out is
   version   : constant String:= "004";
   reference : constant String:= "06-May-2018";
   web       : constant String:= "http://apdf.sf.net/";
-  -- hopefully the latest version is at that URL ^
+  --  hopefully the latest version is at that URL ^
 
 private
 
   min_bits: constant:= Integer'Max(32, System.Word_Size);
-  -- 13.3(8): A word is the largest amount of storage that can be
-  -- conveniently and efficiently manipulated by the hardware,
-  -- given the implementation's run-time model.
+  --  13.3(8): A word is the largest amount of storage that can be
+  --  conveniently and efficiently manipulated by the hardware,
+  --  given the implementation's run-time model.
 
   type PDF_Index_Type is range -2**(min_bits-1) .. 2**(min_bits-1) - 1;
   --  We define an Integer type which is at least 32 bits, but n bits
@@ -415,8 +415,8 @@ private
   type Page_table is array(PDF_Index_Type range <>) of PDF_Index_Type; -- object ID's of pages
   type p_Page_table is access Page_table;
 
-  -- Some unique objects like Pages need to have a pre-determined index,
-  -- otherwise single Page objects don't know their parent's index.
+  --  Some unique objects like Pages need to have a pre-determined index,
+  --  otherwise single Page objects don't know their parent's index.
   pages_idx: constant PDF_Index_Type:= 1;
   last_fix_obj_idx: constant PDF_Index_Type:= 1;
 
@@ -440,12 +440,12 @@ private
 
   type PDF_Raw_Stream_Class is access all Ada.Streams.Root_Stream_Type'Class;
 
-  -- We have a concrete type as hidden ancestor of the PDF_Out_Stream root
-  -- type. A variable of that type is initialized with default values and
-  -- can help re-initialize a PDF_Out_Stream when re-used several times.
-  -- See the Reset procedure in body.
-  -- The abstract PDF_Out_Stream could have default values, but using a
-  -- variable of this type to reset values is not Ada compliant (LRM:3.9.3(8))
+  --  We have a concrete type as hidden ancestor of the PDF_Out_Stream root
+  --  type. A variable of that type is initialized with default values and
+  --  can help re-initialize a PDF_Out_Stream when re-used several times.
+  --  See the Reset procedure in body.
+  --  The abstract PDF_Out_Stream could have default values, but using a
+  --  variable of this type to reset values is not Ada compliant (LRM:3.9.3(8))
   --
   type PDF_Out_Pre_Root_Type is tagged record
     pdf_stream    : PDF_Raw_Stream_Class;
@@ -503,17 +503,17 @@ private
     file_name  : Unbounded_String;
   end record;
 
-  -- Set the index on the file
-  procedure Set_Index (pdf: in out PDF_Out_File;
-                       To: Ada.Streams.Stream_IO.Positive_Count);
+  --  Set the index on the file
+  overriding procedure Set_Index (pdf: in out PDF_Out_File;
+                                  to :        Ada.Streams.Stream_IO.Positive_Count);
 
-  -- Return the index of the file
-  function Index (pdf: PDF_Out_File) return Ada.Streams.Stream_IO.Count;
+  --  Return the index of the file
+  overriding function Index (pdf: PDF_Out_File) return Ada.Streams.Stream_IO.Count;
 
   ------------------------
   -- Output to a string --
   ------------------------
-  -- Code reused from Zip_Streams
+  --  Code reused from Zip_Streams
 
   --- *** We define here a complete in-memory stream:
   type Unbounded_Stream is new Ada.Streams.Root_Stream_Type with
@@ -522,22 +522,22 @@ private
       Loc : Integer := 1;
     end record;
 
-  -- Read data from the stream.
-  procedure Read
+  --  Read data from the stream.
+  overriding procedure Read
     (Stream : in out Unbounded_Stream;
      Item   : out Ada.Streams.Stream_Element_Array;
      Last   : out Ada.Streams.Stream_Element_Offset);
 
-  -- write data to the stream, starting from the current index.
-  -- Data will be overwritten from index is already available.
-  procedure Write
+  --  write data to the stream, starting from the current index.
+  --  Data will be overwritten from index is already available.
+  overriding procedure Write
     (Stream : in out Unbounded_Stream;
      Item   : Ada.Streams.Stream_Element_Array);
 
-  -- Set the index on the stream
+  --  Set the index on the stream
   procedure Set_Index (S : access Unbounded_Stream; To : Positive);
 
-  -- returns the index of the stream
+  --  returns the index of the stream
   function Index (S: access Unbounded_Stream) return Integer;
 
   --- ***
@@ -548,11 +548,11 @@ private
     pdf_memory: Unbounded_Stream_Acc;
   end record;
 
-  -- Set the index on the PDF string stream
-  procedure Set_Index (pdf: in out PDF_Out_String;
-                       To: Ada.Streams.Stream_IO.Positive_Count);
+  --  Set the index on the PDF string stream
+  overriding procedure Set_Index (pdf: in out PDF_Out_String;
+                                  to :        Ada.Streams.Stream_IO.Positive_Count);
 
-  -- Return the index of the PDF string stream
-  function Index (pdf: PDF_Out_String) return Ada.Streams.Stream_IO.Count;
+  --  Return the index of the PDF string stream
+  overriding function Index (pdf: PDF_Out_String) return Ada.Streams.Stream_IO.Count;
 
 end PDF_Out;

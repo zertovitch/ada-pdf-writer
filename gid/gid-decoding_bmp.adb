@@ -30,27 +30,27 @@ package body GID.Decoding_BMP is
             Times_257(Primary_color_range(image.palette(Integer(b)).red)),
             Times_257(Primary_color_range(image.palette(Integer(b)).green)),
             Times_257(Primary_color_range(image.palette(Integer(b)).blue)),
-            -- Times_257 makes max intensity FF go to FFFF
+            --  Times_257 makes max intensity FF go to FFFF
             full_opaque
           );
         when others =>
-          raise invalid_primary_color_range;
+          raise invalid_primary_color_range with "BMP: color range not supported";
       end case;
     end Pixel_with_palette;
     --
     pair: Boolean;
     bit: Natural range 0..7;
     --
-    line_bits: constant Float:= Float(image.width * image.bits_per_pixel);
+    line_bits: constant Float:= Float(image.width * Positive_32 (image.bits_per_pixel));
     padded_line_size: constant Positive:= 4 * Integer(Float'Ceiling(line_bits / 32.0));
     unpadded_line_size: constant Positive:= Integer(Float'Ceiling(line_bits / 8.0));
-    -- (in bytes)
+    --  (in bytes)
   begin
     Attach_Stream(image.buffer, image.stream);
     y:= 0;
-    while y <= image.height-1 loop
+    while y <= Integer (image.height) - 1 loop
       x:= 0;
-      x_max:= image.width-1;
+      x_max:= Integer (image.width) - 1;
       case image.bits_per_pixel is
         when 1 => -- B/W
           bit:= 0;
@@ -109,11 +109,11 @@ package body GID.Decoding_BMP is
                   Times_257(Primary_color_range(br)),
                   Times_257(Primary_color_range(bg)),
                   Times_257(Primary_color_range(bb)),
-                  -- Times_257 makes max intensity FF go to FFFF
+                  --  Times_257 makes max intensity FF go to FFFF
                   full_opaque
                 );
               when others =>
-                raise invalid_primary_color_range;
+                raise invalid_primary_color_range with "BMP: color range not supported";
             end case;
             x:= x + 1;
           end loop;
@@ -124,7 +124,7 @@ package body GID.Decoding_BMP is
         Get_Byte(image.buffer, b);
       end loop;
       y:= y + 1;
-      Feedback((y*100)/image.height);
+      Feedback((y*100) / Integer (image.height));
     end loop;
   end Load;
 

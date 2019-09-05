@@ -5,7 +5,7 @@
 --
 with GID.Buffering, GID.Color_tables;
 
-with Ada.Exceptions, Ada.Text_IO;
+with Ada.Text_IO;
 
 package body GID.Decoding_GIF is
 
@@ -45,10 +45,10 @@ package body GID.Decoding_GIF is
   )
   is
     local: Image_descriptor;
-    -- With GIF, each frame is a local image with an eventual
-    -- palette, different dimensions, etc. ...
+    --  With GIF, each frame is a local image with an eventual
+    --  palette, different dimensions, etc. ...
 
-    use GID.Buffering, Ada.Exceptions;
+    use GID.Buffering;
 
     type GIFDescriptor is record
       ImageLeft,
@@ -58,23 +58,23 @@ package body GID.Decoding_GIF is
       Depth       : U8;
     end record;
 
-    -- For loading from the GIF file
+    --  For loading from the GIF file
     Descriptor : GIFDescriptor;
 
-    -- Coordinates
+    --  Coordinates
     X, tlX, brX : Natural;
     Y, tlY, brY : Natural;
 
-    -- Code information
+    --  Code information
     subtype Code_size_range is Natural range 2..12;
     CurrSize : Code_size_range;
 
     subtype Color_type is U8;
     Transp_color   : Color_type:= 0;
 
-    -- GIF data is stored in blocks and sub-blocks.
-    -- We initialize block_read and block_size to force
-    -- reading and buffering the next sub-block
+    --  GIF data is stored in blocks and sub-blocks.
+    --  We initialize block_read and block_size to force
+    --  reading and buffering the next sub-block
     block_size   : Natural:= 0;
     block_read   : Natural:= 0;
 
@@ -92,25 +92,25 @@ package body GID.Decoding_GIF is
       return b;
     end Read_Byte;
 
-    -- Used while reading the codes
+    --  Used while reading the codes
     bits_in : U8:= 8;
     bits_buf: U8;
 
-    -- Local procedure to read the next code from the file
+    --  Local procedure to read the next code from the file
     function Read_Code return Natural is
       bit_mask: Natural:= 1;
       code: Natural:= 0;
     begin
-      -- Read the code, bit by bit
+      --  Read the code, bit by bit
       for Counter  in reverse  0..CurrSize - 1  loop
-        -- Next bit
+        --  Next bit
         bits_in:= bits_in + 1;
-        -- Maybe, a new byte needs to be loaded with a further 8 bits
+        --  Maybe, a new byte needs to be loaded with a further 8 bits
         if bits_in = 9 then
           bits_buf:= Read_Byte;
           bits_in := 1;
         end if;
-        -- Add the current bit to the code
+        --  Add the current bit to the code
         if (bits_buf  and  1) > 0 then
           code:= code + bit_mask;
         end if;
@@ -121,9 +121,9 @@ package body GID.Decoding_GIF is
     end Read_Code;
 
     generic
-      -- Parameter(s) that are constant through
-      -- the whole image. Macro-expanded generics and
-      -- some optimization will trim corresponding "if's"
+      --  Parameter(s) that are constant through
+      --  the whole image. Macro-expanded generics and
+      --  some optimization will trim corresponding "if's"
       interlaced     : Boolean;
       transparency   : Boolean;
       pixel_mask     : U32;
@@ -159,41 +159,41 @@ package body GID.Decoding_GIF is
               Times_257(Primary_color_range(local.palette(Integer(b)).red)),
               Times_257(Primary_color_range(local.palette(Integer(b)).green)),
               Times_257(Primary_color_range(local.palette(Integer(b)).blue)),
-              -- Times_257 makes max intensity FF go to FFFF
+              --  Times_257 makes max intensity FF go to FFFF
               full_opaque
             );
           when others =>
-            raise invalid_primary_color_range;
+            raise invalid_primary_color_range with "GIF: color range not supported";
         end case;
       end Pixel_with_palette;
 
-      -- Interlacing
+      --  Interlacing
       Interlace_pass : Natural range 1..4:= 1;
       Span           : Natural:= 7;
 
-      -- Local procedure to draw a pixel
+      --  Local procedure to draw a pixel
       procedure Next_Pixel(code: Natural) is
       pragma Inline(Next_Pixel);
         c : constant Color_type:= Color_type(U32(code) and pixel_mask);
       begin
-        -- Actually draw the pixel on screen buffer
-        if X < image.width then
+        --  Actually draw the pixel on screen buffer
+        if X < Integer (image.width) then
           if interlaced and mode = nice then
-            for i in reverse 0..Span loop
-              if Y+i < image.height then
-                Set_X_Y(X, image.height - (Y+i) - 1);
+            for i in reverse 0 .. Span loop
+              if Y+i < Integer (image.height) then
+                Set_X_Y(X, Integer (image.height) - (Y+i) - 1);
                 Pixel_with_palette(c);
               end if;
             end loop;
-          elsif Y < image.height then
+          elsif Y < Integer (image.height) then
             Pixel_with_palette(c);
           end if;
         end if;
 
-        -- Move on to next pixel
+        --  Move on to next pixel
         X:= X + 1;
 
-        -- Or next row, if necessary
+        --  Or next row, if necessary
         if X = brX then
           X:= tlX;
           if interlaced then
@@ -225,16 +225,16 @@ package body GID.Decoding_GIF is
               when 4 =>
                 Y:= Y + 2;
             end case;
-            if mode = fast and then Y < image.height then
-              Set_X_Y(X, image.height - Y - 1);
+            if mode = fast and then Y < Integer (image.height) then
+              Set_X_Y(X, Integer (image.height) - Y - 1);
             end if;
           else -- not interlaced
             Y:= Y + 1;
-            if Y < image.height then
-              Set_X_Y(X, image.height - Y - 1);
+            if Y < Integer (image.height) then
+              Set_X_Y(X, Integer (image.height) - Y - 1);
             end if;
             if Y mod 32 = 0 then
-              Feedback((Y*100)/image.height);
+              Feedback((Y*100) / Integer (image.height));
             end if;
           end if;
         end if;
@@ -248,7 +248,7 @@ package body GID.Decoding_GIF is
       --  broke it (July 2017)...
       Stack  : array ( 0..2048 ) of Natural;
 
-      -- Special codes (specific to GIF's flavour of LZW)
+      --  Special codes (specific to GIF's flavour of LZW)
       ClearCode : constant Natural:= 2 ** CurrSize; -- Reset code
       EndingCode: constant Natural:= ClearCode + 1; -- End of file
       FirstFree : constant Natural:= ClearCode + 2; -- Strings start here
@@ -264,8 +264,8 @@ package body GID.Decoding_GIF is
       BadCodeCount : Natural:= 0;  --  the number of bad codes found
 
     begin -- GIF_Decode
-      -- The decoder source and the cool comments are kindly donated by
-      -- André van Splunter.
+      --  The decoder source and the cool comments are kindly donated by
+      --  André van Splunter.
       --
       CurrSize:= InitCodeSize;
       --  This is the main loop.  For each code we get we pass through the
@@ -366,10 +366,10 @@ package body GID.Decoding_GIF is
       end if;
     end GIF_Decode;
 
-    -- Here we have several specialized instances of GIF_Decode,
-    -- with parameters known at compile-time -> optimizing compilers
-    -- will do expensive tests about interlacing and transparency at compile-time,
-    -- not at run-time.
+    --  Here we have several specialized instances of GIF_Decode,
+    --  with parameters known at compile-time -> optimizing compilers
+    --  will do expensive tests about interlacing and transparency at compile-time,
+    --  not at run-time.
     --
     procedure GIF_Decode_interlaced_transparent_8 is
       new GIF_Decode(interlaced => True,  transparency => True,  pixel_mask => 255);
@@ -387,7 +387,7 @@ package body GID.Decoding_GIF is
        loop
         Get_Byte(image.buffer, temp ); -- load sub-block length byte
         exit sub_blocks_sequence when temp = 0;
-        -- null sub-block = end of sub-block sequence
+        --  null sub-block = end of sub-block sequence
         for i in 1..temp loop
           Get_Byte(image.buffer, temp ); -- load sub-block byte
         end loop;
@@ -402,14 +402,14 @@ package body GID.Decoding_GIF is
     local_palette  : Boolean;
     --
     separator :  Character ;
-    -- Colour information
+    --  Colour information
     new_num_of_colours : Natural;
     pixel_mask : U32;
     BitsPerPixel  : Natural;
 
   begin -- Load
     next_frame:= 0.0;
-    -- Scan various GIF blocks, until finding an image
+    --  Scan various GIF blocks, until finding an image
     loop
       Get_Byte(image.buffer, temp);
       separator:= Character'Val(temp);
@@ -422,8 +422,8 @@ package body GID.Decoding_GIF is
       case separator is
         when ',' => -- 16#2C#
           exit;
-          -- Image descriptor will begin
-          -- See: 20. Image Descriptor
+          --  Image descriptor will begin
+          --  See: 20. Image Descriptor
         when ';' => -- 16#3B#
           if full_trace then
             Ada.Text_IO.Put(" - End of GIF");
@@ -443,10 +443,7 @@ package body GID.Decoding_GIF is
               end if;
               Get_Byte(image.buffer, temp );
               if temp /= 4 then
-                Raise_Exception(
-                  error_in_image_data'Identity,
-                  "GIF: error in Graphic Control Extension"
-                );
+                raise error_in_image_data with "GIF: error in Graphic Control Extension";
               end if;
               Get_Byte(image.buffer, temp );
               --  Reserved                      3 Bits
@@ -460,7 +457,7 @@ package body GID.Decoding_GIF is
               next_frame:= image.next_frame;
               Get_Byte(image.buffer, temp );
               Transp_color:= Color_type(temp);
-              -- zero sub-block:
+              --  zero sub-block:
               Get_Byte(image.buffer, temp );
             when 16#FE# => -- See: 24. Comment Extension
               if full_trace then
@@ -469,7 +466,7 @@ package body GID.Decoding_GIF is
                 loop
                   Get_Byte(image.buffer, temp ); -- load sub-block length byte
                   exit sub_blocks_sequence when temp = 0;
-                  -- null sub-block = end of sub-block sequence
+                  --  null sub-block = end of sub-block sequence
                   for i in 1..temp loop
                     Get_Byte(image.buffer, temp2);
                     c:= Character'Val(temp2);
@@ -503,22 +500,20 @@ package body GID.Decoding_GIF is
             Ada.Text_IO.Put_Line(" - Wrong separator, skip and hope for the better...");
           end if;
         when others =>
-          Raise_Exception(
-            error_in_image_data'Identity,
-            "Unknown GIF separator: [" & separator &
-            "] code:" & Integer'Image(Character'Pos(separator))
-          );
+          raise error_in_image_data with
+            "GIF: unknown separator: [" & separator &
+            "] code:" & Integer'Image(Character'Pos(separator));
       end case;
     end loop;
 
-    -- Load the image descriptor
+    --  Load the image descriptor
     Read_Intel(image.buffer, Descriptor.ImageLeft);
     Read_Intel(image.buffer, Descriptor.ImageTop);
     Read_Intel(image.buffer, Descriptor.ImageWidth);
     Read_Intel(image.buffer, Descriptor.ImageHeight);
     Get_Byte(image.buffer, Descriptor.Depth);
 
-    -- Get image corner coordinates
+    --  Get image corner coordinates
     tlX := Natural(Descriptor.ImageLeft);
     tlY := Natural(Descriptor.ImageTop);
     brX := tlX + Natural(Descriptor.ImageWidth);
@@ -536,23 +531,20 @@ package body GID.Decoding_GIF is
     local.stream:= image.stream;
     local.buffer:= image.buffer;
     if local_palette then
-      -- Get amount of colours in image
+      --  Get amount of colours in image
       BitsPerPixel := 1 + Natural(Descriptor.Depth and 7);
       new_num_of_colours:= 2 ** BitsPerPixel;
-      -- 21. Local Color Table
+      --  21. Local Color Table
       local.palette:= new Color_table(0..new_num_of_colours-1);
       Color_tables.Load_palette(local);
       image.buffer:= local.buffer;
     elsif image.palette = null then
-      Raise_Exception(
-        error_in_image_data'Identity,
-        "GIF: neither local, nor global palette"
-      );
+      raise error_in_image_data with "GIF: neither local, nor global palette";
     else
-      -- Use global palette
+      --  Use global palette
       new_num_of_colours:= 2 ** image.subformat_id;
-      -- usually <= 2** image.bits_per_pixel
-      -- Just copy main palette
+      --  usually <= 2** image.bits_per_pixel
+      --  Just copy main palette
       local.palette:= new Color_table'(image.palette.all);
     end if;
     pixel_mask:= U32(new_num_of_colours - 1);
@@ -566,34 +558,32 @@ package body GID.Decoding_GIF is
       );
     end if;
 
-    -- Get initial code size
+    --  Get initial code size
     Get_Byte(image.buffer, temp );
     if Natural(temp) not in Code_size_range then
-      Raise_Exception(
-        error_in_image_data'Identity,
+      raise error_in_image_data with
         "GIF: wrong LZW code size (must be in 2..12), is" &
-        U8'Image(temp)
-      );
+        U8'Image(temp);
     end if;
     CurrSize := Natural(temp);
 
-    -- Start at top left of image
+    --  Start at top left of image
     X := Natural(Descriptor.ImageLeft);
     Y := Natural(Descriptor.ImageTop);
-    Set_X_Y(X, image.height - Y - 1);
+    Set_X_Y(X, Integer (image.height) - Y - 1);
     --
     if new_num_of_colours < 256 then
-      -- "Rare" formats -> no need of best speed
+      --  "Rare" formats -> no need of best speed
       declare
-        -- We create an instance with dynamic parameters
+        --  We create an instance with dynamic parameters
         procedure GIF_Decode_general is
           new GIF_Decode(frame_interlaced, frame_transparency, pixel_mask);
       begin
         GIF_Decode_general;
       end;
     else
-      -- 8 bit, usual format: we try to make things
-      -- faster with specialized instanciations...
+      --  8 bit, usual format: we try to make things
+      --  faster with specialized instanciations...
       if frame_interlaced then
         if frame_transparency then
           GIF_Decode_interlaced_transparent_8;

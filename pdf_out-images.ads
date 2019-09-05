@@ -11,7 +11,7 @@ private package PDF_Out.Images is
 
   generic
     with procedure Action_private( dn: in out Dir_node );
-    -- Dir_node is private: only known to us, contents subject to change
+    --  Dir_node is private: only known to us, contents subject to change
   procedure Traverse_private( pdf: PDF_Out_Stream );
 
   procedure Insert_unloaded_local_images( pdf: in out PDF_Out_Stream );

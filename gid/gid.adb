@@ -2,7 +2,7 @@
 -- GID - Generic Image Decoder --
 ---------------------------------
 --
---  Copyright (c) Gautier de Montmollin 2010 .. 2015
+--  Copyright (c) Gautier de Montmollin 2010 .. 2019
 --
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,8 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 --
--- NB: this is the MIT License, as found 2-May-2010 on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found 2-May-2010 on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
 with GID.Headers,
      GID.Decoding_BMP,
@@ -50,11 +50,13 @@ package body GID is
         JPEG_defs.p_VLC_table
       );
   begin
-    -- Deterministic garbage collection
-    Dispose(Object.palette);
+    --  Deterministic garbage collection of heap allocated objects.
+    --  -> Palette
+    Dispose (Object.palette);
+    --  -> JPEG tables
     for ad in JPEG_defs.VLC_defs_type'Range(1) loop
       for idx in JPEG_defs.VLC_defs_type'Range(2) loop
-        Dispose(Object.JPEG_stuff.vlc_defs(ad, idx));
+        Dispose (Object.JPEG_stuff.vlc_defs (ad, idx));
       end loop;
     end loop;
   end Clear_heap_allocated_memory;
@@ -70,7 +72,7 @@ package body GID is
   )
   is
   begin
-    Clear_heap_allocated_memory(image);
+    Clear_heap_allocated_memory (image);
     image.stream:= from'Unchecked_Access;
     --
     --  Load the very first symbols of the header,
@@ -104,7 +106,7 @@ package body GID is
 
   function Pixel_width (image: Image_descriptor) return Positive is
   begin
-    return image.width;
+    return Positive (image.width);
   end Pixel_width;
 
   ------------------
@@ -113,7 +115,7 @@ package body GID is
 
   function Pixel_height (image: Image_descriptor) return Positive is
   begin
-    return image.height;
+    return Positive (image.height);
   end Pixel_height;
 
   function Display_orientation (image: Image_descriptor) return Orientation is
@@ -150,8 +152,8 @@ package body GID is
 
   begin
     next_frame:= 0.0;
-    -- ^ value updated in case of animation and when
-    --   current frame is not the last frame
+    --  ^ value updated in case of animation and when
+    --    current frame is not the last frame
     case image.format is
       when BMP =>
         BMP_Load(image);
@@ -219,15 +221,28 @@ package body GID is
     return image.transparency;
   end Expect_transparency;
 
-  procedure Adjust (Object : in out Image_descriptor) is
+  overriding procedure Adjust (Object : in out Image_descriptor) is
+    use JPEG_defs;
   begin
-    -- Clone the palette
-    Object.palette:= new Color_table'(Object.palette.all);
+    --  Clone heap allocated objects, if any.
+    --  -> Palette
+    if Object.palette /= null then
+      Object.palette := new Color_table'(Object.palette.all);
+    end if;
+    --  -> JPEG tables
+    for ad in JPEG_defs.VLC_defs_type'Range(1) loop
+      for idx in JPEG_defs.VLC_defs_type'Range(2) loop
+        if Object.JPEG_stuff.vlc_defs (ad, idx) /= null then
+          Object.JPEG_stuff.vlc_defs (ad, idx) :=
+            new VLC_table'(Object.JPEG_stuff.vlc_defs (ad, idx).all);
+        end if;
+      end loop;
+    end loop;
   end Adjust;
 
-  procedure Finalize (Object : in out Image_descriptor) is
+  overriding procedure Finalize (Object : in out Image_descriptor) is
   begin
-    Clear_heap_allocated_memory(Object);
+    Clear_heap_allocated_memory (Object);
   end Finalize;
 
 end GID;

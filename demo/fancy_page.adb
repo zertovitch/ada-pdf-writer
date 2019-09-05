@@ -4,7 +4,7 @@ package body Fancy_page is
 
   use PDF_Out;
 
-  procedure Page_Header (pdf : in out Fancy_PDF) is
+  overriding procedure Page_Header (pdf : in out Fancy_PDF) is
     pg_layout: constant PDF_Out.Rectangle:= Layout(pdf);
     factor: constant:= 1.0;
     ada_logo_width  : constant:= 140.0 * factor;
@@ -48,7 +48,7 @@ package body Fancy_page is
     Font_Size(pdf, 11.0);
   end Page_Header;
 
-  procedure Page_Footer (pdf : in out Fancy_PDF) is
+  overriding procedure Page_Footer (pdf : in out Fancy_PDF) is
     pg_layout: constant PDF_Out.Rectangle:= Layout(pdf);
   begin
     --  Footer line through the page:
