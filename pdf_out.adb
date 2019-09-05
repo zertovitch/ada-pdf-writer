@@ -298,7 +298,7 @@ package body PDF_Out is
 
   producer: constant String :=
     "Ada PDF Writer " & version & ", ref: " & reference & ", " & web &
-    ", using GID (Generic Image Decoder) version " & GID.version;
+    " , using GID (Generic Image Decoder) version " & GID.version;
 
   procedure Write_PDF_header(pdf : in out PDF_Out_Stream'Class) is
   begin
@@ -919,6 +919,9 @@ package body PDF_Out is
     dummy_pdf_with_defaults.format:= PDF_format;
     --  Now we reset pdf:
     PDF_Out_Pre_Root_Type(pdf):= dummy_pdf_with_defaults;
+    --  Set a default title (replaced when procedure Title is called).
+    --  In Adobe Reader, this content can be copied to the clipboard.
+    pdf.doc_title := "Document created with: " & To_Unbounded_String(producer);
   end Reset;
 
   procedure Finish(pdf : in out PDF_Out_Stream) is
