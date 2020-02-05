@@ -1,19 +1,17 @@
 --  This is a GNAT, GCC or GNAT Programming Studio (GPS) project file
---  for the Ada PDF Writer project:
+--  for the Ada PDF Writer project.
 --
---      home page:     http://apdf.sf.net/
---      project page:  http://sf.net/projects/apdf/
+--      Home page:       http://apdf.sf.net/
+--      Project page 1:  http://sf.net/projects/apdf/
+--      Project page 2:  https://github.com/zertovitch/ada-pdf-writer
 --
---  Build me with "gprbuild -p -P pdf_out_gnat", or "gnatmake -p -P pdf_out_gnat",
---  or open me with GPS.
+--  Build me with "gprbuild -p -P pdf_out_gnat",
+--  or "gnatmake -p -P pdf_out_gnat", or open me with GPS.
 --
 project PDF_Out_Gnat is
 
-   type Build_Mode_Type is
-      ("Debug", 
-			 "Fast"
-			 );
-   Build_Mode : Build_Mode_Type := external ("Build_Mode", "Debug");
+   type PDF_Build_Mode_Type is ("Debug", "Fast");
+   PDF_Build_Mode : PDF_Build_Mode_Type := external ("PDF_Build_Mode", "Debug");
    for Source_Dirs use (".", "gid", "demo", "tools", "test");
    for Main use (
            "pdf_out_demo.adb",     --  Demos
@@ -23,7 +21,7 @@ project PDF_Out_Gnat is
    );
    for Exec_Dir use ".";
 
-   case Build_Mode is
+   case PDF_Build_Mode is
       when "Debug" =>
          for Object_Dir use "obj_debug";
       when "Fast" =>
@@ -32,7 +30,7 @@ project PDF_Out_Gnat is
 
    package Compiler is
 
-      case Build_Mode is
+      case PDF_Build_Mode is
 
          when "Debug" =>
             for Default_Switches ("ada") use (
@@ -50,7 +48,7 @@ project PDF_Out_Gnat is
    end Compiler;
 
    package Linker is
-      case Build_Mode is
+      case PDF_Build_Mode is
          when "Debug" =>
             for Default_Switches ("ada") use ("-g");
          when "Fast" =>

@@ -25,15 +25,23 @@ Contents
   PDF Writer
   ==========
 
-  - pdf_out.ads        : package specification
-  - pdf_out.adb        : package body
-  - pdf_out-*          : private children packages (needed but not relevant for users)
-  - pdf_out_demo.adb   : demo procedure
-  - pdf_out_gnat.gpr   : project file for the GNAT compiler
-  - pdf_out_oa.prj     : project file for the ObjectAda (10+) compiler
-  - pdf_writer.txt     : this file
-  - gid/*              : packages used by pdf_out.adb (this is the Generic Image Decoder)
+  - pdf_out.ads            : package specification
+  - pdf_out.adb            : package body
+  - pdf_out-*              : private children packages (needed but not relevant for users)
+  - pdf_out_demo.adb       : demo procedure
+  - gid/*                  : packages used by pdf_out.adb (this is GID, the Generic Image Decoder)
+  - pdf_out_gnat.gpr       : project file for the GNAT compiler, using the local GID copy
+  - pdf_out_gnat_w_gid.gpr : project file for the GNAT compiler, with reference to GID as project (*)
+  - pdf_out_oa.prj         : project file for the ObjectAda (10+) compiler
+  - pdf_writer.txt         : this file
 
+(*) The alternative project file for GNAT, pdf_out_gnat_w_gid.gpr, will reference
+    the project file for GID (the Generic Image Decoder), gid.gpr.
+    This is useful if:
+      - you are using GID elsewhere in your own project (to avoid duplication)
+      - GID is visible through GPR_PROJECT_PATH or ADA_PROJECT_PATH (again, to avoid duplication)
+      - you are using the Alire package manager - in this case, all is already
+        managed behind the scenes.
 
 License / Warning / Legal stuff
 ===============================
@@ -45,7 +53,7 @@ You find the full license and copyright notice in pdf_out.ads.
 Portability
 ===========
 PDF Writer can be compiled for any target machine, and with any compiler
-for Ada 95 or later language versions.
+for Ada 2005 or later language versions.
 
 How to build PDF Writer and its demo
 ====================================
@@ -101,9 +109,9 @@ a certain order:
 Thanks to...
 ============
 
-Giuseppe Cannone, for testing with the third-party online validator
-   ( https://www.pdf-online.com/osa/validate.aspx ) and providing a
-   patch to the PDF Writer for making it ISO-compliant.
+Giuseppe Cannone ( http://www.ari-srl.it/ ), for testing with a
+   third-party online validator ( https://www.pdf-online.com/osa/validate.aspx )
+   and providing a patch to the PDF Writer for making it ISO-compliant.
 
 --
 Enjoy!

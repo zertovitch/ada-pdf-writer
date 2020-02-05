@@ -1,0 +1,77 @@
+--  This is a GNAT, GCC or GNAT Programming Studio (GPS) project file
+--  for the Ada PDF Writer project.
+--
+--      Home page:       http://apdf.sf.net/
+--      Project page 1:  http://sf.net/projects/apdf/
+--      Project page 2:  https://github.com/zertovitch/ada-pdf-writer
+--
+--  Build me with "gprbuild -p -P pdf_out_gnat_w_gid",
+--  or "gnatmake -p -P pdf_out_gnat_w_gid", or open me with GPS.
+--
+
+with "gid.gpr";
+
+project PDF_Out_Gnat_w_GID is
+
+   type PDF_Build_Mode_Type is ("Debug", "Fast");
+   PDF_Build_Mode : PDF_Build_Mode_Type := external ("PDF_Build_Mode", "Debug");
+   for Source_Dirs use (".", "demo", "tools", "test");
+   for Main use (
+           "pdf_out_demo.adb",     --  Demos
+           "img2pdf.adb",          --  Tools
+           "validation_test.adb",  --  Test
+           "page_test.adb"
+   );
+   for Exec_Dir use ".";
+
+   case PDF_Build_Mode is
+      when "Debug" =>
+         for Object_Dir use "obj_debug";
+      when "Fast" =>
+         for Object_Dir use "obj_fast";
+   end case;
+
+   package Compiler is
+
+      case PDF_Build_Mode is
+
+         when "Debug" =>
+            for Default_Switches ("ada") use (
+              "-gnatyaknpr",  --  Style: check all casings: a:attribute, k:keywords, n:package Standard identifiers, p:pragma, r:identifier references
+              "-gnatybfhiu",  --  Style: check b:no blanks at end of lines, f:no ff/vtabs, h: no htabs, i:if-then layout, u:no unnecessary blank lines
+              "-gnatyO",      --  Style: check that overriding subprograms are explicitly marked as such.
+              "-gnatyx",      --  Style: check x:no extra parens
+              "-gnatye",      --  Style: check e:end/exit labels present
+              "-gnatyc",      --  Style: check c:comment format (two spaces)
+              "-gnato", "-fno-inline", "-fstack-check", "-g", "-gnatwa", "-gnatVa", "-gnatec=" & project'Project_Dir & "debug.pra");
+
+         when "Fast" =>
+            for Default_Switches ("ada") use ("-O2", "-gnatn", "-gnatp", "-gnatwa", "-fno-strict-aliasing", "-funroll-loops", "-fpeel-loops", "-ftracer", "-funswitch-loops", "-fweb", "-frename-registers");
+      end case;
+   end Compiler;
+
+   package Linker is
+      case PDF_Build_Mode is
+         when "Debug" =>
+            for Default_Switches ("ada") use ("-g");
+         when "Fast" =>
+            for Default_Switches ("ada") use ("-g", "-s", "-Wl,--gc-sections");
+      end case;
+   end Linker;
+ 
+   package Binder is
+      --  -Es: Store tracebacks in exception occurrences, and enable symbolic tracebacks
+      for Default_Switches ("ada") use ("-Es");
+   end Binder;
+
+   package Builder is
+      --   "If -j0 is used, then the maximum number of simultaneous compilation
+      --    jobs is the number of core processors on the platform."
+      for Default_Switches ("ada") use ("-j0");
+   end Builder;
+
+   package Ide is
+      for Default_Switches ("adacontrol") use ("-f", "verif.aru");
+   end Ide;
+
+end PDF_Out_Gnat_w_GID;
