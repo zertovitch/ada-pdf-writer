@@ -9,7 +9,7 @@
 
 --  Legal licensing note:
 
---  Copyright (c) 2014 .. 2019 Gautier de Montmollin
+--  Copyright (c) 2014 .. 2020 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -182,11 +182,20 @@ package PDF_Out is
 
   subtype Standard_Font_Type is Font_Type range Courier .. Zapf_Dingbats;
 
+  --  Select one of the Adobe PDF standard fonts.
+  --  The encoding is on 8 bits and follows the "Windows Code Page 1252"
+  --  encoding (called WinAnsiEncoding in the PDF standard).
+  --  See Annex D, especially "Table D.1 - Latin-text encodings" for details.
   procedure Font(pdf: in out PDF_Out_Stream; f: Standard_Font_Type);
+
+  --  Set the font size.
+  --  In general the size is a scale factor (see Table 105, Tf operator).
+  --  For standard fonts the unit seems to be the Point (pt).
   procedure Font_Size(pdf: in out PDF_Out_Stream; size: Real);
+
   procedure Line_Spacing(pdf: in out PDF_Out_Stream; factor: Real);  --  as multiple of font size
   default_line_spacing: constant:= 1.2;
-  procedure Line_Spacing_Pt(pdf: in out PDF_Out_Stream; pt: Real);   --  in Point units
+  procedure Line_Spacing_Pt(pdf: in out PDF_Out_Stream; pt: Real);   --  in Point (pt) units
 
   --------------
   --  Colors  --
@@ -225,8 +234,8 @@ package PDF_Out is
 
   --  For calibrating the target rectangle in the Image procedure, you may need this:
   function Get_pixel_dimensions(image_file_name: String) return Rectangle;
-  --  Caution: scaling is up to you: the rectangle is (0.0, 0.0, width, height)
-  --  with 1 pixel = 1pt
+  --  Caution: scaling is up to you! The rectangle returned by the function
+  --  is (0.0, 0.0, width, height), with 1 pixel = 1pt.
 
   -----------------------
   --  Vector graphics  --

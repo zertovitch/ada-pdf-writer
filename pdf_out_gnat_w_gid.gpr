@@ -1,6 +1,11 @@
 --  This is a GNAT, GCC or GNAT Programming Studio (GPS) project file
 --  for the Ada PDF Writer project.
 --
+--  This variant of the project file refers to the GID (Generic Image Decoder)
+--  library as an external project. This is the best fit for a multi-project setup,
+--  including through the Alire system (Ada LIbrary REpository, https://alire.ada.dev/ ).
+--  For a fully standalone project file, see the pdf_out_gnat.gpr variant.
+--
 --      Home page:       http://apdf.sf.net/
 --      Project page 1:  http://sf.net/projects/apdf/
 --      Project page 2:  https://github.com/zertovitch/ada-pdf-writer

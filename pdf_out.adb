@@ -389,6 +389,7 @@ package body PDF_Out is
   procedure Line_Spacing_Pt(pdf: in out PDF_Out_Stream; pt: Real) is
   begin
     pdf.line_spacing:= pt / pdf.font_size;
+    --  !! This assumes that the font size is in Point (pt) units.
     Insert_PDF_Font_Selection_Code(pdf);
   end Line_Spacing_Pt;
 
