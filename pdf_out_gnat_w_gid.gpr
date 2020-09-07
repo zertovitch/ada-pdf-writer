@@ -10,8 +10,8 @@
 --      Project page 1:  http://sf.net/projects/apdf/
 --      Project page 2:  https://github.com/zertovitch/ada-pdf-writer
 --
---  Build me with "gprbuild -p -P pdf_out_gnat_w_gid",
---  or "gnatmake -p -P pdf_out_gnat_w_gid", or open me with GPS.
+--  Build me with "gprbuild -P pdf_out_gnat_w_gid",
+--  or "gnatmake -P pdf_out_gnat_w_gid", or open me with GPS.
 --
 
 with "gid.gpr";
@@ -28,6 +28,7 @@ project PDF_Out_Gnat_w_GID is
            "page_test.adb"
    );
    for Exec_Dir use ".";
+   for Create_Missing_Dirs use "True";  --  Flips by default the "-p" switch
 
    case PDF_Build_Mode is
       when "Debug" =>
