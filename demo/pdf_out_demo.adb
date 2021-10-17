@@ -216,7 +216,7 @@ procedure PDF_Out_Demo is
       --  The Ada mascot !  --
       ------------------------
       New_Page(pdf);
-      Put(pdf, "Direct PDF vector graphics code inclusion - Ada Mascot: see http://joinadanow.com/#mascot");
+      Put(pdf, "Direct PDF vector graphics code inclusion - Ada Mascot");
       for cx in 1..8 loop
         for cy in 1..6 loop
           Insert_Mascot(

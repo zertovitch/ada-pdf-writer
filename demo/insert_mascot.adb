@@ -1,5 +1,4 @@
 --  Ada Mascot Artwork
---  http://joinadanow.com/mascot/originalmascot.pdf
 --  Opened in InkScape, saved as PostScript; extracted data (commands are PDF commands!)
 
 with PDF_Out;                           use PDF_Out;
