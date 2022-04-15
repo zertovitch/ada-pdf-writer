@@ -1,15 +1,15 @@
 -------------------------------------------------------------------------------------
 --
--- PDF_OUT - A low level package for writing Adobe Acrobat PDF (*) files
+--  PDF_OUT - A low level package for writing Adobe Acrobat PDF (*) files
 --
--- Pure Ada 95 code, 100% portable: OS-, CPU- and compiler- independent.
+--  Pure Ada 95 code, 100% portable: OS-, CPU- and compiler- independent.
 --
--- Version / date / download info: see the version, reference, web strings
---   defined at the end of the public part of this package.
+--  Version / date / download info: see the version, reference, web strings
+--    defined at the end of the public part of this package.
 
 --  Legal licensing note:
 
---  Copyright (c) 2014 .. 2020 Gautier de Montmollin
+--  Copyright (c) 2014 .. 2022 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal

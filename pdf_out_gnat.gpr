@@ -1,11 +1,11 @@
---  This is a GNAT, GCC or GNAT Programming Studio (GPS) project file
+--  This is a GNAT, GCC or GNAT Studio project file
 --  for the Ada PDF Writer project.
 --
---  This variant of the project file refers to a copy of the GID (Generic Image Decoder)
---  library included in a subdirectory. So, it is standalone, but if *your* project uses
---  both Ada PDF Writer and GID, then the GID sources will be visible at two locations
---  and GNAT will rightfully complain about it. In that case, you'd perhaps prefer to use
---  the pdf_out_gnat_w_gid.gpr project file.
+--    This variant of the project file refers to a copy of the GID (Generic Image Decoder)
+--    library included in a subdirectory. So, the project is standalone. But if *your* project
+--    uses both Ada PDF Writer and GID project files, then the GID sources will be visible
+--    at two different locations, and GNAT will rightfully complain about it.
+--    In that case, you'd perhaps prefer to use the pdf_out_gnat_w_gid.gpr project file.
 --
 --      Home page:       http://apdf.sf.net/
 --      Project page 1:  http://sf.net/projects/apdf/
@@ -20,7 +20,7 @@ project PDF_Out_Gnat is
 
    type PDF_Build_Mode_Type is ("Debug", "Fast");
    PDF_Build_Mode : PDF_Build_Mode_Type := external ("PDF_Build_Mode", "Debug");
-   for Source_Dirs use (".", "gid", "demo", "tools", "test");
+   for Source_Dirs use (".", "demo", "tools", "test", "gid");
    for Main use (
            "pdf_out_demo.adb",     --  Demos
            "img2pdf.adb",          --  Tools
@@ -37,32 +37,34 @@ project PDF_Out_Gnat is
          for Object_Dir use "obj_fast";
    end case;
 
-   Common_Options := (
+   Common_Options :=
+   (
      "-gnatwa",                        --  Warnings switches (a:turn on all info/warnings marked with +)
      --  "-gnatwh",                        --  Warnings switches (h:turn on warnings for hiding declarations)
      --  "-gnatwcijkmopruvz.c.n.p.t.w.x",  --  Warnings switches (run "gnatmake" for full list)
      "-gnatf",  --  Full errors. Verbose details, all undefined references
      "-gnatq",  --  Don't quit, try semantics, even if parse errors
      "-gnatQ"   --  Don't quit, write ali/tree file even if compile errors
+   )
+   &
+   (
+     "-gnatyaknpr",  --  Style: check all casings: a:attribute, k:keywords, n:package Standard identifiers, p:pragma, r:identifier references
+     "-gnatybfhiu",  --  Style: check b:no blanks at end of lines, f:no ff/vtabs, h: no htabs, i:if-then layout, u:no unnecessary blank lines
+     "-gnatyO",      --  Style: check that overriding subprograms are explicitly marked as such.
+     "-gnatyx",      --  Style: check x:no extra parens
+     "-gnatye",      --  Style: check e:end/exit labels present
+     "-gnatyc"       --  Style: check c:comment format (two spaces)
    );
 
    package Compiler is
-
       case PDF_Build_Mode is
-
          when "Debug" =>
-            for Default_Switches ("ada") use Common_Options & (
-              "-gnatyaknpr",  --  Style: check all casings: a:attribute, k:keywords, n:package Standard identifiers, p:pragma, r:identifier references
-              "-gnatybfhiu",  --  Style: check b:no blanks at end of lines, f:no ff/vtabs, h: no htabs, i:if-then layout, u:no unnecessary blank lines
-              "-gnatyO",      --  Style: check that overriding subprograms are explicitly marked as such.
-              "-gnatyx",      --  Style: check x:no extra parens
-              "-gnatye",      --  Style: check e:end/exit labels present
-              "-gnatyc",      --  Style: check c:comment format (two spaces)
-              "-gnato", "-fno-inline", "-fstack-check", "-g", "-gnatVa", "-gnatec=" & project'Project_Dir & "debug.pra");
-
+            for Local_Configuration_Pragmas use project'Project_Dir & "debug.pra";
+            for Default_Switches ("ada") use Common_Options &
+             ("-gnato", "-fno-inline", "-fstack-check", "-g", "-gnatVa");
          when "Fast" =>
-            for Default_Switches ("ada") use Common_Options & (
-              "-O2", "-gnatn", "-gnatp", "-fno-strict-aliasing", "-funroll-loops", "-fpeel-loops", "-ftracer", "-funswitch-loops", "-fweb", "-frename-registers");
+            for Default_Switches ("ada") use Common_Options &
+             ("-O2", "-gnatn", "-gnatp", "-fno-strict-aliasing", "-funroll-loops", "-fpeel-loops", "-ftracer", "-funswitch-loops", "-fweb", "-frename-registers");
       end case;
    end Compiler;
 
