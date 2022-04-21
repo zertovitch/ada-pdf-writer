@@ -8,13 +8,13 @@ other types of data streams.
 The creation of a PDF file is as simple as this
 small procedure (Ada 2005+ object-oriented syntax):
 
-  with PDF_Out; use PDF_Out;
+  with PDF_Out;
    
   procedure Small_demo is 
-    pdf: PDF_Out_File;
+    pdf: PDF_Out.PDF_Out_File;
   begin 
-    pdf.Create("Small.pdf");
-    pdf.Put_Line("Hello world !");
+    pdf.Create ("Small.pdf");
+    pdf.Put_Line ("Hello world !");
     pdf.Close;
   end;
 
@@ -29,11 +29,11 @@ Contents
   - pdf_out.adb            : package body
   - pdf_out-*              : private children packages (needed but not relevant for users)
   - pdf_out_demo.adb       : demo procedure
-  - gid/*                  : packages used by pdf_out.adb (this is GID, the Generic Image Decoder)
   - pdf_out_gnat.gpr       : project file for the GNAT compiler, using the local GID copy
   - pdf_out_gnat_w_gid.gpr : project file for the GNAT compiler, with reference to GID as project (*)
   - pdf_out_oa.prj         : project file for the ObjectAda (10+) compiler
   - pdf_writer.txt         : this file
+  - gid/*                  : packages used by pdf_out.adb (local copy of GID, the Generic Image Decoder)
 
 (*) The alternative project file for GNAT, pdf_out_gnat_w_gid.gpr, will reference
     the project file for GID (the Generic Image Decoder), gid.gpr.

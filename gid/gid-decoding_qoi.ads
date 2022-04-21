@@ -1,4 +1,10 @@
-private package GID.Decoding_GIF is
+--  QOI - The "Quite OK Image" format for fast, lossless image compression
+--
+--  https://github.com/phoboslab/qoi
+--
+--  Dominic Szablewski - https://phoboslab.org
+
+private package GID.Decoding_QOI is
 
   --------------------
   -- Image decoding --
@@ -12,11 +18,7 @@ private package GID.Decoding_GIF is
       alpha            : Primary_color_range
     );
     with procedure Feedback (percents : Natural);
-    mode : Display_mode;
   --
-  procedure Load (
-    image     : in out Image_descriptor;
-    next_frame :    out Ada.Calendar.Day_Duration
-  );
+  procedure Load (image : in out Image_descriptor);
 
-end GID.Decoding_GIF;
+end GID.Decoding_QOI;

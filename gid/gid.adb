@@ -29,6 +29,7 @@ with GID.Headers,
      GID.Decoding_BMP,
      GID.Decoding_GIF,
      GID.Decoding_JPG,
+     GID.Decoding_QOI,
      GID.Decoding_PNG,
      GID.Decoding_PNM,
      GID.Decoding_TGA;
@@ -43,9 +44,9 @@ package body GID is
 
   procedure Clear_heap_allocated_memory (Object : in out Image_descriptor) is
     procedure Dispose is
-      new Ada.Unchecked_Deallocation(Color_table, p_Color_table);
+      new Ada.Unchecked_Deallocation (Color_table, p_Color_table);
     procedure Dispose is
-      new Ada.Unchecked_Deallocation(
+      new Ada.Unchecked_Deallocation (
         JPEG_defs.VLC_table,
         JPEG_defs.p_VLC_table
       );
@@ -54,8 +55,8 @@ package body GID is
     --  -> Palette
     Dispose (Object.palette);
     --  -> JPEG tables
-    for ad in JPEG_defs.VLC_defs_type'Range(1) loop
-      for idx in JPEG_defs.VLC_defs_type'Range(2) loop
+    for ad in JPEG_defs.VLC_defs_type'Range (1) loop
+      for idx in JPEG_defs.VLC_defs_type'Range (2) loop
         Dispose (Object.JPEG_stuff.vlc_defs (ad, idx));
       end loop;
     end loop;
@@ -68,35 +69,37 @@ package body GID is
   procedure Load_image_header (
     image   :    out Image_descriptor;
     from    : in out Ada.Streams.Root_Stream_Type'Class;
-    try_tga :        Boolean:= False
+    try_tga :        Boolean := False
   )
   is
   begin
     Clear_heap_allocated_memory (image);
-    image.stream:= from'Unchecked_Access;
+    image.stream := from'Unchecked_Access;
     --
     --  Load the very first symbols of the header,
     --  this identifies the image format.
     --
-    Headers.Load_signature(image, try_tga);
+    Headers.Load_signature (image, try_tga);
     --
     case image.format is
       when BMP =>
-        Headers.Load_BMP_header(image);
+        Headers.Load_BMP_header (image);
       when FITS =>
-        Headers.Load_FITS_header(image);
+        Headers.Load_FITS_header (image);
       when GIF =>
-        Headers.Load_GIF_header(image);
+        Headers.Load_GIF_header (image);
       when JPEG =>
-        Headers.Load_JPEG_header(image);
+        Headers.Load_JPEG_header (image);
       when PNG =>
-        Headers.Load_PNG_header(image);
+        Headers.Load_PNG_header (image);
       when PNM =>
-        Headers.Load_PNM_header(image);
+        Headers.Load_PNM_header (image);
+      when QOI =>
+        Headers.Load_QOI_header (image);
       when TGA =>
-        Headers.Load_TGA_header(image);
+        Headers.Load_TGA_header (image);
       when TIFF =>
-        Headers.Load_TIFF_header(image);
+        Headers.Load_TIFF_header (image);
     end case;
   end Load_image_header;
 
@@ -104,7 +107,7 @@ package body GID is
   -- Pixel_width --
   -----------------
 
-  function Pixel_width (image: Image_descriptor) return Positive is
+  function Pixel_width (image : Image_descriptor) return Positive is
   begin
     return Positive (image.width);
   end Pixel_width;
@@ -113,12 +116,12 @@ package body GID is
   -- Pixel_height --
   ------------------
 
-  function Pixel_height (image: Image_descriptor) return Positive is
+  function Pixel_height (image : Image_descriptor) return Positive is
   begin
     return Positive (image.height);
   end Pixel_height;
 
-  function Display_orientation (image: Image_descriptor) return Orientation is
+  function Display_orientation (image : Image_descriptor) return Orientation is
   begin
     return image.display_orientation;
   end Display_orientation;
@@ -129,46 +132,43 @@ package body GID is
 
   procedure Load_image_contents (
     image     : in out Image_descriptor;
-    next_frame:    out Ada.Calendar.Day_Duration
+    next_frame :    out Ada.Calendar.Day_Duration
   )
   is
     procedure BMP_Load is
-      new Decoding_BMP.Load( Primary_color_range, Set_X_Y, Put_Pixel, Feedback );
+      new Decoding_BMP.Load (Primary_color_range, Set_X_Y, Put_Pixel, Feedback);
 
     procedure GIF_Load is
-      new Decoding_GIF.Load( Primary_color_range, Set_X_Y, Put_Pixel, Feedback, mode );
+      new Decoding_GIF.Load (Primary_color_range, Set_X_Y, Put_Pixel, Feedback, mode);
 
     procedure JPG_Load is
-      new Decoding_JPG.Load( Primary_color_range, Set_X_Y, Put_Pixel, Feedback );
+      new Decoding_JPG.Load (Primary_color_range, Set_X_Y, Put_Pixel, Feedback);
 
     procedure PNG_Load is
-      new Decoding_PNG.Load( Primary_color_range, Set_X_Y, Put_Pixel, Feedback );
+      new Decoding_PNG.Load (Primary_color_range, Set_X_Y, Put_Pixel, Feedback);
 
     procedure PNM_Load is
-      new Decoding_PNM.Load( Primary_color_range, Set_X_Y, Put_Pixel, Feedback );
+      new Decoding_PNM.Load (Primary_color_range, Set_X_Y, Put_Pixel, Feedback);
+
+    procedure QOI_Load is
+      new Decoding_QOI.Load (Primary_color_range, Set_X_Y, Put_Pixel, Feedback);
 
     procedure TGA_Load is
-      new Decoding_TGA.Load( Primary_color_range, Set_X_Y, Put_Pixel, Feedback );
+      new Decoding_TGA.Load (Primary_color_range, Set_X_Y, Put_Pixel, Feedback);
 
   begin
-    next_frame:= 0.0;
+    next_frame := 0.0;
     --  ^ value updated in case of animation and when
     --    current frame is not the last frame
     case image.format is
-      when BMP =>
-        BMP_Load(image);
-      when GIF =>
-        GIF_Load(image, next_frame);
-      when JPEG =>
-        JPG_Load(image, next_frame);
-      when PNG =>
-        PNG_Load(image);
-      when PNM =>
-        PNM_Load(image);
-      when TGA =>
-        TGA_Load(image);
-      when others =>
-        raise known_but_unsupported_image_format;
+      when BMP =>        BMP_Load (image);
+      when GIF =>        GIF_Load (image, next_frame);
+      when JPEG =>       JPG_Load (image);
+      when PNG =>        PNG_Load (image);
+      when PNM =>        PNM_Load (image);
+      when QOI =>        QOI_Load (image);
+      when TGA =>        TGA_Load (image);
+      when others =>     raise known_but_unsupported_image_format;
     end case;
   end Load_image_contents;
 
@@ -176,47 +176,47 @@ package body GID is
   -- Some informations about the image --
   ---------------------------------------
 
-  function Format (image: Image_descriptor) return Image_format_type is
+  function Format (image : Image_descriptor) return Image_format_type is
   begin
     return image.format;
   end Format;
 
-  function Detailed_format (image: Image_descriptor) return String is
+  function Detailed_format (image : Image_descriptor) return String is
   begin
-    return Bounded_255.To_String(image.detailed_format);
+    return Bounded_255.To_String (image.detailed_format);
   end Detailed_format;
 
-  function Subformat (image: Image_descriptor) return Integer is
+  function Subformat (image : Image_descriptor) return Integer is
   begin
     return image.subformat_id;
   end Subformat;
 
-  function Bits_per_pixel (image: Image_descriptor) return Positive is
+  function Bits_per_pixel (image : Image_descriptor) return Positive is
   begin
     return image.bits_per_pixel;
   end Bits_per_pixel;
 
-  function RLE_encoded (image: Image_descriptor) return Boolean is
+  function Is_RLE_encoded (image : Image_descriptor) return Boolean is
   begin
     return image.RLE_encoded;
-  end RLE_encoded;
+  end Is_RLE_encoded;
 
-  function Interlaced (image: Image_descriptor) return Boolean is
+  function Is_Interlaced (image : Image_descriptor) return Boolean is
   begin
     return image.interlaced;
-  end Interlaced;
+  end Is_Interlaced;
 
-  function Greyscale (image: Image_descriptor) return Boolean is
+  function Greyscale (image : Image_descriptor) return Boolean is
   begin
     return image.greyscale;
   end Greyscale;
 
-  function Has_palette (image: Image_descriptor) return Boolean is
+  function Has_palette (image : Image_descriptor) return Boolean is
   begin
     return image.palette /= null;
   end Has_palette;
 
-  function Expect_transparency (image: Image_descriptor) return Boolean is
+  function Expect_transparency (image : Image_descriptor) return Boolean is
   begin
     return image.transparency;
   end Expect_transparency;
@@ -230,8 +230,8 @@ package body GID is
       Object.palette := new Color_table'(Object.palette.all);
     end if;
     --  -> JPEG tables
-    for ad in JPEG_defs.VLC_defs_type'Range(1) loop
-      for idx in JPEG_defs.VLC_defs_type'Range(2) loop
+    for ad in JPEG_defs.VLC_defs_type'Range (1) loop
+      for idx in JPEG_defs.VLC_defs_type'Range (2) loop
         if Object.JPEG_stuff.vlc_defs (ad, idx) /= null then
           Object.JPEG_stuff.vlc_defs (ad, idx) :=
             new VLC_table'(Object.JPEG_stuff.vlc_defs (ad, idx).all);
