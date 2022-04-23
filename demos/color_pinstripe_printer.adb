@@ -9,7 +9,7 @@ procedure Color_Pinstripe_Printer
 is
    use PDF_Out;
 
-   package Point_IO
+   package Real_IO
    is new Ada.Text_Io.Float_IO (Real);
 
    procedure Pinstripe (Doc          : in out PDF_Out_File;
@@ -57,7 +57,7 @@ is
       --  Text
       Doc.Color (black);
       Doc.Text_Rendering_Mode (fill);
-      Point_IO.Put (Image, Line_Width, Aft => 1, Exp => 0);
+      Real_IO.Put (Image, Line_Width, Aft => 1, Exp => 0);
       Doc.Put_XY (Corner_Text.x, Corner_Text.y + Y,
                   Image & " point color pinstripe");
    end Pinstripe;
