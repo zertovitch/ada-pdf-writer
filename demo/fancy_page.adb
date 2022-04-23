@@ -1,71 +1,71 @@
-package body Fancy_page is
+package body Fancy_Page is
 
-  pt_font: constant:= 40.0;
+  pt_font : constant := 40.0;
 
   use PDF_Out;
 
   overriding procedure Page_Header (pdf : in out Fancy_PDF) is
-    pg_layout: constant PDF_Out.Rectangle:= Layout(pdf);
-    factor: constant:= 1.0;
-    ada_logo_width  : constant:= 140.0 * factor;
-    ada_logo_height : constant:= 78.0 * factor;
+    pg_layout : constant PDF_Out.Rectangle := pdf.Layout;
+    factor : constant := 1.0;
+    ada_logo_width  : constant := 140.0 * factor;
+    ada_logo_height : constant := 78.0 * factor;
   begin
-    Text_XY(pdf, Left_Margin(pdf), Y_Max(pg_layout) - Top_Margin(pdf) * 0.2 - pt_font * 0.5);
-    Text_Rendering_Mode(pdf, fill_then_stroke);
-    Font(pdf, Helvetica);
-    Font_Size(pdf, 18.7);
-    Stroking_Color(pdf, (0.8,0.1,0.0));
-    Color(pdf, (0.7,0.7,0.0));
-    Put(pdf, "Fancy header");  --  Red outline, yellow fill
-    Color(pdf, black);
-    Stroking_Color(pdf, black);
-    Put(pdf, " for ");
-    Stroking_Color(pdf, (0.0,0.5,0.1));
-    Color(pdf, (0.0,0.3,0.3));
-    Put(pdf, "Ada PDF Writer Demo");  --  Green outline, cyan fill
-    Image(pdf,
+    pdf.Text_XY (pdf.Left_Margin, Y_Max (pg_layout) - pdf.Top_Margin * 0.2 - pt_font * 0.5);
+    pdf.Text_Rendering_Mode (fill_then_stroke);
+    pdf.Font (Helvetica);
+    pdf.Font_Size (18.7);
+    pdf.Stroking_Color ((0.8, 0.1, 0.0));
+    pdf.Color ((0.7, 0.7, 0.0));
+    pdf.Put ("Fancy header");  --  Red outline, yellow fill
+    pdf.Color (black);
+    pdf.Stroking_Color (black);
+    pdf.Put (" for ");
+    pdf.Stroking_Color ((0.0, 0.5, 0.1));
+    pdf.Color ((0.0, 0.3, 0.3));
+    pdf.Put ("Ada PDF Writer Demo");  --  Green outline, cyan fill
+    pdf.Image (
       "demo/ada_logo.jpg",
-      (X_Max(pg_layout) - ada_logo_width,
-       Y_Max(pg_layout) - ada_logo_height,
+      (X_Max (pg_layout) - ada_logo_width,
+       Y_Max (pg_layout) - ada_logo_height,
        ada_logo_width,
        ada_logo_height)
     );
-    Stroking_Color(pdf, (0.0,0.0,0.3));  --  Dark blue
-    Color(pdf, (0.0,0.1,0.6));  --  A bit less dark blue
-    Draw(pdf,
-      (Left_Margin(pdf),
-       Y_Max(pg_layout) - Top_Margin(pdf) + pt_font,
-       X_Max(pg_layout) - ada_logo_width - Left_Margin(pdf),
+    pdf.Stroking_Color ((0.0, 0.0, 0.3));  --  Dark blue
+    pdf.Color ((0.0, 0.1, 0.6));  --  A bit less dark blue
+    pdf.Draw (
+      (pdf.Left_Margin,
+       Y_Max (pg_layout) - pdf.Top_Margin + pt_font,
+       X_Max (pg_layout) - ada_logo_width - pdf.Left_Margin,
        one_cm * 0.2),
        fill_then_stroke
     );
     --
     --  Back to normal
     --
-    Text_Rendering_Mode(pdf, fill);
-    Color(pdf, black);
-    Stroking_Color(pdf, black);
-    Font_Size(pdf, 11.0);
+    pdf.Text_Rendering_Mode (fill);
+    pdf.Color (black);
+    pdf.Stroking_Color (black);
+    pdf.Font_Size (11.0);
   end Page_Header;
 
   overriding procedure Page_Footer (pdf : in out Fancy_PDF) is
-    pg_layout: constant PDF_Out.Rectangle:= Layout(pdf);
+    pg_layout : constant PDF_Out.Rectangle := pdf.Layout;
   begin
     --  Footer line through the page:
-    Line_Width(pdf, 1.0);
-    Stroking_Color(pdf, black);
-    Single_Line(pdf,
-      (pg_layout.x_min + Left_Margin(pdf),
-       pg_layout.y_min + Bottom_Margin(pdf)),
-      (X_Max(pg_layout) - Right_Margin(pdf),
-       pg_layout.y_min + Bottom_Margin(pdf))
+    pdf.Line_Width (1.0);
+    pdf.Stroking_Color (black);
+    pdf.Single_Line (
+      (pg_layout.x_min + pdf.Left_Margin,
+       pg_layout.y_min + pdf.Bottom_Margin),
+      (X_Max (pg_layout) - pdf.Right_Margin,
+       pg_layout.y_min + pdf.Bottom_Margin)
     );
     --  Page numbering:
-    Color (pdf, black);
-    Font (pdf, Helvetica);
-    Font_Size (pdf, 11.0);
-    Text_XY(pdf, Left_Margin(pdf), pg_layout.y_min + Bottom_Margin(pdf) - pt_font);
-    Put(pdf, "Page" & Integer'Image(Page(pdf)) & " /" & Integer'Image(pdf.page_nb));
+    pdf.Color (black);
+    pdf.Font (Helvetica);
+    pdf.Font_Size (11.0);
+    pdf.Text_XY (pdf.Left_Margin, pg_layout.y_min + pdf.Bottom_Margin - pt_font);
+    pdf.Put ("Page" & Integer'Image (pdf.Page) & " /" & Integer'Image (pdf.page_nb));
   end Page_Footer;
 
-end Fancy_page;
+end Fancy_Page;

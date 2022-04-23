@@ -1,18 +1,21 @@
 --  Ada Mascot Artwork
---  Opened in InkScape, saved as PostScript; extracted data (commands are PDF commands!)
+--  Opened in InkScape, saved as PostScript.
+--  PostScript data were extracted as PDF commands!
 
-with PDF_Out;                           use PDF_Out;
+with PDF_Out;
 
-procedure Insert_Mascot(pdf : in out PDF_Out_Stream'Class; w, h, xm, ym: Real) is
-  wf: constant:= 1.0 / 2470.0;
-  hf: constant:= 1.0 / 2810.0;
-  NL: constant Character:= ASCII.LF;
+procedure Insert_Mascot (pdf : in out PDF_Out.PDF_Out_Stream'Class; w, h, xm, ym : PDF_Out.Real) is
+  wf : constant := 1.0 / 2470.0;
+  hf : constant := 1.0 / 2810.0;
+  NL : constant Character := ASCII.LF;
+  use type PDF_Out.Real;
 begin
-  pdf.Insert_Graphics_PDF_Code(
+  pdf.Insert_Graphics_PDF_Code (
     --  Summary of PDF operators: Table 51 in PDF reference.
     "q q" & NL &
     --  0 -1 2470 2809 rectclip
-    Img(w * wf) & " 0 0 " & NL & Img(h * hf) & ' ' & Img(xm) & ' ' & Img(ym) & " cm" & NL &
+    PDF_Out.Img (w * wf) & " 0 0 " & NL & PDF_Out.Img (h * hf) & ' ' &
+    PDF_Out.Img (xm) & ' ' & PDF_Out.Img (ym) & " cm" & NL &
     --  g is gray nonstroking operations (Table 74 - Colour Operators)
     "0 g" & NL &
     "1509.273 1806.575 m 1509.273 1806.575 1519.93 1925.047 1753.895 1933.286" & NL &

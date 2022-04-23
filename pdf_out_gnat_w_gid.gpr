@@ -11,20 +11,28 @@
 --      Project page 2:  https://github.com/zertovitch/ada-pdf-writer
 --
 --  Build me with "gprbuild -P pdf_out_gnat_w_gid",
---  or "gnatmake -P pdf_out_gnat_w_gid", or open me with GPS.
+--  or "gnatmake -P pdf_out_gnat_w_gid", or open me with GNAT Studio.
 --
 
-with "gid.gpr";
+with "gid.gpr";  --  <--------- *Here* is GID referenced as a dependent project file.
 
 project PDF_Out_Gnat_w_GID is
 
    type PDF_Build_Mode_Type is ("Debug", "Fast");
    PDF_Build_Mode : PDF_Build_Mode_Type := external ("PDF_Build_Mode", "Debug");
+
    for Source_Dirs use (".", "demo", "tools", "test");
+
+
+
+
    for Main use (
-           "pdf_out_demo.adb",     --  Demos
-           "img2pdf.adb",          --  Tools
-           "validation_test.adb",  --  Test
+           "pdf_out_demo.adb",              --  Demos
+           "color_pinstripe_printer.adb",
+           "pinstripe_printer.adb",
+           "koch_curve.adb",
+           "img2pdf.adb",                   --  Tools
+           "validation_test.adb",           --  Test
            "page_test.adb"
    );
    for Exec_Dir use ".";
@@ -53,7 +61,8 @@ project PDF_Out_Gnat_w_GID is
      "-gnatyO",      --  Style: check that overriding subprograms are explicitly marked as such.
      "-gnatyx",      --  Style: check x:no extra parens
      "-gnatye",      --  Style: check e:end/exit labels present
-     "-gnatyc"       --  Style: check c:comment format (two spaces)
+     "-gnatyc",      --  Style: check c:comment format (two spaces)
+     "-gnatyt"       --  Style: check t:token separation rules
    );
 
    package Compiler is

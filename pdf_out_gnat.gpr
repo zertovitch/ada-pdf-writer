@@ -1,5 +1,5 @@
 --  This is a GNAT, GCC or GNAT Studio project file
---  for the Ada PDF Writer project.
+--  for the Ada PDF Writer project (standalone variant).
 --
 --    This variant of the project file refers to a copy of the GID (Generic Image Decoder)
 --    library included in a subdirectory. So, the project is standalone. But if *your* project
@@ -12,7 +12,7 @@
 --      Project page 2:  https://github.com/zertovitch/ada-pdf-writer
 --
 --  Build me with "gprbuild -P pdf_out_gnat",
---  or "gnatmake -P pdf_out_gnat", or open me with GPS.
+--  or "gnatmake -P pdf_out_gnat", or open me with GNAT Studio.
 --
 --
 
@@ -20,11 +20,19 @@ project PDF_Out_Gnat is
 
    type PDF_Build_Mode_Type is ("Debug", "Fast");
    PDF_Build_Mode : PDF_Build_Mode_Type := external ("PDF_Build_Mode", "Debug");
-   for Source_Dirs use (".", "demo", "tools", "test", "gid");
+
+   for Source_Dirs use
+     (".", "demo", "tools", "test",
+      "gid"                          --  <--------- *Here* is the subdirectory with a copy of GID sources.
+     );
+
    for Main use (
-           "pdf_out_demo.adb",     --  Demos
-           "img2pdf.adb",          --  Tools
-           "validation_test.adb",  --  Test
+           "pdf_out_demo.adb",              --  Demos
+           "color_pinstripe_printer.adb",
+           "pinstripe_printer.adb",
+           "koch_curve.adb",
+           "img2pdf.adb",                   --  Tools
+           "validation_test.adb",           --  Test
            "page_test.adb"
    );
    for Exec_Dir use ".";
@@ -53,7 +61,8 @@ project PDF_Out_Gnat is
      "-gnatyO",      --  Style: check that overriding subprograms are explicitly marked as such.
      "-gnatyx",      --  Style: check x:no extra parens
      "-gnatye",      --  Style: check e:end/exit labels present
-     "-gnatyc"       --  Style: check c:comment format (two spaces)
+     "-gnatyc",      --  Style: check c:comment format (two spaces)
+     "-gnatyt"       --  Style: check t:token separation rules
    );
 
    package Compiler is

@@ -78,87 +78,87 @@ package PDF_Out is
 
   PDF_stream_not_created,
   PDF_stream_not_closed,
-  Not_implemented: exception;
+  Not_implemented : exception;
 
   type PDF_type is (
     PDF_1_3 -- PDF 1.3
   );
 
-  Default_PDF_type: constant PDF_type:= PDF_1_3;
+  Default_PDF_type : constant PDF_type := PDF_1_3;
 
   type Real is digits System.Max_Digits;
-  package Real_IO is new Ada.Text_IO.Float_IO(Real);
+  package Real_IO is new Ada.Text_IO.Float_IO (Real);
 
   type Point is record
     x, y : Real;
   end record;
 
-  function "+"(P1,P2: Point) return Point;
-  pragma Inline("+");
+  function "+"(P1, P2 : Point) return Point;
+  pragma Inline ("+");
 
-  function "*"(f: Real; P: Point) return Point;
-  pragma Inline("*");
+  function "*"(f : Real; P : Point) return Point;
+  pragma Inline ("*");
 
   type Rectangle is record
     x_min, y_min,
     width, height : Real;
   end record;
 
-  function "+"(P: Point; r: Rectangle) return Rectangle;
-  pragma Inline("+");
+  function "+"(P : Point; r : Rectangle) return Rectangle;
+  pragma Inline ("+");
 
   --  Scaling. r.x_min and r.y_min are preserved.
-  function "*"(f: Real; r: Rectangle) return Rectangle;
-  pragma Inline("*");
+  function "*"(f : Real; r : Rectangle) return Rectangle;
+  pragma Inline ("*");
 
-  function X_Max(r: Rectangle) return Real;
-  function Y_Max(r: Rectangle) return Real;
+  function X_Max (r : Rectangle) return Real;
+  function Y_Max (r : Rectangle) return Real;
 
   ----------------------------
   -- (2) Document contents: --
   ----------------------------
 
-  procedure Put(pdf  : in out PDF_Out_Stream;
-                num  : in Real;
-                fore : in Ada.Text_IO.Field := Real_IO.Default_Fore;
-                aft  : in Ada.Text_IO.Field := Real_IO.Default_Aft;
-                exp  : in Ada.Text_IO.Field := Real_IO.Default_Exp
+  procedure Put (pdf  : in out PDF_Out_Stream;
+                 num  : in Real;
+                 fore : in Ada.Text_IO.Field := Real_IO.Default_Fore;
+                 aft  : in Ada.Text_IO.Field := Real_IO.Default_Aft;
+                 exp  : in Ada.Text_IO.Field := Real_IO.Default_Exp
             );
-  procedure Put(pdf   : in out PDF_Out_Stream;
-                num   : in Integer;
-                width : in Ada.Text_IO.Field := 0; -- ignored
-                base  : in Ada.Text_IO.Number_Base := 10
+  procedure Put (pdf   : in out PDF_Out_Stream;
+                 num   : in Integer;
+                 width : in Ada.Text_IO.Field := 0; -- ignored
+                 base  : in Ada.Text_IO.Number_Base := 10
             );
-  procedure Put(pdf: in out PDF_Out_Stream; str : String);
-  procedure Put(pdf: in out PDF_Out_Stream; str : Unbounded_String);
+  procedure Put (pdf : in out PDF_Out_Stream; str : String);
+  procedure Put (pdf : in out PDF_Out_Stream; str : Unbounded_String);
   --
-  procedure Put_Line(pdf  : in out PDF_Out_Stream;
-                     num  : in Real;
-                     fore : in Ada.Text_IO.Field := Real_IO.Default_Fore;
-                     aft  : in Ada.Text_IO.Field := Real_IO.Default_Aft;
-                     exp  : in Ada.Text_IO.Field := Real_IO.Default_Exp
+  procedure Put_Line (pdf  : in out PDF_Out_Stream;
+                      num  : in Real;
+                      fore : in Ada.Text_IO.Field := Real_IO.Default_Fore;
+                      aft  : in Ada.Text_IO.Field := Real_IO.Default_Aft;
+                      exp  : in Ada.Text_IO.Field := Real_IO.Default_Exp
             );
-  procedure Put_Line(pdf   : in out PDF_Out_Stream;
-                     num   : in Integer;
-                     width : in Ada.Text_IO.Field := 0; -- ignored
-                     base  : in Ada.Text_IO.Number_Base := 10
+  procedure Put_Line (pdf   : in out PDF_Out_Stream;
+                      num   : in Integer;
+                      width : in Ada.Text_IO.Field := 0; -- ignored
+                      base  : in Ada.Text_IO.Number_Base := 10
             );
-  procedure Put_Line(pdf: in out PDF_Out_Stream; str : String);
-  procedure Put_Line(pdf: in out PDF_Out_Stream; str : Unbounded_String);
+  procedure Put_Line (pdf : in out PDF_Out_Stream; str : String);
+  procedure Put_Line (pdf : in out PDF_Out_Stream; str : Unbounded_String);
   --
-  procedure New_Line(pdf: in out PDF_Out_Stream; Spacing : Positive := 1);
-  procedure New_Page(pdf: in out PDF_Out_Stream);
+  procedure New_Line (pdf : in out PDF_Out_Stream; Spacing : Positive := 1);
+  procedure New_Page (pdf : in out PDF_Out_Stream);
   --  Call to Finish_Page is optional, but can be necessary in some circumstances,
   --  for instance for displaying the footer correctly before changing page
   --  orientation or margins for the following pages.
-  procedure Finish_Page(pdf: in out PDF_Out_Stream);
+  procedure Finish_Page (pdf : in out PDF_Out_Stream);
   --
-  procedure Text_XY(pdf: in out PDF_Out_Stream; x,y: Real);
-  procedure Put_XY(pdf: in out PDF_Out_Stream; x,y: Real; str : String);
+  procedure Text_XY (pdf : in out PDF_Out_Stream; x, y : Real);
+  procedure Put_XY (pdf : in out PDF_Out_Stream; x, y : Real; str : String);
 
-  function Col(pdf: in PDF_Out_Stream) return Positive;
-  function Line(pdf: in PDF_Out_Stream) return Positive;
-  function Page(pdf: in PDF_Out_Stream) return Natural;
+  function Col (pdf : in PDF_Out_Stream) return Positive;
+  function Line (pdf : in PDF_Out_Stream) return Positive;
+  function Page (pdf : in PDF_Out_Stream) return Natural;
 
   type Font_Type is
      ( --  The 14 standard fonts
@@ -186,16 +186,16 @@ package PDF_Out is
   --  The encoding is on 8 bits and follows the "Windows Code Page 1252"
   --  encoding (called WinAnsiEncoding in the PDF standard).
   --  See Annex D, especially "Table D.1 - Latin-text encodings" for details.
-  procedure Font(pdf: in out PDF_Out_Stream; f: Standard_Font_Type);
+  procedure Font (pdf : in out PDF_Out_Stream; f : Standard_Font_Type);
 
   --  Set the font size.
   --  In general the size is a scale factor (see Table 105, Tf operator).
   --  For standard fonts the unit seems to be the Point (pt).
-  procedure Font_Size(pdf: in out PDF_Out_Stream; size: Real);
+  procedure Font_Size (pdf : in out PDF_Out_Stream; size : Real);
 
-  procedure Line_Spacing(pdf: in out PDF_Out_Stream; factor: Real);  --  as multiple of font size
-  default_line_spacing: constant:= 1.2;
-  procedure Line_Spacing_Pt(pdf: in out PDF_Out_Stream; pt: Real);   --  in Point (pt) units
+  procedure Line_Spacing (pdf : in out PDF_Out_Stream; factor : Real);  --  as multiple of font size
+  default_line_spacing : constant := 1.2;
+  procedure Line_Spacing_Pt (pdf : in out PDF_Out_Stream; pt : Real);   --  in Point (pt) units
 
   --------------
   --  Colors  --
@@ -206,13 +206,13 @@ package PDF_Out is
   subtype Color_Value is Real range 0.0 .. 1.0;
 
   type Color_Type is record
-    red, green, blue: Color_Value;
+    red, green, blue : Color_Value;
   end record;
 
-  black: constant Color_Type:= (0.0,0.0,0.0);
+  black : constant Color_Type := (0.0, 0.0, 0.0);
 
-  procedure Color(pdf: in out PDF_Out_Stream; c: Color_Type);
-  procedure Stroking_Color(pdf: in out PDF_Out_Stream; c: Color_Type);
+  procedure Color (pdf : in out PDF_Out_Stream; c : Color_Type);
+  procedure Stroking_Color (pdf : in out PDF_Out_Stream; c : Color_Type);
 
   type Rendering_Mode is (
     fill, stroke, fill_then_stroke, invisible,
@@ -223,17 +223,17 @@ package PDF_Out is
     add_to_path
   );
 
-  procedure Text_Rendering_Mode(pdf: in out PDF_Out_Stream; r: Rendering_Mode);
+  procedure Text_Rendering_Mode (pdf : in out PDF_Out_Stream; r : Rendering_Mode);
 
   ---------------
   --  Graphics --
   ---------------
 
   --  Insert an image from a file
-  procedure Image(pdf: in out PDF_Out_Stream; file_name: String; target: Rectangle);
+  procedure Image (pdf : in out PDF_Out_Stream; file_name : String; target : Rectangle);
 
   --  For calibrating the target rectangle in the Image procedure, you may need this:
-  function Get_pixel_dimensions(image_file_name: String) return Rectangle;
+  function Get_pixel_dimensions (image_file_name : String) return Rectangle;
   --  Caution: scaling is up to you! The rectangle returned by the function
   --  is (0.0, 0.0, width, height), with 1 pixel = 1pt.
 
@@ -241,17 +241,17 @@ package PDF_Out is
   --  Vector graphics  --
   -----------------------
 
-  initial_line_width: constant:= 1.0; --  See Table 52, 8.4.1
-  procedure Line_Width(pdf: in out PDF_Out_Stream; width: Real);
+  initial_line_width : constant := 1.0; --  See Table 52, 8.4.1
+  procedure Line_Width (pdf : in out PDF_Out_Stream; width : Real);
 
   --  Draw a single line segment:
-  procedure Single_Line(pdf: in out PDF_Out_Stream; from, to: Point);
+  procedure Single_Line (pdf : in out PDF_Out_Stream; from, to : Point);
 
   subtype Path_Rendering_Mode is Rendering_Mode range fill .. fill_then_stroke;
 
   --  Draw simple figures.
   --  Rectangle:
-  procedure Draw(pdf: in out PDF_Out_Stream; what: Rectangle; rendering: Path_Rendering_Mode);
+  procedure Draw (pdf : in out PDF_Out_Stream; what : Rectangle; rendering : Path_Rendering_Mode);
 
   --  Paths:
 
@@ -259,13 +259,13 @@ package PDF_Out is
   --  Rule to determine how to fill areas within a (non-trivial) path.
   --  See 8.5.3.3.2 and 8.5.3.3.3 of PDF specification
 
-  procedure Move(pdf: in out PDF_Out_Stream; to: Point);
-  procedure Line(pdf: in out PDF_Out_Stream; to: Point);
-  procedure Cubic_Bezier(pdf: in out PDF_Out_Stream; control_1, control_2: Point; to: Point);
+  procedure Move (pdf : in out PDF_Out_Stream; to : Point);
+  procedure Line (pdf : in out PDF_Out_Stream; to : Point);
+  procedure Cubic_Bezier (pdf : in out PDF_Out_Stream; control_1, control_2 : Point; to : Point);
   --  All lines and curves and the eventual filling inside the path
   --  will be drawn when path is completed, with Finish_Path:
 
-  procedure Finish_Path(
+  procedure Finish_Path (
     pdf        : in out PDF_Out_Stream;
     close_path :        Boolean;
     rendering  :        Path_Rendering_Mode;  --  fill, stroke, or both
@@ -285,31 +285,31 @@ package PDF_Out is
   --  use the Insert_Graphics_PDF_Code below. For text-related stuff,
   --  use Insert_Text_PDF_Code.
   --
-  procedure Insert_PDF_Code(pdf: in out PDF_Out_Stream; code: String);
-  pragma Inline(Insert_PDF_Code);
+  procedure Insert_PDF_Code (pdf : in out PDF_Out_Stream; code : String);
+  pragma Inline (Insert_PDF_Code);
 
   --  This is for direct text PDF code insertion (text-writing mode
   --  will be switched on). In PDF language these are the T... commands.
   --
-  procedure Insert_Text_PDF_Code(pdf: in out PDF_Out_Stream; code: String);
+  procedure Insert_Text_PDF_Code (pdf : in out PDF_Out_Stream; code : String);
 
   --  This is for direct graphics PDF code insertion (text-writing mode
   --  will be switched off for the graphics output).
   --
-  procedure Insert_Graphics_PDF_Code(pdf: in out PDF_Out_Stream; code: String);
+  procedure Insert_Graphics_PDF_Code (pdf : in out PDF_Out_Stream; code : String);
 
   --  Image (representation in digits) functions for numbers, designed to
   --  take the least possible room, albeit without loss of precision.
   --  Useful for inserting PDF code.
-  function Img(p: Integer) return String;
-  function Img(x: Real; prec: Positive:= Real'Digits) return String;
+  function Img (p : Integer) return String;
+  function Img (x : Real; prec : Positive := Real'Digits) return String;
 
   --  Document information
-  procedure Title(pdf: in out PDF_Out_Stream; s: String);
-  procedure Author(pdf: in out PDF_Out_Stream; s: String);
-  procedure Subject(pdf: in out PDF_Out_Stream; s: String);
-  procedure Keywords(pdf: in out PDF_Out_Stream; s: String);
-  procedure Creator_Application(pdf: in out PDF_Out_Stream; s: String);
+  procedure Title (pdf : in out PDF_Out_Stream; s : String);
+  procedure Author (pdf : in out PDF_Out_Stream; s : String);
+  procedure Subject (pdf : in out PDF_Out_Stream; s : String);
+  procedure Keywords (pdf : in out PDF_Out_Stream; s : String);
+  procedure Creator_Application (pdf : in out PDF_Out_Stream; s : String);
 
   ------------------
   --  Page layout --
@@ -317,54 +317,54 @@ package PDF_Out is
 
   --  You need to override the Header and Footer methods
   --  for setting up your custom header and footer. By default they do nothing.
-  procedure Page_Header(pdf : in out PDF_Out_Stream);
-  procedure Page_Footer(pdf : in out PDF_Out_Stream);
+  procedure Page_Header (pdf : in out PDF_Out_Stream);
+  procedure Page_Footer (pdf : in out PDF_Out_Stream);
 
   --  They have to be called before New_Page in order to influence the next page.
   --  For the first page, call them before any output (typically right after Create).
   --
-  procedure Left_Margin(pdf : out PDF_Out_Stream; pts: Real);
-  function Left_Margin(pdf : PDF_Out_Stream) return Real;
-  procedure Right_Margin(pdf : out PDF_Out_Stream; pts: Real);
-  function Right_Margin(pdf : PDF_Out_Stream) return Real;
-  procedure Top_Margin(pdf : out PDF_Out_Stream; pts: Real);
-  function Top_Margin(pdf : PDF_Out_Stream) return Real;
-  procedure Bottom_Margin(pdf : out PDF_Out_Stream; pts: Real);
-  function Bottom_Margin(pdf : PDF_Out_Stream) return Real;
+  procedure Left_Margin (pdf : out PDF_Out_Stream; pts : Real);
+  function Left_Margin (pdf : PDF_Out_Stream) return Real;
+  procedure Right_Margin (pdf : out PDF_Out_Stream; pts : Real);
+  function Right_Margin (pdf : PDF_Out_Stream) return Real;
+  procedure Top_Margin (pdf : out PDF_Out_Stream; pts : Real);
+  function Top_Margin (pdf : PDF_Out_Stream) return Real;
+  procedure Bottom_Margin (pdf : out PDF_Out_Stream; pts : Real);
+  function Bottom_Margin (pdf : PDF_Out_Stream) return Real;
   --
   type Margins_Type is record
-    left, right, top, bottom: Real;
+    left, right, top, bottom : Real;
   end record;
 
   --  Some distances in Points
 
-  one_cm   : constant:= 72.0 / 2.54;
-  cm_2_5   : constant:= one_cm * 2.5;
-  one_inch : constant:= 72.0;
+  one_cm   : constant := 72.0 / 2.54;
+  cm_2_5   : constant := one_cm * 2.5;
+  one_inch : constant := 72.0;
 
-  cm_2_5_margins: constant Margins_Type:= (cm_2_5, cm_2_5, cm_2_5, cm_2_5);
+  cm_2_5_margins : constant Margins_Type := (cm_2_5, cm_2_5, cm_2_5, cm_2_5);
 
-  procedure Margins(pdf : out PDF_Out_Stream; new_margins: Margins_Type);
-  function Margins(pdf : PDF_Out_Stream) return Margins_Type;
+  procedure Margins (pdf : out PDF_Out_Stream; new_margins : Margins_Type);
+  function Margins (pdf : PDF_Out_Stream) return Margins_Type;
 
   --  A4 is 21.0 x 29.7 cm
-  A4_portrait : constant Rectangle:= (0.0, 0.0, 21.0 * one_cm, 29.7 * one_cm);
-  A4_landscape: constant Rectangle:= (0.0, 0.0, A4_portrait.height, A4_portrait.width);
+  A4_portrait : constant Rectangle := (0.0, 0.0, 21.0 * one_cm, 29.7 * one_cm);
+  A4_landscape : constant Rectangle := (0.0, 0.0, A4_portrait.height, A4_portrait.width);
 
-  procedure Page_Setup(pdf : in out PDF_Out_Stream; layout: Rectangle);
+  procedure Page_Setup (pdf : in out PDF_Out_Stream; layout : Rectangle);
 
-  function Layout(pdf : PDF_Out_Stream) return Rectangle;
+  function Layout (pdf : PDF_Out_Stream) return Rectangle;
 
   --  Set_Index and Index are not directly useful for PDF_Out users.
   --  They are private indeed, but they must be visible (RM 3.9.3(10)).
 
   --  Set the index on the stream
-  procedure Set_Index (pdf: in out PDF_Out_Stream;
-                       to: Ada.Streams.Stream_IO.Positive_Count)
+  procedure Set_Index (pdf : in out PDF_Out_Stream;
+                       to : Ada.Streams.Stream_IO.Positive_Count)
   is abstract;
 
   --  Return the index of the stream
-  function Index (pdf: PDF_Out_Stream) return Ada.Streams.Stream_IO.Count
+  function Index (pdf : PDF_Out_Stream) return Ada.Streams.Stream_IO.Count
   is abstract;
 
   -----------------------------------------------------------------
@@ -374,69 +374,70 @@ package PDF_Out is
 
   type PDF_Out_File is new PDF_Out_Stream with private;
 
-  procedure Create(
+  procedure Create (
     pdf        : in out PDF_Out_File;
     file_name  :        String;
-    PDF_format :        PDF_type:= Default_PDF_type
+    PDF_format :        PDF_type := Default_PDF_type
   );
 
-  procedure Close(pdf : in out PDF_Out_File);
+  procedure Close (pdf : in out PDF_Out_File);
 
-  function Is_Open(pdf : in PDF_Out_File) return Boolean;
+  function Is_Open (pdf : in PDF_Out_File) return Boolean;
 
   --  * Output to a string (to be compressed, packaged, transmitted, ... ):
 
   type PDF_Out_String is new PDF_Out_Stream with private;
 
-  procedure Create(
+  procedure Create (
     pdf        : in out PDF_Out_String;
-    PDF_format :        PDF_type:= Default_PDF_type
+    PDF_format :        PDF_type := Default_PDF_type
   );
 
-  procedure Close(pdf : in out PDF_Out_String);
+  procedure Close (pdf : in out PDF_Out_String);
 
-  function Contents(pdf: PDF_Out_String) return String;
+  function Contents (pdf : PDF_Out_String) return String;
 
   --------------------------------------------------------------
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "005";
-  reference : constant String:= "05-Sep-2019";
-  web       : constant String:= "http://apdf.sf.net/";
-  --  hopefully the latest version is at that URL ^
+  version   : constant String := "005";
+  reference : constant String := "23-Apr-2022";
+  web       : constant String := "http://apdf.sf.net/";
+  --  Hopefully the latest version is at that URL....^
+  --  There is a mirror too @ https://github.com/zertovitch/ada-pdf-writer
 
 private
 
-  min_bits: constant:= Integer'Max(32, System.Word_Size);
+  min_bits : constant := Integer'Max (32, System.Word_Size);
   --  13.3(8): A word is the largest amount of storage that can be
   --  conveniently and efficiently manipulated by the hardware,
   --  given the implementation's run-time model.
 
-  type PDF_Index_Type is range -2**(min_bits-1) .. 2**(min_bits-1) - 1;
+  type PDF_Index_Type is range -2**(min_bits - 1) .. 2**(min_bits - 1) - 1;
   --  We define an Integer type which is at least 32 bits, but n bits
   --  on a native n > 32 bits architecture (no performance hit on 64+
   --  bits architectures).
 
-  type Offset_table is array(PDF_Index_Type range <>) of Ada.Streams.Stream_IO.Count;
+  type Offset_table is array (PDF_Index_Type range <>) of Ada.Streams.Stream_IO.Count;
   type p_Offset_table is access Offset_table;
 
-  type Page_table is array(PDF_Index_Type range <>) of PDF_Index_Type; -- object ID's of pages
+  type Page_table is array (PDF_Index_Type range <>) of PDF_Index_Type; -- object ID's of pages
   type p_Page_table is access Page_table;
 
   --  Some unique objects like Pages need to have a pre-determined index,
   --  otherwise single Page objects don't know their parent's index.
-  pages_idx: constant PDF_Index_Type:= 1;
-  last_fix_obj_idx: constant PDF_Index_Type:= 1;
+  pages_idx : constant PDF_Index_Type := 1;
+  last_fix_obj_idx : constant PDF_Index_Type := 1;
 
   type Dir_node;
   type p_Dir_node is access Dir_node;
 
-  type Dir_node(name_len: Natural) is record
+  type Dir_node (name_len : Natural) is record
     left, right      : p_Dir_node;
-    file_name        : String(1..name_len);
+    file_name        : String (1 .. name_len);
     image_index      : Positive;
-    pdf_object_index : PDF_Index_Type:= 0;  --  0 = not yet insterted into the PDF stream
+    pdf_object_index : PDF_Index_Type := 0;  --  0 = not yet insterted into the PDF stream
     local_resource   : Boolean;      --  All True items to be listed into Resource dictionary
   end record;
 
@@ -473,7 +474,7 @@ private
     page_margins  : Margins_Type      := cm_2_5_margins;
     objects       : PDF_Index_Type    := last_fix_obj_idx;
     object_offset : p_Offset_table    := null;
-    stream_obj_buf: Unbounded_String;
+    stream_obj_buf : Unbounded_String;
     img_dir_tree  : p_Dir_node        := null;
     img_count     : Natural           := 0;
     current_font  : Font_Type         := Helvetica;
@@ -490,14 +491,14 @@ private
   type PDF_Out_Stream is abstract new PDF_Out_Pre_Root_Type with null record;
 
   --  For child packages
-  function Image_name(i: Positive) return String;
-  procedure New_object(pdf : in out PDF_Out_Stream'Class);
-  procedure WL(pdf : in out PDF_Out_Stream'Class; s: String);
-  pragma Inline(WL);
-  procedure Copy_file(
+  function Image_name (i : Positive) return String;
+  procedure New_object (pdf : in out PDF_Out_Stream'Class);
+  procedure WL (pdf : in out PDF_Out_Stream'Class; s : String);
+  pragma Inline (WL);
+  procedure Copy_file (
     file_name  : String;
     into       : in out Ada.Streams.Root_Stream_Type'Class;
-    buffer_size: Positive:= 1024*1024
+    buffer_size : Positive := 1024 * 1024
   );
 
   ----------------------
@@ -508,16 +509,16 @@ private
     access Ada.Streams.Stream_IO.File_Type;
 
   type PDF_Out_File is new PDF_Out_Stream with record
-    pdf_file   : PDF_file_acc:= null; -- access to the "physical" PDF file
+    pdf_file   : PDF_file_acc := null; -- access to the "physical" PDF file
     file_name  : Unbounded_String;
   end record;
 
   --  Set the index on the file
-  overriding procedure Set_Index (pdf: in out PDF_Out_File;
+  overriding procedure Set_Index (pdf : in out PDF_Out_File;
                                   to :        Ada.Streams.Stream_IO.Positive_Count);
 
   --  Return the index of the file
-  overriding function Index (pdf: PDF_Out_File) return Ada.Streams.Stream_IO.Count;
+  overriding function Index (pdf : PDF_Out_File) return Ada.Streams.Stream_IO.Count;
 
   ------------------------
   -- Output to a string --
@@ -547,21 +548,21 @@ private
   procedure Set_Index (S : access Unbounded_Stream; To : Positive);
 
   --  returns the index of the stream
-  function Index (S: access Unbounded_Stream) return Integer;
+  function Index (S : access Unbounded_Stream) return Integer;
 
   --- ***
 
   type Unbounded_Stream_Acc is access Unbounded_Stream;
 
   type PDF_Out_String is new PDF_Out_Stream with record
-    pdf_memory: Unbounded_Stream_Acc;
+    pdf_memory : Unbounded_Stream_Acc;
   end record;
 
   --  Set the index on the PDF string stream
-  overriding procedure Set_Index (pdf: in out PDF_Out_String;
+  overriding procedure Set_Index (pdf : in out PDF_Out_String;
                                   to :        Ada.Streams.Stream_IO.Positive_Count);
 
   --  Return the index of the PDF string stream
-  overriding function Index (pdf: PDF_Out_String) return Ada.Streams.Stream_IO.Count;
+  overriding function Index (pdf : PDF_Out_String) return Ada.Streams.Stream_IO.Count;
 
 end PDF_Out;

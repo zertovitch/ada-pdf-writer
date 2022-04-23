@@ -1,40 +1,41 @@
 --  This tool creates a PDF including one or more images files.
 --  The file names are given as command-line parameters.
 
-with PDF_Out;                           use PDF_Out;
+with PDF_Out;
 
-with Ada.Command_Line;                  use Ada.Command_Line;
+with Ada.Command_Line;
 
 procedure Img2PDF is
+  use Ada.Command_Line, PDF_Out;
   --
   --  Hardcoded scan and page parameters:
   --
   DPI  : constant := 300.0;  --  DPI = Dots (pixels) Per Inch
   page : constant Rectangle := A4_portrait;
   --
-  left, bottom: Real;
-  target: Rectangle;
-  pdf: PDF_Out.PDF_Out_File;
+  left, bottom : Real;
+  target : Rectangle;
+  pdf : PDF_Out_File;
 begin
-  Create(pdf, "img2pdf_out.pdf");
-  Creator_Application(pdf, "Img2PDF");
-  Page_Setup(pdf, page);
+  pdf.Create ("img2pdf_out.pdf");
+  pdf.Creator_Application ("Img2PDF");
+  pdf.Page_Setup (page);
   for i in 1 .. Argument_Count loop
     --  Get image dimensions and look for a good fit into the page:
-    target:= (one_inch / DPI) * Get_pixel_dimensions(Argument(i));
-    left:= Left_Margin(pdf);
+    target := (one_inch / DPI) * Get_pixel_dimensions (Argument (i));
+    left := pdf.Left_Margin;
     if left + target.width > page.width then
-      left:= 0.0;
+      left := 0.0;
     end if;
-    bottom:= Bottom_Margin(pdf);
+    bottom := pdf.Bottom_Margin;
     if bottom + target.height > page.height then
-      bottom:= 0.0;
+      bottom := 0.0;
     end if;
     --  Insert image:
-    Image(pdf, Argument(i), (left, bottom) + target);
+    pdf.Image (Argument (i), (left, bottom) + target);
     if i < Argument_Count then
-      New_Page(pdf);
+      pdf.New_Page;
     end if;
   end loop;
-  Close(pdf);
+  pdf.Close;
 end Img2PDF;
