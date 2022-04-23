@@ -15,6 +15,7 @@
 --  or "gnatmake -P pdf_out_gnat", or open me with GNAT Studio.
 --
 --
+--
 
 project PDF_Out_Gnat is
 
@@ -22,7 +23,7 @@ project PDF_Out_Gnat is
    PDF_Build_Mode : PDF_Build_Mode_Type := external ("PDF_Build_Mode", "Debug");
 
    for Source_Dirs use
-     (".", "demo", "tools", "test",
+     (".", "demos", "tools", "tests",
       "gid"                          --  <--------- *Here* is the subdirectory with a copy of GID sources.
      );
 

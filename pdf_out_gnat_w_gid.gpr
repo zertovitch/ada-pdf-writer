@@ -6,6 +6,7 @@
 --    for instance through the Alire system (Ada LIbrary REpository, https://alire.ada.dev/ ).
 --    For a fully standalone project file, see the pdf_out_gnat.gpr variant.
 --
+--
 --      Home page:       http://apdf.sf.net/
 --      Project page 1:  http://sf.net/projects/apdf/
 --      Project page 2:  https://github.com/zertovitch/ada-pdf-writer
@@ -21,8 +22,8 @@ project PDF_Out_Gnat_w_GID is
    type PDF_Build_Mode_Type is ("Debug", "Fast");
    PDF_Build_Mode : PDF_Build_Mode_Type := external ("PDF_Build_Mode", "Debug");
 
-   for Source_Dirs use (".", "demo", "tools", "test");
-
+   for Source_Dirs use
+     (".", "demos", "tools", "tests");
 
 
 

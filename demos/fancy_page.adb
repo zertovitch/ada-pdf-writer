@@ -24,7 +24,7 @@ package body Fancy_Page is
     pdf.Color ((0.0, 0.3, 0.3));
     pdf.Put ("Ada PDF Writer Demo");  --  Green outline, cyan fill
     pdf.Image (
-      "demo/ada_logo.jpg",
+      "demos/ada_logo.jpg",
       (X_Max (pg_layout) - ada_logo_width,
        Y_Max (pg_layout) - ada_logo_height,
        ada_logo_width,

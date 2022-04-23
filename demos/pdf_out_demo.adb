@@ -44,7 +44,7 @@ procedure PDF_Out_Demo is
     procedure Big_demo_contents (name : String) is
       factor : Real;
       pdf : Fancy_Page.Fancy_PDF;
-      bordu : constant String := "demo/bordu_2016_01_01_25pct.jpg";
+      bordu : constant String := "demos/bordu_2016_01_01_25pct.jpg";
       target : Rectangle;
     begin
       pdf.page_nb := mem_page_nb;
@@ -111,7 +111,7 @@ procedure PDF_Out_Demo is
           x0 : constant Real := pdf.Left_Margin * 2.0;
           y0 : constant Real := pdf.Bottom_Margin + y;
         begin
-          pdf.Image ("demo/bp_mask.jpg", (x0, y0, factor_bp * 835.0, factor_bp * 315.0));
+          pdf.Image ("demos/bp_mask.jpg", (x0, y0, factor_bp * 835.0, factor_bp * 315.0));
           pdf.Put_XY (x0 +  15.0, y0 + 120.0, date);
           pdf.Put_XY (x0 + 158.0, y0 + 120.0, from);
           pdf.Put_XY (x0 + 158.0, y0 +  87.0, to);
