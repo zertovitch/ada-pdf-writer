@@ -17,6 +17,8 @@ procedure Koch_Curve is
    Length : constant Real       := 400.0;
    Corner : constant Point      := (90.0, 580.0);
 
+   procedure Draw_Image (Level : Level_Type) is
+
    Current   : Point      := (0.0, 0.0);
    Direction : Angle_Deg  := Angle_Deg'(60.0);
    Doc       : PDF_Out_File;
@@ -35,8 +37,7 @@ procedure Koch_Curve is
       end if;
    end Koch;
 
-begin
-   for Level in Level_Type loop
+   begin
       Doc.Create ("koch_" & Character'Val (Character'Pos ('0') + Level) & ".pdf");
       Doc.Page_Setup (A4_portrait);
       Doc.Margins (Margins_Type'(left   => cm_2_5,
@@ -51,5 +52,10 @@ begin
                        rendering  => fill,
                        rule       => even_odd);
       Doc.Close;
+   end Draw_Image;
+
+begin
+   for Level in Level_Type loop
+      Draw_Image (Level);
    end loop;
 end Koch_Curve;

@@ -1,1 +1,1 @@
-gprbuild -p -P pdf_out_gnat
+gprbuild -P pdf_out_gnat

@@ -28,12 +28,13 @@ project PDF_Out_Gnat_w_GID is
 
 
    for Main use (
-           "pdf_out_demo.adb",              --  Demos
+           "pdf_out_demo.adb",                --  Demos
            "color_pinstripe_printer.adb",
            "pinstripe_printer.adb",
            "koch_curve.adb",
-           "img2pdf.adb",                   --  Tools
-           "validation_test.adb",           --  Test
+           "sierpinski_arrowhead_curve.adb",
+           "img2pdf.adb",                     --  Tools
+           "validation_test.adb",             --  Test
            "page_test.adb"
    );
    for Exec_Dir use ".";
