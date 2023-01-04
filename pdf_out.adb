@@ -121,7 +121,7 @@ package body PDF_Out is
     Open (f, In_File, file_name);
     loop
       Block_Read (f, buf, actually_read);
-      exit when actually_read = 0; -- this is expected
+      exit when actually_read = 0;  --  this is expected
       Block_Write (into, buf (1 .. actually_read));
     end loop;
     Close (f);
@@ -521,11 +521,10 @@ package body PDF_Out is
   end Finish_Page;
 
   procedure Put (pdf  : in out PDF_Out_Stream;
-                num  : in Real;
-                fore : in Ada.Text_IO.Field := Real_IO.Default_Fore;
-                aft  : in Ada.Text_IO.Field := Real_IO.Default_Aft;
-                exp  : in Ada.Text_IO.Field := Real_IO.Default_Exp
-            )
+                 num  : in Real;
+                 fore : in Ada.Text_IO.Field := Real_IO.Default_Fore;
+                 aft  : in Ada.Text_IO.Field := Real_IO.Default_Aft;
+                 exp  : in Ada.Text_IO.Field := Real_IO.Default_Exp)
   is
   begin
     if exp = 0 then
@@ -546,10 +545,9 @@ package body PDF_Out is
   end Put;
 
   procedure Put (pdf   : in out PDF_Out_Stream;
-                num   : in Integer;
-                width : in Ada.Text_IO.Field := 0; -- ignored
-                base  : in Ada.Text_IO.Number_Base := 10
-            )
+                 num   : in Integer;
+                 width : in Ada.Text_IO.Field       := 0;  --  ignored
+                 base  : in Ada.Text_IO.Number_Base := 10)
   is
   begin
     if base = 10 then
@@ -567,12 +565,39 @@ package body PDF_Out is
     end if;
   end Put;
 
+  procedure Show_Text_String (pdf : in out PDF_Out_Stream; str : String) is
+  --  9.4.3 Text-Showing Operators; table 109.
+  begin
+    if str'Length > 0 then
+      Insert_Text_PDF_Code (pdf, '(' & str & ") Tj");
+    end if;
+  end Show_Text_String;
+
   procedure Put (pdf : in out PDF_Out_Stream; str : String) is
   begin
     if test_page_mode then
       null;  --  Nothing to do (test page instead)
     else
-      Insert_Text_PDF_Code (pdf, '(' & str & ") Tj");
+      for i in str'Range loop
+        --  We scan the string for special characters:
+        case str (i) is
+          when ASCII.NUL .. ASCII.HT |
+               ASCII.VT .. ASCII.US =>
+            --  Skip special character.
+            Show_Text_String (pdf, str (str'First .. i - 1));
+            Put (pdf, str (i + 1 .. str'Last));
+            return;
+          when ASCII.LF =>
+            --  Line Feed character: display string on two or more lines.
+            Show_Text_String (pdf, str (str'First .. i - 1));
+            New_Line (pdf);
+            Put (pdf, str (i + 1 .. str'Last));
+            return;
+          when others =>
+            null;
+        end case;
+      end loop;
+      Show_Text_String (pdf, str);
     end if;
   end Put;
 
@@ -582,21 +607,20 @@ package body PDF_Out is
   end Put;
 
   procedure Put_Line (pdf  : in out PDF_Out_Stream;
-                     num  : in Real;
-                     fore : in Ada.Text_IO.Field := Real_IO.Default_Fore;
-                     aft  : in Ada.Text_IO.Field := Real_IO.Default_Aft;
-                     exp  : in Ada.Text_IO.Field := Real_IO.Default_Exp
-            ) is
+                      num  : in Real;
+                      fore : in Ada.Text_IO.Field := Real_IO.Default_Fore;
+                      aft  : in Ada.Text_IO.Field := Real_IO.Default_Aft;
+                      exp  : in Ada.Text_IO.Field := Real_IO.Default_Exp)
+  is
   begin
     Put (pdf, num, fore, aft, exp);
     New_Line (pdf);
   end Put_Line;
 
   procedure Put_Line (pdf   : in out PDF_Out_Stream;
-                     num   : in Integer;
-                     width : in Ada.Text_IO.Field := 0; -- ignored
-                     base  : in Ada.Text_IO.Number_Base := 10
-            )
+                      num   : in Integer;
+                      width : in Ada.Text_IO.Field := 0;  --  ignored
+                      base  : in Ada.Text_IO.Number_Base := 10)
   is
   begin
     Put (pdf, num, width, base);

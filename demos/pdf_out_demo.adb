@@ -56,10 +56,11 @@ procedure PDF_Out_Demo is
       pdf.Page_Setup (A4_portrait);
       pdf.Top_Margin (one_cm * 4.0);
       --
-      pdf.Put_Line ("This is a big demo for Ada PDF Writer (PDF_Out package).");
-      pdf.Put_Line ("We begin with some Put_Line and other Ada.Text_IO-like commands.");
-      pdf.Put_Line ("You can use a PDF stream just like a File_Type of Ada.Text_IO");
-      pdf.Put_Line ("and its standard subprograms.");
+      pdf.Put_Line
+        ("This is a big demo for Ada PDF Writer (PDF_Out package)."         & ASCII.LF &
+         "We begin with some Put_Line and other Ada.Text_IO-like commands." & ASCII.LF &
+         "You can use a PDF stream just like a File_Type of Ada.Text_IO"    & ASCII.LF &
+         "and its standard subprograms.");
       pdf.New_Line;
       pdf.Put_Line ("Of course you have much more with PDF_Out: high-quality fonts,");
       pdf.Put_Line ("colors, amazing vector graphics, image inclusions, ...");

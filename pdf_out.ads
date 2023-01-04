@@ -9,7 +9,7 @@
 
 --  Legal licensing note:
 
---  Copyright (c) 2014 .. 2022 Gautier de Montmollin
+--  Copyright (c) 2014 .. 2023 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -39,11 +39,11 @@
 --
 --  1. Create
 --
---  2. | Put(pdf, data),
---     | New_Line(pdf), ... : other "Text_IO"-like (full list below)
---     | Image(pdf, ...)    : raster images
---     | Move/Line/...      : vector graphics
---     | New_Page(pdf)
+--  2. | Put (pdf, data),
+--     | New_Line (pdf), ... : other "Text_IO"-like (full list below)
+--     | Image (pdf, ...)    : raster images
+--     | Move/Line/...       : vector graphics
+--     | New_Page (pdf)
 --
 --  3. Close
 --
@@ -54,7 +54,7 @@
 --  Note: the standard PDF measurement unit is a "point", set as 1/72 inch.
 --
 --  All technical references are to PDF 1.7 format, ISO 32000-1:2008 standard
---  http://www.adobe.com/devnet/pdf/pdf_reference.html
+--  https://opensource.adobe.com/dc-acrobat-sdk-docs/standards/pdfstandards/pdf/PDF32000_2008.pdf
 --
 --------------------------------------------------------------------------
 
@@ -66,13 +66,13 @@ with System;
 
 package PDF_Out is
 
-  -----------------------------------------------------------------
-  -- The abstract PDF output stream root type.                   --
-  -- From this package, you can use the following derived types: --
-  --    * PDF_Out_File    : output in a file                     --
-  --    * PDF_Out_String  : output in a string                   --
-  -- Of course you can define your own derived types.            --
-  -----------------------------------------------------------------
+  -------------------------------------------------------------------
+  --  The abstract PDF output stream root type.                    --
+  --  From this package, you can use the following derived types:  --
+  --     * PDF_Out_File    : output in a file                      --
+  --     * PDF_Out_String  : output in a string                    --
+  --  Of course you can define your own derived types.             --
+  -------------------------------------------------------------------
 
   type PDF_Out_Stream is abstract tagged private;
 
@@ -81,7 +81,7 @@ package PDF_Out is
   Not_implemented : exception;
 
   type PDF_type is (
-    PDF_1_3 -- PDF 1.3
+    PDF_1_3  --  PDF 1.3
   );
 
   Default_PDF_type : constant PDF_type := PDF_1_3;
@@ -114,45 +114,46 @@ package PDF_Out is
   function X_Max (r : Rectangle) return Real;
   function Y_Max (r : Rectangle) return Real;
 
-  ----------------------------
-  -- (2) Document contents: --
-  ----------------------------
+  ------------------------------
+  --  (2) Document contents:  --
+  ------------------------------
 
   procedure Put (pdf  : in out PDF_Out_Stream;
                  num  : in Real;
                  fore : in Ada.Text_IO.Field := Real_IO.Default_Fore;
                  aft  : in Ada.Text_IO.Field := Real_IO.Default_Aft;
-                 exp  : in Ada.Text_IO.Field := Real_IO.Default_Exp
-            );
+                 exp  : in Ada.Text_IO.Field := Real_IO.Default_Exp);
+
   procedure Put (pdf   : in out PDF_Out_Stream;
                  num   : in Integer;
-                 width : in Ada.Text_IO.Field := 0; -- ignored
-                 base  : in Ada.Text_IO.Number_Base := 10
-            );
+                 width : in Ada.Text_IO.Field       := 0;  --  ignored
+                 base  : in Ada.Text_IO.Number_Base := 10);
+
   procedure Put (pdf : in out PDF_Out_Stream; str : String);
   procedure Put (pdf : in out PDF_Out_Stream; str : Unbounded_String);
-  --
+
   procedure Put_Line (pdf  : in out PDF_Out_Stream;
                       num  : in Real;
                       fore : in Ada.Text_IO.Field := Real_IO.Default_Fore;
                       aft  : in Ada.Text_IO.Field := Real_IO.Default_Aft;
-                      exp  : in Ada.Text_IO.Field := Real_IO.Default_Exp
-            );
+                      exp  : in Ada.Text_IO.Field := Real_IO.Default_Exp);
+
   procedure Put_Line (pdf   : in out PDF_Out_Stream;
                       num   : in Integer;
-                      width : in Ada.Text_IO.Field := 0; -- ignored
-                      base  : in Ada.Text_IO.Number_Base := 10
-            );
+                      width : in Ada.Text_IO.Field       := 0;  --  ignored
+                      base  : in Ada.Text_IO.Number_Base := 10);
+
   procedure Put_Line (pdf : in out PDF_Out_Stream; str : String);
   procedure Put_Line (pdf : in out PDF_Out_Stream; str : Unbounded_String);
-  --
+
   procedure New_Line (pdf : in out PDF_Out_Stream; Spacing : Positive := 1);
   procedure New_Page (pdf : in out PDF_Out_Stream);
+
   --  Call to Finish_Page is optional, but can be necessary in some circumstances,
   --  for instance for displaying the footer correctly before changing page
   --  orientation or margins for the following pages.
   procedure Finish_Page (pdf : in out PDF_Out_Stream);
-  --
+
   procedure Text_XY (pdf : in out PDF_Out_Stream; x, y : Real);
   procedure Put_XY (pdf : in out PDF_Out_Stream; x, y : Real; str : String);
 
@@ -225,9 +226,9 @@ package PDF_Out is
 
   procedure Text_Rendering_Mode (pdf : in out PDF_Out_Stream; r : Rendering_Mode);
 
-  ---------------
-  --  Graphics --
-  ---------------
+  ----------------
+  --  Graphics  --
+  ----------------
 
   --  Insert an image from a file
   procedure Image (pdf : in out PDF_Out_Stream; file_name : String; target : Rectangle);
@@ -241,7 +242,7 @@ package PDF_Out is
   --  Vector graphics  --
   -----------------------
 
-  initial_line_width : constant := 1.0; --  See Table 52, 8.4.1
+  initial_line_width : constant := 1.0;  --  See Table 52, 8.4.1
   procedure Line_Width (pdf : in out PDF_Out_Stream; width : Real);
 
   --  Draw a single line segment:
@@ -251,7 +252,10 @@ package PDF_Out is
 
   --  Draw simple figures.
   --  Rectangle:
-  procedure Draw (pdf : in out PDF_Out_Stream; what : Rectangle; rendering : Path_Rendering_Mode);
+  procedure Draw
+    (pdf       : in out PDF_Out_Stream;
+     what      :        Rectangle;
+     rendering :        Path_Rendering_Mode);
 
   --  Paths:
 
@@ -261,7 +265,10 @@ package PDF_Out is
 
   procedure Move (pdf : in out PDF_Out_Stream; to : Point);
   procedure Line (pdf : in out PDF_Out_Stream; to : Point);
-  procedure Cubic_Bezier (pdf : in out PDF_Out_Stream; control_1, control_2 : Point; to : Point);
+  procedure Cubic_Bezier
+    (pdf                  : in out PDF_Out_Stream;
+     control_1, control_2 :        Point;
+     to                   :        Point);
   --  All lines and curves and the eventual filling inside the path
   --  will be drawn when path is completed, with Finish_Path:
 
@@ -311,9 +318,9 @@ package PDF_Out is
   procedure Keywords (pdf : in out PDF_Out_Stream; s : String);
   procedure Creator_Application (pdf : in out PDF_Out_Stream; s : String);
 
-  ------------------
-  --  Page layout --
-  ------------------
+  -------------------
+  --  Page layout  --
+  -------------------
 
   --  You need to override the Header and Footer methods
   --  for setting up your custom header and footer. By default they do nothing.
@@ -367,18 +374,17 @@ package PDF_Out is
   function Index (pdf : PDF_Out_Stream) return Ada.Streams.Stream_IO.Count
   is abstract;
 
-  -----------------------------------------------------------------
-  -- Here are derived stream types, pre-defined in this package. --
-  -----------------------------------------------------------------
+  -------------------------------------------------------------------
+  --  Here are derived stream types, pre-defined in this package.  --
+  -------------------------------------------------------------------
   --  * Output to a file:
 
   type PDF_Out_File is new PDF_Out_Stream with private;
 
-  procedure Create (
-    pdf        : in out PDF_Out_File;
-    file_name  :        String;
-    PDF_format :        PDF_type := Default_PDF_type
-  );
+  procedure Create
+    (pdf        : in out PDF_Out_File;
+     file_name  :        String;
+     PDF_format :        PDF_type := Default_PDF_type);
 
   procedure Close (pdf : in out PDF_Out_File);
 
@@ -388,24 +394,24 @@ package PDF_Out is
 
   type PDF_Out_String is new PDF_Out_Stream with private;
 
-  procedure Create (
-    pdf        : in out PDF_Out_String;
-    PDF_format :        PDF_type := Default_PDF_type
-  );
+  procedure Create
+    (pdf        : in out PDF_Out_String;
+     PDF_format :        PDF_type := Default_PDF_type);
 
   procedure Close (pdf : in out PDF_Out_String);
 
   function Contents (pdf : PDF_Out_String) return String;
 
-  --------------------------------------------------------------
-  -- Information about this package - e.g. for an "about" box --
-  --------------------------------------------------------------
+  ----------------------------------------------------------------
+  --  Information about this package - e.g. for an "about" box  --
+  ----------------------------------------------------------------
 
-  version   : constant String := "005";
-  reference : constant String := "23-Apr-2022";
-  web       : constant String := "http://apdf.sf.net/";
-  --  Hopefully the latest version is at that URL....^
-  --  There is a mirror too @ https://github.com/zertovitch/ada-pdf-writer
+  version   : constant String := "006, preview 1";
+  reference : constant String := "04-Jan-2023";
+  --  Hopefully the latest version is at one of those URLs:
+  web  : constant String := "https://apdf.sourceforge.io/";
+  web2 : constant String := "https://sourceforge.net/projects/apdf/";
+  web3 : constant String := "https://github.com/zertovitch/ada-pdf-writer";
 
 private
 
@@ -444,9 +450,9 @@ private
   type Page_zone is (nowhere, in_page, in_header, in_footer);
   type Text_or_graphics is (text, graphics);
 
-  ----------------------------------------
-  -- Raw Streams, with 'Read and 'Write --
-  ----------------------------------------
+  ------------------------------------------
+  --  Raw Streams, with 'Read and 'Write  --
+  ------------------------------------------
 
   type PDF_Raw_Stream_Class is access all Ada.Streams.Root_Stream_Type'Class;
 
@@ -501,9 +507,9 @@ private
     buffer_size : Positive := 1024 * 1024
   );
 
-  ----------------------
-  -- Output to a file --
-  ----------------------
+  ------------------------
+  --  Output to a file  --
+  ------------------------
 
   type PDF_file_acc is
     access Ada.Streams.Stream_IO.File_Type;
@@ -520,9 +526,9 @@ private
   --  Return the index of the file
   overriding function Index (pdf : PDF_Out_File) return Ada.Streams.Stream_IO.Count;
 
-  ------------------------
-  -- Output to a string --
-  ------------------------
+  --------------------------
+  --  Output to a string  --
+  --------------------------
   --  Code reused from Zip_Streams
 
   --- *** We define here a complete in-memory stream:
