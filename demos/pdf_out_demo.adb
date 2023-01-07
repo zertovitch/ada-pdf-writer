@@ -66,6 +66,7 @@ procedure PDF_Out_Demo is
       pdf.Put_Line ("colors, amazing vector graphics, image inclusions, ...");
       pdf.New_Line;
       pdf.Put_Line ("Testing Latin-1 characters: je répète, ganz schöne Umläute");
+      pdf.Put_Line ("Testing special characters: ()\");
       pdf.New_Line (2);
       pdf.Line_Spacing (2.0);
       for r in 1 .. 5 loop

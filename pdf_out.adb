@@ -149,17 +149,17 @@ package body PDF_Out is
 
   --  Delayed output, for internal PDF's "stream" object
 
-  procedure Wd (pdf : in out PDF_Out_Stream'Class; s : String) is
-  pragma Inline (Wd);
+  procedure Write_delayed (pdf : in out PDF_Out_Stream'Class; s : String) is
+  pragma Inline (Write_delayed);
   begin
     No_Nowhere (pdf);
     Append (pdf.stream_obj_buf, s);
-  end Wd;
+  end Write_delayed;
 
   procedure WLd (pdf : in out PDF_Out_Stream'Class; s : String) is
   pragma Inline (WLd);
   begin
-    Wd (pdf, s & NL);
+    Write_delayed (pdf, s & NL);
   end WLd;
 
   --  External stream index
@@ -591,6 +591,12 @@ package body PDF_Out is
             --  Line Feed character: display string on two or more lines.
             Show_Text_String (pdf, str (str'First .. i - 1));
             New_Line (pdf);
+            Put (pdf, str (i + 1 .. str'Last));
+            return;
+          when '(' | ')' | '\' =>
+            --  Insert a Reverse Solidus (backslash, '\') for an escape
+            --  sequence. See full list in: 7.3.4.2 Literal Strings; table 3.
+            Show_Text_String (pdf, str (str'First .. i - 1) & '\' & str (i));
             Put (pdf, str (i + 1 .. str'Last));
             return;
           when others =>

@@ -407,7 +407,7 @@ package PDF_Out is
   ----------------------------------------------------------------
 
   version   : constant String := "006, preview 1";
-  reference : constant String := "04-Jan-2023";
+  reference : constant String := "07-Jan-2023";
   --  Hopefully the latest version is at one of those URLs:
   web  : constant String := "https://apdf.sourceforge.io/";
   web2 : constant String := "https://sourceforge.net/projects/apdf/";
