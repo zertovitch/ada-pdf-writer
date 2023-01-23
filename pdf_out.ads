@@ -35,7 +35,8 @@
 --  (*) All Trademarks mentioned are properties of their respective owners.
 -------------------------------------------------------------------------------------
 --
---  Follow these steps to create a PDF document stream:
+--  Follow the steps below to create a PDF document stream.
+--  You can also get inspiration from the demos, tests & tools.
 --
 --  1. Create
 --
@@ -58,9 +59,9 @@
 --
 --------------------------------------------------------------------------
 
-with Ada.Streams.Stream_IO;
-with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
-with Ada.Text_IO;
+with Ada.Streams.Stream_IO,
+     Ada.Strings.Unbounded,
+     Ada.Text_IO;
 
 with System;
 
@@ -87,6 +88,7 @@ package PDF_Out is
   Default_PDF_type : constant PDF_type := PDF_1_3;
 
   type Real is digits System.Max_Digits;
+
   package Real_IO is new Ada.Text_IO.Float_IO (Real);
 
   type Point is record
@@ -113,6 +115,8 @@ package PDF_Out is
 
   function X_Max (r : Rectangle) return Real;
   function Y_Max (r : Rectangle) return Real;
+
+  use Ada.Strings.Unbounded;
 
   ------------------------------
   --  (2) Document contents:  --
@@ -501,10 +505,11 @@ private
   procedure New_object (pdf : in out PDF_Out_Stream'Class);
   procedure WL (pdf : in out PDF_Out_Stream'Class; s : String);
   pragma Inline (WL);
-  procedure Copy_file (
-    file_name  : String;
-    into       : in out Ada.Streams.Root_Stream_Type'Class;
-    buffer_size : Positive := 1024 * 1024
+
+  procedure Copy_File (
+    file_name   :        String;
+    into        : in out Ada.Streams.Root_Stream_Type'Class;
+    buffer_size :        Positive := 1024 * 1024
   );
 
   ------------------------

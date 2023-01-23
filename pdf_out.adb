@@ -3,15 +3,16 @@ with PDF_Out.Fonts,
 
 with GID;
 
-with Ada.Characters.Handling;           use Ada.Characters.Handling;
-with Ada.Strings.Fixed;
-with Ada.Unchecked_Deallocation;
+with Ada.Characters.Handling,
+     Ada.Strings.Fixed,
+     Ada.Unchecked_Deallocation;
 
-with Interfaces;                        use Interfaces;
+with Interfaces;
 
 package body PDF_Out is
 
   use Ada.Streams.Stream_IO, Ada.Streams;
+  use Interfaces;
 
   package CIO is new Ada.Text_IO.Integer_IO (Ada.Streams.Stream_IO.Count);
 
@@ -60,11 +61,10 @@ package body PDF_Out is
     Size_test_a'Size = Size_test_b'Size and
     Size_test_a'Alignment = Size_test_b'Alignment;
 
-  procedure Block_Read (
-    file         : in     Ada.Streams.Stream_IO.File_Type;
-    buffer       :    out Byte_buffer;
-    actually_read :    out Natural
-  )
+  procedure Block_Read
+    (file          : in     Ada.Streams.Stream_IO.File_Type;
+     buffer        :    out Byte_buffer;
+     actually_read :    out Natural)
   is
     SE_Buffer   : Stream_Element_Array (1 .. buffer'Length);
     for SE_Buffer'Address use buffer'Address;
@@ -88,10 +88,9 @@ package body PDF_Out is
     end if;
   end Block_Read;
 
-  procedure Block_Write (
-    stream : in out Ada.Streams.Root_Stream_Type'Class;
-    buffer : in     Byte_buffer
-  )
+  procedure Block_Write
+    (stream : in out Ada.Streams.Root_Stream_Type'Class;
+     buffer : in     Byte_buffer)
   is
     pragma Inline (Block_Write);
     SE_Buffer   : Stream_Element_Array (1 .. buffer'Length);
@@ -108,11 +107,10 @@ package body PDF_Out is
   end Block_Write;
 
   --  Copy a whole file into a stream, using a temporary buffer
-  procedure Copy_file (
-    file_name  : String;
-    into       : in out Ada.Streams.Root_Stream_Type'Class;
-    buffer_size : Positive := 1024 * 1024
-  )
+  procedure Copy_File
+    (file_name   :        String;
+     into        : in out Ada.Streams.Root_Stream_Type'Class;
+     buffer_size :        Positive := 1024 * 1024)
   is
     f : File_Type;
     buf : Byte_buffer (1 .. buffer_size);
@@ -125,7 +123,7 @@ package body PDF_Out is
       Block_Write (into, buf (1 .. actually_read));
     end loop;
     Close (f);
-  end Copy_file;
+  end Copy_File;
 
   procedure W (pdf : in out PDF_Out_Stream'Class; s : String) is
   pragma Inline (W);
@@ -796,7 +794,7 @@ package body PDF_Out is
     cmd : String := path_drawing_operator (rendering) & inside_path_rule_char (rule);
   begin
     if close_path then
-      cmd := To_Lower (cmd);
+      cmd := Ada.Characters.Handling.To_Lower (cmd);
     end if;
     --  Insert the s, S, f, f*, b, b*, B, B* of Table 60 - Path-Painting Operators (8.5.3.1)
     if cmd = "s*" or cmd = "S*" or cmd = "F " or cmd = "F*" then
