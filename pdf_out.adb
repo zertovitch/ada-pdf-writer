@@ -3,7 +3,8 @@ with PDF_Out.Fonts,
 
 with GID;
 
-with Ada.Characters.Handling,
+with Ada.Characters.Conversions,
+     Ada.Characters.Handling,
      Ada.Strings.Fixed,
      Ada.Unchecked_Deallocation;
 
@@ -654,6 +655,54 @@ package body PDF_Out is
       end loop;
     end if;
   end New_Line;
+
+  procedure Put_WS
+    (pdf : in out PDF_Out_Stream; w_str : Wide_String) is
+    use Ada.Characters.Conversions;
+  begin
+     Put (pdf, To_String (w_str));
+  end Put_WS;
+
+  procedure Put_Line_WS
+    (pdf : in out PDF_Out_Stream; w_str : Wide_String)
+  is
+    use Ada.Characters.Conversions;
+  begin
+    Put_Line (pdf, To_String (w_str));
+  end Put_Line_WS;
+
+  procedure Put_Line_WS
+     (pdf   : in out PDF_Out_Stream;
+      w_str :        Ada.Strings.Wide_Unbounded.Unbounded_Wide_String)
+  is
+    use Ada.Characters.Conversions, Ada.Strings.Wide_Unbounded;
+  begin
+     Put_Line (pdf, To_String (To_Wide_String (w_str)));
+  end Put_Line_WS;
+
+  procedure Put_WWS
+    (pdf : in out PDF_Out_Stream; ww_str : Wide_Wide_String) is
+    use Ada.Characters.Conversions;
+  begin
+     Put (pdf, To_String (ww_str));
+  end Put_WWS;
+
+  procedure Put_Line_WWS
+    (pdf : in out PDF_Out_Stream; ww_str : Wide_Wide_String)
+  is
+    use Ada.Characters.Conversions;
+  begin
+    Put_Line (pdf, To_String (ww_str));
+  end Put_Line_WWS;
+
+  procedure Put_Line_WWS
+     (pdf    : in out PDF_Out_Stream;
+      ww_str :        Ada.Strings.Wide_Wide_Unbounded.Unbounded_Wide_Wide_String)
+  is
+    use Ada.Characters.Conversions, Ada.Strings.Wide_Wide_Unbounded;
+  begin
+     Put_Line (pdf, To_String (To_Wide_Wide_String (ww_str)));
+  end Put_Line_WWS;
 
   procedure Text_XY (pdf : in out PDF_Out_Stream; x, y : Real) is
   begin

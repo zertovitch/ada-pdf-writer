@@ -113,6 +113,9 @@ Giuseppe Cannone ( http://www.ari-srl.it/ ), for testing with a
    third-party online validator ( https://www.pdf-online.com/osa/validate.aspx )
    and providing a patch to the PDF Writer for making it ISO-compliant.
 
+Roland Coghetto ( https://github.com/CoghettoR ), for testing and
+   contributions in the Text Output area.
+
 --
 Enjoy!
 

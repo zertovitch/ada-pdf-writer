@@ -61,6 +61,8 @@
 
 with Ada.Streams.Stream_IO,
      Ada.Strings.Unbounded,
+     Ada.Strings.Wide_Unbounded,
+     Ada.Strings.Wide_Wide_Unbounded,
      Ada.Text_IO;
 
 with System;
@@ -152,6 +154,30 @@ package PDF_Out is
 
   procedure New_Line (pdf : in out PDF_Out_Stream; Spacing : Positive := 1);
   procedure New_Page (pdf : in out PDF_Out_Stream);
+
+  --  Support for Wide_String's, usually containing UTF-16 or UCS-2 strings.
+  --  Caution: only the ISO-8859-1 (Latin-1) subset is currently supported.
+
+  procedure Put_WS (pdf : in out PDF_Out_Stream; w_str : Wide_String);
+
+  procedure Put_Line_WS
+     (pdf : in out PDF_Out_Stream; w_str : Wide_String);
+
+  procedure Put_Line_WS
+     (pdf   : in out PDF_Out_Stream;
+      w_str :        Ada.Strings.Wide_Unbounded.Unbounded_Wide_String);
+
+  --  Support for Wide_Wide_String's, containing UTF-32 strings.
+  --  Caution: only the ISO-8859-1 (Latin-1) subset is currently supported.
+
+  procedure Put_WWS (pdf : in out PDF_Out_Stream; ww_str : Wide_Wide_String);
+
+  procedure Put_Line_WWS
+     (pdf : in out PDF_Out_Stream; ww_str : Wide_Wide_String);
+
+  procedure Put_Line_WWS
+     (pdf    : in out PDF_Out_Stream;
+      ww_str :        Ada.Strings.Wide_Wide_Unbounded.Unbounded_Wide_Wide_String);
 
   --  Call to Finish_Page is optional, but can be necessary in some circumstances,
   --  for instance for displaying the footer correctly before changing page
@@ -411,7 +437,7 @@ package PDF_Out is
   ----------------------------------------------------------------
 
   version   : constant String := "006, preview 1";
-  reference : constant String := "07-Jan-2023";
+  reference : constant String := "26-Jan-2023";
   --  Hopefully the latest version is at one of those URLs:
   web  : constant String := "https://apdf.sourceforge.io/";
   web2 : constant String := "https://sourceforge.net/projects/apdf/";
