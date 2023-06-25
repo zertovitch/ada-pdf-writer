@@ -436,12 +436,13 @@ package PDF_Out is
   --  Information about this package - e.g. for an "about" box  --
   ----------------------------------------------------------------
 
-  version   : constant String := "006, preview 1";
-  reference : constant String := "26-Jan-2023";
+  version   : constant String := "006";
+  reference : constant String := "25-Jun-2023";
   --  Hopefully the latest version is at one of those URLs:
   web  : constant String := "https://apdf.sourceforge.io/";
   web2 : constant String := "https://sourceforge.net/projects/apdf/";
   web3 : constant String := "https://github.com/zertovitch/ada-pdf-writer";
+  web4 : constant String := "https://alire.ada.dev/crates/apdf";
 
 private
 
