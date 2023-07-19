@@ -1,12 +1,12 @@
-echo with PDF_Out; use PDF_Out;>small_demo.adb
+echo with PDF_Out;>small_demo.adb
 echo.>>small_demo.adb
-echo procedure Small_demo is>>small_demo.adb
-echo   pdf: PDF_Out_File;>>small_demo.adb
+echo procedure Small_Demo is>>small_demo.adb
+echo   pdf : PDF_Out.PDF_Out_File;>>small_demo.adb
 echo begin>>small_demo.adb
-echo   pdf.Create("Small.pdf");>>small_demo.adb
-echo   pdf.Put_Line("This is a very small demo for PDF_Out...");>>small_demo.adb
+echo   pdf.Create ("small.pdf");>>small_demo.adb
+echo   pdf.Put_Line ("This is a very small demo for PDF_Out...");>>small_demo.adb
 echo   pdf.Close;>>small_demo.adb
-echo end Small_demo;>>small_demo.adb
+echo end Small_Demo;>>small_demo.adb
 
 rem Call GNATMake without project file: we want the .ali here.
 
