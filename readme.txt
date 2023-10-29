@@ -6,15 +6,15 @@ which produces PDF files - as "physical" files, or as
 other types of data streams.
 
 The creation of a PDF file is as simple as this
-small procedure (Ada 2005+ object-oriented syntax):
+small procedure:
 
 
   with PDF_Out;
 
-  procedure Small_demo is
+  procedure Hello is
     pdf : PDF_Out.PDF_Out_File;
   begin
-    pdf.Create ("Small.pdf");
+    pdf.Create ("tiny.pdf");
     pdf.Put_Line ("Hello world !");
     pdf.Close;
   end;

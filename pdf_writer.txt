@@ -6,14 +6,14 @@ which produces PDF files - as "physical" files, or as
 other types of data streams.
 
 The creation of a PDF file is as simple as this
-small procedure (Ada 2005+ object-oriented syntax):
+small procedure:
 
   with PDF_Out;
-   
-  procedure Small_demo is 
-    pdf: PDF_Out.PDF_Out_File;
-  begin 
-    pdf.Create ("Small.pdf");
+
+  procedure Hello is
+    pdf : PDF_Out.PDF_Out_File;
+  begin
+    pdf.Create ("tiny.pdf");
     pdf.Put_Line ("Hello world !");
     pdf.Close;
   end;
@@ -39,8 +39,8 @@ Contents
     the project file for GID (the Generic Image Decoder), gid.gpr.
     This is useful if:
       - you are using GID elsewhere in your own project (to avoid duplication)
-      - GID is visible through GPR_PROJECT_PATH or ADA_PROJECT_PATH (again, to avoid duplication)
-      - you are using the Alire package manager - in this case, all is already
+      - gid.gpr is visible through GPR_PROJECT_PATH or ADA_PROJECT_PATH (again, to avoid duplication)
+      - you are using the Alire package manager ( https://alire.ada.dev ) - in this case, all is already
         managed behind the scenes.
 
 License / Warning / Legal stuff
