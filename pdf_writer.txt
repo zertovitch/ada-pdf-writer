@@ -116,6 +116,16 @@ Giuseppe Cannone ( http://www.ari-srl.it/ ), for testing with a
 Roland Coghetto ( https://github.com/CoghettoR ), for testing and
    contributions in the Text Output area.
 
+Where to find the latest version
+================================
+
+    Home page:       http://apdf.sf.net/
+    Project page 1:  http://sf.net/projects/apdf/
+    Project page 2:  https://github.com/zertovitch/ada-pdf-writer
+    Alire crate:     https://alire.ada.dev/crates/apdf
+
+See also the "web", "web2", "web3", "web4", constants in pdf_out.ads.
+
 --
 Enjoy!
 

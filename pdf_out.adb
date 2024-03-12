@@ -161,6 +161,51 @@ package body PDF_Out is
     Write_delayed (pdf, s & NL);
   end WLd;
 
+  procedure Begin_Text (pdf : in out PDF_Out_Stream'Class) is
+  begin
+    WLd (pdf,  "  BT");  --  Begin Text object (9.4.1, Table 107)
+  end Begin_Text;
+
+  procedure End_Text (pdf : in out PDF_Out_Stream'Class) is
+  begin
+    WLd (pdf,  "  ET");
+  end End_Text;
+
+  procedure Flip_To (pdf : in out PDF_Out_Stream'Class; new_state : Text_or_graphics) is
+  begin
+    No_Nowhere (pdf);
+    --  WLd(pdf,  " % Text_or_graphics before: " & pdf.text_switch'Image);
+    if pdf.text_switch /= new_state then
+      pdf.text_switch := new_state;
+      case new_state is
+        when text     => Begin_Text (pdf);
+        when graphics => End_Text (pdf);
+      end case;
+    end if;
+    --  WLd(pdf,  " % Text_or_graphics after: " & pdf.text_switch'Image);
+  end Flip_To;
+
+  -----------------------------
+  --  Direct code insertion  --
+  -----------------------------
+
+  procedure Insert_PDF_Code (pdf : in out PDF_Out_Stream; code : String) is
+  begin
+    WLd (pdf, "    " & code);  --  Indentation is just cosmetic...
+  end Insert_PDF_Code;
+
+  procedure Insert_Text_PDF_Code (pdf : in out PDF_Out_Stream; code : String) is
+  begin
+    Flip_To (pdf, text);
+    Insert_PDF_Code (pdf, code);
+  end Insert_Text_PDF_Code;
+
+  procedure Insert_Graphics_PDF_Code (pdf : in out PDF_Out_Stream; code : String) is
+  begin
+    Flip_To (pdf, graphics);
+    Insert_PDF_Code (pdf, code);
+  end Insert_Graphics_PDF_Code;
+
   --  External stream index
 
   function Buffer_index (pdf : PDF_Out_Stream'Class) return Ada.Streams.Stream_IO.Count is
@@ -392,31 +437,7 @@ package body PDF_Out is
     Insert_PDF_Font_Selection_Code (pdf);
   end Line_Spacing_Pt;
 
-  procedure Begin_text (pdf : in out PDF_Out_Stream'Class) is
-  begin
-    WLd (pdf,  "  BT");  --  Begin Text object (9.4.1, Table 107)
-  end Begin_text;
-
-  procedure End_text (pdf : in out PDF_Out_Stream'Class) is
-  begin
-    WLd (pdf,  "  ET");
-  end End_text;
-
   procedure Dispose is new Ada.Unchecked_Deallocation (Page_table, p_Page_table);
-
-  procedure Flip_to (pdf : in out PDF_Out_Stream'Class; new_state : Text_or_graphics) is
-  begin
-    No_Nowhere (pdf);
-    --  WLd(pdf,  " % Text_or_graphics before: " & pdf.text_switch'Image);
-    if pdf.text_switch /= new_state then
-      pdf.text_switch := new_state;
-      case new_state is
-        when text     => Begin_text (pdf);
-        when graphics => End_text (pdf);
-      end case;
-    end if;
-    --  WLd(pdf,  " % Text_or_graphics after: " & pdf.text_switch'Image);
-  end Flip_to;
 
   procedure New_Page (pdf : in out PDF_Out_Stream) is
     new_table : p_Page_table;
@@ -499,7 +520,7 @@ package body PDF_Out is
       pdf.zone := in_footer;
       --  PDF_Out_Stream'Class: make the call to Page_Header dispatching
       Page_Footer (PDF_Out_Stream'Class (pdf));
-      Flip_to (pdf, graphics);
+      Flip_To (pdf, graphics);
     end if;
     pdf.zone := nowhere;
     Finish_substream (pdf);
@@ -706,11 +727,11 @@ package body PDF_Out is
 
   procedure Text_XY (pdf : in out PDF_Out_Stream; x, y : Real) is
   begin
-    Flip_to (pdf, text);
+    Flip_To (pdf, text);
     --  The following explicit End_text, Begin_text are just
     --  for resetting the text matrices (hence, position and orientation).
-    End_text (pdf);
-    Begin_text (pdf);
+    End_Text (pdf);
+    Begin_Text (pdf);
     Insert_PDF_Code (pdf, Img (x) & ' ' & Img (y) & " Td");  --  Td: 9.4.2 Text-Positioning Operators
     pdf.current_line := 1;
     pdf.current_col := 1;
@@ -852,27 +873,6 @@ package body PDF_Out is
       Insert_Graphics_PDF_Code (pdf, cmd);
     end if;
   end Finish_Path;
-
-  -----------------------------
-  --  Direct code insertion  --
-  -----------------------------
-
-  procedure Insert_PDF_Code (pdf : in out PDF_Out_Stream; code : String) is
-  begin
-    WLd (pdf, "    " & code);  --  Indentation is just cosmetic...
-  end Insert_PDF_Code;
-
-  procedure Insert_Text_PDF_Code (pdf : in out PDF_Out_Stream; code : String) is
-  begin
-    Flip_to (pdf, text);
-    Insert_PDF_Code (pdf, code);
-  end Insert_Text_PDF_Code;
-
-  procedure Insert_Graphics_PDF_Code (pdf : in out PDF_Out_Stream; code : String) is
-  begin
-    Flip_to (pdf, graphics);
-    Insert_PDF_Code (pdf, code);
-  end Insert_Graphics_PDF_Code;
 
   --  Table 317 - Entries in the document information dictionary (14.3.3)
 
