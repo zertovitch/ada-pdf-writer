@@ -31,7 +31,9 @@ project PDF_Out_Gnat is
            "pdf_out_demo.adb",                --  Demos
            "color_pinstripe_printer.adb",
            "pinstripe_printer.adb",
+           "hilbert_curve.adb",
            "koch_curve.adb",
+           "peano_curve.adb",
            "sierpinski_arrowhead_curve.adb",
            "img2pdf.adb",                     --  Tools
            "validation_test.adb",             --  Test
