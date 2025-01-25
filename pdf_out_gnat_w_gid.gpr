@@ -10,6 +10,7 @@
 --      Home page:       http://apdf.sf.net/
 --      Project page 1:  http://sf.net/projects/apdf/
 --      Project page 2:  https://github.com/zertovitch/ada-pdf-writer
+--      Alire crate:     https://alire.ada.dev/crates/apdf
 --
 --  Build me with "gprbuild -P pdf_out_gnat_w_gid",
 --  or "gnatmake -P pdf_out_gnat_w_gid", or open me with GNAT Studio.
@@ -36,9 +37,10 @@ project PDF_Out_Gnat_w_GID is
            "peano_curve.adb",
            "sierpinski_arrowhead_curve.adb",
            "img2pdf.adb",                     --  Tools
-           "validation_test.adb",             --  Test
-           "page_test.adb"
-   );
+           "arc_test.adb",                    --  Tests
+           "page_test.adb",
+           "validation_test.adb");
+
    for Exec_Dir use ".";
    for Create_Missing_Dirs use "True";  --  Flips by default the "-p" switch
 
