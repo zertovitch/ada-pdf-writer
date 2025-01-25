@@ -11,7 +11,7 @@ procedure PDF_Out_Demo is
 
   use PDF_Out;
 
-  procedure Small_demo is
+  procedure Small_Demo is
     pdf : PDF_Out_File;
   begin
     pdf.Create ("Small.pdf");
@@ -34,16 +34,55 @@ procedure PDF_Out_Demo is
     pdf.New_Page;
     pdf.Put_Line ("Just had a page break (and switched to landscape)...");
     pdf.Close;
-  end Small_demo;
+  end Small_Demo;
 
-  procedure Big_demo is
+  procedure Big_Demo is
+    pdf : Fancy_Page.Fancy_PDF;
+
+    procedure Arc_Demo is  --  Reused from arc_test.adb.
+      scale : constant := 16.0;
+      some_angle : constant := 135.0;
+      angle_1 : Real;
+      center : Point;
+      n_angles : constant := 12;
+    begin
+      pdf.Stroking_Color ((0.3, 0.1, 0.0));  --  Dark red
+      pdf.Filling_Color  ((0.6, 1.0, 0.6));  --  Light green
+
+      for non_trivial_angle_1 in 0 .. 1 loop
+        for rend in stroke .. fill_then_stroke loop
+          for is_pie in Boolean loop
+            for n in 1 .. n_angles loop
+              center :=
+                (pdf.Margins.left,
+                 pdf.Layout.height - pdf.Margins.top) +
+                scale * 3.0 *
+                  (Real
+                     (1 + Boolean'Pos (is_pie) +
+                      2 * (Rendering_Mode'Pos (rend) - Rendering_Mode'Pos (stroke)) +
+                      4 * non_trivial_angle_1),
+                   -Real (n));
+              if is_pie then
+                pdf.Move (center);
+              end if;
+              angle_1 := Real (non_trivial_angle_1) * some_angle;
+              pdf.Arc
+                (center, scale, angle_1, angle_1 + Real (n) * 360.0 / Real (n_angles), is_pie);
+              if is_pie then
+                pdf.Line (center);
+              end if;
+              pdf.Finish_Path (False, rend, nonzero_winding_number);
+            end loop;
+          end loop;
+        end loop;
+      end loop;
+    end Arc_Demo;
 
     mem_page_nb : Natural := 0;
     curve_max : constant := 8;
 
-    procedure Big_demo_contents (name : String) is
+    procedure Big_Demo_Contents (name : String) is
       factor : Real;
-      pdf : Fancy_Page.Fancy_PDF;
       bordu : constant String := "demos/bordu_2016_01_01_25pct.jpg";
       target : Rectangle;
     begin
@@ -207,11 +246,18 @@ procedure PDF_Out_Demo is
           end loop;
         end loop;
       end;
-      pdf.Finish_Page;  --  Needed for having the footer right before changing orientation.
-      pdf.Page_Setup (A4_landscape);
+
+      ------------------------------------------------------
+      --  More advanced vector graphics - arc of circles  --
+      ------------------------------------------------------
+      pdf.New_Page;
+      Arc_Demo;
+
       ------------------------
       --  The Ada mascot !  --
       ------------------------
+      pdf.Finish_Page;  --  Needed for having the footer right before changing orientation.
+      pdf.Page_Setup (A4_landscape);
       pdf.New_Page;
       pdf.Put ("Direct PDF vector graphics code inclusion - Ada Mascot");
       for cx in 1 .. 8 loop
@@ -236,20 +282,20 @@ procedure PDF_Out_Demo is
       --
       mem_page_nb := pdf.Page;
       pdf.Close;
-    end Big_demo_contents;
+    end Big_Demo_Contents;
 
   begin
     --  Dry run: here page_nb is properly set (TeX-style processing):
-    Big_demo_contents ("Big.pdf");  --  Need a portable version of /dev/null (UNIX) or nul (Win.)
+    Big_Demo_Contents ("Big.pdf");  --  Need a portable version of /dev/null (UNIX) or nul (Win.)
     --  Real file:
-    Big_demo_contents ("Big.pdf");
-  end Big_demo;
+    Big_Demo_Contents ("Big.pdf");
+  end Big_Demo;
 
   use Ada.Text_IO;
 
 begin
   Put_Line ("Small demo -> Small.pdf");
-  Small_demo;
+  Small_Demo;
   Put_Line ("Big demo -> Big.pdf");
-  Big_demo;
+  Big_Demo;
 end PDF_Out_Demo;

@@ -5,6 +5,7 @@ with GID;
 
 with Ada.Characters.Conversions,
      Ada.Characters.Handling,
+     Ada.Numerics.Generic_Elementary_Functions,
      Ada.Strings.Fixed,
      Ada.Unchecked_Deallocation;
 
@@ -16,6 +17,7 @@ package body PDF_Out is
   use Interfaces;
 
   package CIO is new Ada.Text_IO.Integer_IO (Ada.Streams.Stream_IO.Count);
+  package REF is new Ada.Numerics.Generic_Elementary_Functions (Real);
 
   --  Very low level part which deals with transferring data endian-proof,
   --  and floats in the IEEE format. This is needed for having PDF Writer
@@ -802,6 +804,11 @@ package body PDF_Out is
   --  Vector graphics  --
   -----------------------
 
+  function Almost_Zero (x : Real) return Boolean is
+  begin
+    return abs x <= Real'Base'Model_Small;
+  end Almost_Zero;
+
   procedure Line_Width (pdf : in out PDF_Out_Stream; width : Real) is
   begin
     Insert_Graphics_PDF_Code (pdf, Img (width) & " w");
@@ -853,6 +860,87 @@ package body PDF_Out is
       Img (to) & " c"
     );
   end Cubic_Bezier;
+
+  procedure Arc
+    (pdf              : in out PDF_Out_Stream;
+     center           :        Point;
+     radius           :        Real;
+     angle_1, angle_2 :        Real;
+     line_to_start    :        Boolean)
+  is
+    use Ada.Numerics, REF;
+    sweep_angle : Real;
+    n_curves : Integer;
+    deg_to_rad  : constant := Pi / 180.0;
+    angle_start : constant Real := angle_1 * deg_to_rad;
+    angle_stop  : constant Real := angle_2 * deg_to_rad;
+    sn, cs, sweep_angle_part, angle_part_start : Real;
+    p, q : array (0 .. 3) of Point;
+    v, t, q0 : Point;
+    --  This value looks like an optimum (it possibly minimizes
+    --  the distance from the curve to the actual arc):
+    scale : constant := 4.0 / 3.0;
+  begin
+    sweep_angle := angle_stop - angle_start;
+
+    if Almost_Zero (sweep_angle) then
+      return;
+    end if;
+
+    --  If sweep_angle is too large, divide arc to smaller ones:
+    n_curves := Integer (Real'Ceiling (abs (sweep_angle) / (Pi * 0.5)));
+
+    sweep_angle_part := sweep_angle / Real (n_curves);
+
+    --  Calculates control points for Bezier approximation of
+    --  an arc with radius=1, circle center at (0,0),
+    --  middle of the arc at (1,0).
+
+    v.x := Cos (sweep_angle_part * 0.5);
+    v.y := Sin (sweep_angle_part * 0.5);
+
+    t.x := (1.0 - v.x) * scale;
+    t.y := -t.x * v.x / v.y;  --  Vectors t and v must be perpendicular.
+
+    --  End point 2
+    p (3) := v;
+    --  Control point 2
+    p (2) := v + t;
+    --  Control point 1
+    p (1) := (+p (2).x, -p (2).y);
+    --  End point 1
+    p (0) := (+p (3).x, -p (3).y);
+
+    --  Rotation and translation of control points,
+    --  the start point and the end points.
+
+    cs := Cos (angle_start + sweep_angle_part * 0.5);
+    sn := Sin (angle_start + sweep_angle_part * 0.5);
+
+    q0 := center + radius * (p (0).x * cs - p (0).y * sn,
+                        p (0).x * sn + p (0).y * cs);
+
+    if line_to_start then
+      Line (pdf, q0);
+    else
+      Move (pdf, q0);
+    end if;
+
+    for i_curve in 1 .. n_curves loop
+      angle_part_start := angle_start + sweep_angle_part * Real (i_curve - 1);
+
+      sn := Sin (angle_part_start + sweep_angle_part * 0.5);
+      cs := Cos (angle_part_start + sweep_angle_part * 0.5);
+
+      for i in 1 .. 3 loop
+        q (i) :=
+          center + radius * (p (i).x * cs - p (i).y * sn,
+                        p (i).x * sn + p (i).y * cs);
+      end loop;
+
+      Cubic_Bezier (pdf, q (1), q (2), q (3));
+    end loop;
+  end Arc;
 
   procedure Finish_Path (
     pdf        : in out PDF_Out_Stream;

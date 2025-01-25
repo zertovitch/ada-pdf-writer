@@ -296,13 +296,26 @@ package PDF_Out is
 
   procedure Move (pdf : in out PDF_Out_Stream; to : Point);
   procedure Line (pdf : in out PDF_Out_Stream; to : Point);
+
   procedure Cubic_Bezier
     (pdf                  : in out PDF_Out_Stream;
      control_1, control_2 :        Point;
      to                   :        Point);
+
+  --  Arc of a circle.
+  --  Parameters as in PostScript Language Reference, 8.2.
+  --  Angles are in degrees, counterclockwise.
+  --
+  procedure Arc
+    (pdf              : in out PDF_Out_Stream;
+     center           :        Point;
+     radius           :        Real;
+     angle_1, angle_2 :        Real;
+     line_to_start    :        Boolean);
+
   --  All lines and curves and the possible filling inside the path
   --  will be drawn when path is completed, with Finish_Path:
-
+  --
   procedure Finish_Path
     (pdf        : in out PDF_Out_Stream;
      close_path :        Boolean;
@@ -436,7 +449,7 @@ package PDF_Out is
   --  Information about this package - e.g. for an "about" box  --
   ----------------------------------------------------------------
 
-  version   : constant String := "006";
+  version   : constant String := "007, preview 1";
   reference : constant String := "25-Jan-2025";
   --  Hopefully the latest version is at one of those URLs:
   web  : constant String := "https://apdf.sourceforge.io/";
