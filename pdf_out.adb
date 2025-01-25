@@ -171,7 +171,7 @@ package body PDF_Out is
     WLd (pdf,  "  ET");
   end End_Text;
 
-  procedure Flip_To (pdf : in out PDF_Out_Stream'Class; new_state : Text_or_graphics) is
+  procedure Flip_To (pdf : in out PDF_Out_Stream'Class; new_state : Text_or_Graphics) is
   begin
     No_Nowhere (pdf);
     --  WLd(pdf,  " % Text_or_graphics before: " & pdf.text_switch'Image);
@@ -317,15 +317,15 @@ package body PDF_Out is
     end case;
   end Img;
 
-  procedure Dispose is new Ada.Unchecked_Deallocation (Offset_table, p_Offset_table);
+  procedure Dispose is new Ada.Unchecked_Deallocation (Offset_Table, p_Offset_Table);
 
   procedure New_fixed_index_object (pdf : in out PDF_Out_Stream'Class; idx : PDF_Index_Type) is
-    new_table : p_Offset_table;
+    new_table : p_Offset_Table;
   begin
     if pdf.object_offset = null then
-      pdf.object_offset := new Offset_table (1 .. idx);
+      pdf.object_offset := new Offset_Table (1 .. idx);
     elsif pdf.object_offset'Last < idx then
-      new_table := new Offset_table (1 .. idx * 2);
+      new_table := new Offset_Table (1 .. idx * 2);
       new_table (1 .. pdf.object_offset'Last) := pdf.object_offset.all;
       Dispose (pdf.object_offset);
       pdf.object_offset := new_table;
@@ -334,11 +334,11 @@ package body PDF_Out is
     WL (pdf, Img (idx) & " 0 obj");
   end New_fixed_index_object;
 
-  procedure New_object (pdf : in out PDF_Out_Stream'Class) is
+  procedure New_Object (pdf : in out PDF_Out_Stream'Class) is
   begin
     pdf.objects := pdf.objects + 1;
     New_fixed_index_object (pdf, pdf.objects);
-  end New_object;
+  end New_Object;
 
   producer : constant String :=
     "Ada PDF Writer " & version & ", ref: " & reference & ", " & web &
@@ -437,10 +437,10 @@ package body PDF_Out is
     Insert_PDF_Font_Selection_Code (pdf);
   end Line_Spacing_Pt;
 
-  procedure Dispose is new Ada.Unchecked_Deallocation (Page_table, p_Page_table);
+  procedure Dispose is new Ada.Unchecked_Deallocation (Page_Table, p_Page_Table);
 
   procedure New_Page (pdf : in out PDF_Out_Stream) is
-    new_table : p_Page_table;
+    new_table : p_Page_Table;
   begin
     if pdf.zone /= nowhere then
       Finish_Page (pdf);
@@ -452,11 +452,11 @@ package body PDF_Out is
     --
     --  Page descriptor object:
     --
-    New_object (pdf);
+    New_Object (pdf);
     if pdf.page_idx = null then
-      pdf.page_idx := new Page_table (1 .. pdf.last_page);
+      pdf.page_idx := new Page_Table (1 .. pdf.last_page);
     elsif pdf.page_idx'Last < pdf.last_page then
-      new_table := new Page_table (1 .. pdf.last_page * 2);
+      new_table := new Page_Table (1 .. pdf.last_page * 2);
       new_table (1 .. pdf.page_idx'Last) := pdf.page_idx.all;
       Dispose (pdf.page_idx);
       pdf.page_idx := new_table;
@@ -475,7 +475,7 @@ package body PDF_Out is
     WL (pdf, "endobj");
     --  Page contents object:
     --
-    New_object (pdf);
+    New_Object (pdf);
     New_substream (pdf);
     if test_page_mode then
       Test_Page (pdf);
@@ -494,7 +494,7 @@ package body PDF_Out is
 
     appended_object_idx : PDF_Index_Type;
 
-    procedure Image_Item (dn : in out Dir_node) is
+    procedure Image_Item (dn : in out Dir_Node) is
       img_obj : PDF_Index_Type;
     begin
       if dn.local_resource then
@@ -504,7 +504,7 @@ package body PDF_Out is
         else
           img_obj := dn.pdf_object_index;  --  image has been loaded for a previous page
         end if;
-        WL (pdf, Image_name (dn.image_index) & ' ' & Img (img_obj) & " 0 R");
+        WL (pdf, Image_Name (dn.image_index) & ' ' & Img (img_obj) & " 0 R");
       end if;
     end Image_Item;
 
@@ -526,7 +526,7 @@ package body PDF_Out is
     Finish_substream (pdf);
     WL (pdf, "endobj");  --  end of page contents.
     --  Resources Dictionary (7.8.3) for the page just finished:
-    New_object (pdf);
+    New_Object (pdf);
     WL (pdf, "<<");
     --  Font resources:
     PDF_Out.Fonts.Font_Dictionary (pdf);
@@ -776,10 +776,10 @@ package body PDF_Out is
     --  Tr = Set rendering mode (Table 106)
   end Text_Rendering_Mode;
 
-  function Image_name (i : Positive) return String is
+  function Image_Name (i : Positive) return String is
   begin
     return "/Ada_PDF_Img" & Img (i);
-  end Image_name;
+  end Image_Name;
 
   procedure Image (pdf : in out PDF_Out_Stream; file_name : String; target : Rectangle) is
     image_index : Positive;  --  Index in the list of images
@@ -789,7 +789,7 @@ package body PDF_Out is
     Insert_Graphics_PDF_Code (pdf, "q " &
       Img (target.width) & " 0 0 " & Img (target.height) &
       ' ' & Img (target.x_min) & ' ' & Img (target.y_min) & " cm " &  --  cm: Table 57
-      Image_name (image_index) & " Do Q"
+      Image_Name (image_index) & " Do Q"
     );
   end Image;
 
@@ -1008,7 +1008,7 @@ package body PDF_Out is
 
     procedure Info is
     begin
-      New_object (pdf);
+      New_Object (pdf);
       info_idx := pdf.objects;
       WL (pdf, "  << /Producer (" & producer & ')');
       WL (pdf, "     /Title (" & To_String (pdf.doc_title) & ')');
@@ -1045,7 +1045,7 @@ package body PDF_Out is
 
     procedure Catalog_dictionary is
     begin
-      New_object (pdf);
+      New_Object (pdf);
       cat_idx := pdf.objects;
       WL (pdf, "  << /Type /Catalog");
       WL (pdf, "     /Pages " & Img (pages_idx) & " 0 R");
@@ -1128,7 +1128,7 @@ package body PDF_Out is
 
   procedure Close (pdf : in out PDF_Out_File) is
     procedure Dispose is new
-      Ada.Unchecked_Deallocation (Ada.Streams.Stream_IO.File_Type, PDF_file_acc);
+      Ada.Unchecked_Deallocation (Ada.Streams.Stream_IO.File_Type, PDF_File_Acc);
   begin
     Finish (PDF_Out_Stream (pdf));
     if pdf.file_name /= "nul" then  --  Test needed for OA 7.2.2 (Close raises Use_Error)

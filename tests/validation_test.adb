@@ -9,14 +9,14 @@
 --
 with PDF_Out;
 
-procedure Validation_test is
+procedure Validation_Test is
   use PDF_Out;
   pdf : PDF_Out_File;
   o : constant Point := (0.0, 550.0);
   f : constant := 0.3;
 begin
   --  We split the test into very small files since the
-  --  validator doesn't give locations of eventual errors.
+  --  validator doesn't give locations of possible errors.
   --
   for test in 1 .. 2 loop
     pdf.Create ("validation test" & Integer'Image (test) & ".pdf");
@@ -34,4 +34,4 @@ begin
     end case;
     pdf.Close;
   end loop;
-end Validation_test;
+end Validation_Test;

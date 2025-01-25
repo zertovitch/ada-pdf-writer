@@ -39,7 +39,7 @@ is
 
       --  Box
       Doc.Stroking_Color (black);
-      Doc.Color (Light_Gray);
+      Doc.Filling_Color  (Light_Gray);
       Doc.Line_Width (3.0);
       Doc.Draw (what => Corner_Box + (0.0, Y, 120.0, 26.0),
                 rendering => fill_then_stroke);

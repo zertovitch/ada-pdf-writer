@@ -5,7 +5,7 @@ with PDF_Out;
 
 procedure Peano_Curve is
    use PDF_Out;
-   
+
    Filename   : constant String     := "peano-curve.pdf";
    Scale      : constant Real       := 2.1;
    Line_Width : constant Real       := 2.5;

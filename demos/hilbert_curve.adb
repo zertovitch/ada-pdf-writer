@@ -70,7 +70,7 @@ begin
    PDF.Page_Setup (A4_portrait);
 
    for depth in reverse 1 .. 7 loop
-      PDF.Line_Width (if depth >= 7 then 1.0 else 2.0);
+      PDF.Line_Width (if depth = 7 then 1.0 else 2.0);
       PDF.Color (black);
       PDF.Draw (Corner + (0.0, 0.0, Length, Length), fill);
 

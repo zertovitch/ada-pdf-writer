@@ -156,7 +156,7 @@ procedure PDF_Out_Demo is
       --  Blue star
       pdf.Line_Width (5.0);
       pdf.Stroking_Color ((0.0, 1.0, 0.0));
-      pdf.Color ((0.0, 0.0, 1.0));
+      pdf.Filling_Color  ((0.0, 0.0, 1.0));
       --
       --  Fill only: equivalent to
       --    pdf.Insert_PDF_Code ("315 226 m 299 182 l 339 208 l 291 208 l 331 182 l f");
@@ -175,7 +175,7 @@ procedure PDF_Out_Demo is
       ----------------------------------------------------------------------
       pdf.New_Page;
       declare
-        procedure Bezier_curves_demo (o : Point) is
+        procedure Bezier_Curves_Demo (o : Point) is
           f : constant := 0.3;
         begin
           pdf.Move (o + f * (350.0, 350.0));
@@ -184,7 +184,7 @@ procedure PDF_Out_Demo is
           pdf.Cubic_Bezier (o + f * (250.0, 350.0), o + f * (325.0, 350.0), o + f * (325.0, 400.0));
           pdf.Cubic_Bezier (o + f * (325.0, 437.5), o + f * (275.0, 437.5), o + f * (275.0, 400.0));
           pdf.Cubic_Bezier (o + f * (275.0, 382.0), o + f * (300.0, 382.0), o + f * (300.0, 400.0));
-        end Bezier_curves_demo;
+        end Bezier_Curves_Demo;
         y0 : Real := 600.0;
       begin
         pdf.Stroking_Color (black);
@@ -193,8 +193,8 @@ procedure PDF_Out_Demo is
         for rend in Path_Rendering_Mode loop
           for rule in Inside_path_rule loop
             for close_it in reverse Boolean loop
-              pdf.Color ((0.2, 0.5, 1.0));
-              Bezier_curves_demo ((0.0, y0 - 50.0));
+              pdf.Filling_Color ((0.2, 0.5, 1.0));
+              Bezier_Curves_Demo ((0.0, y0 - 50.0));
               pdf.Finish_Path (close_it, rend, rule);
               pdf.Color (black);
               pdf.Put_XY (150.0, y0 + 70.0,
@@ -216,13 +216,12 @@ procedure PDF_Out_Demo is
       pdf.Put ("Direct PDF vector graphics code inclusion - Ada Mascot");
       for cx in 1 .. 8 loop
         for cy in 1 .. 6 loop
-          Insert_Mascot (
-            pdf,
-            w => Real (cx) * 17.0,
-            h => Real (cy) * 17.0,
-            xm => pdf.Left_Margin + Real (cx * (cx - 1) / 2) * 20.0,
-            ym => pdf.Bottom_Margin + Real (cy * (cy - 1) / 2) * 20.0
-          );
+          Insert_Mascot
+            (pdf,
+             w => Real (cx) * 17.0,
+             h => Real (cy) * 17.0,
+             xm => pdf.Left_Margin + Real (cx * (cx - 1) / 2) * 20.0,
+             ym => pdf.Bottom_Margin + Real (cy * (cy - 1) / 2) * 20.0);
         end loop;
       end loop;
       ------------------------------------------------------------------

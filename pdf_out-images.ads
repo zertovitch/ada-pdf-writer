@@ -10,7 +10,7 @@ private package PDF_Out.Images is
   procedure Clear_local_resource_flags (pdf : PDF_Out_Stream);
 
   generic
-    with procedure Action_private (dn : in out Dir_node);
+    with procedure Action_private (dn : in out Dir_Node);
     --  Dir_node is private: only known to us, contents subject to change
   procedure Traverse_private (pdf : PDF_Out_Stream);
 

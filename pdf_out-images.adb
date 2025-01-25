@@ -7,11 +7,11 @@ package body PDF_Out.Images is
 
   procedure Image_ref (pdf : in out PDF_Out_Stream; file_name : String; image_index : out Positive) is
 
-    procedure Insert (file_name : String; node : in out p_Dir_node) is
+    procedure Insert (file_name : String; node : in out p_Dir_Node) is
     begin
       if node = null then
         pdf.img_count := pdf.img_count + 1;
-        node := new Dir_node'
+        node := new Dir_Node'
           ((name_len          => file_name'Length,
              left              => null,
              right             => null,
@@ -48,7 +48,7 @@ package body PDF_Out.Images is
 
   procedure Traverse_private (pdf : PDF_Out_Stream) is
 
-    procedure Traverse (p : p_Dir_node) is
+    procedure Traverse (p : p_Dir_Node) is
     begin
       if p /= null then
         Traverse (p.left);
@@ -62,8 +62,8 @@ package body PDF_Out.Images is
   end Traverse_private;
 
   procedure Clear_image_directory (pdf : in out PDF_Out_Stream) is
-    procedure Clear (p : in out p_Dir_node) is
-      procedure Dispose is new Ada.Unchecked_Deallocation (Dir_node, p_Dir_node);
+    procedure Clear (p : in out p_Dir_Node) is
+      procedure Dispose is new Ada.Unchecked_Deallocation (Dir_Node, p_Dir_Node);
     begin
       if p /= null then
         Clear (p.left);
@@ -75,7 +75,7 @@ package body PDF_Out.Images is
     Clear (pdf.img_dir_tree);
   end Clear_image_directory;
 
-  procedure Clear_local_resource_flag (dn : in out Dir_node) is
+  procedure Clear_local_resource_flag (dn : in out Dir_Node) is
   begin
     dn.local_resource := False;
   end Clear_local_resource_flag;
@@ -105,7 +105,7 @@ package body PDF_Out.Images is
            "So far only JPEG images can be inserted. This image is of type " &
            GID.Detailed_format (i) & ", file name = " & file_name);
       end if;
-      New_object (pdf);
+      New_Object (pdf);
       WL (pdf,
         "<< /Type /XObject /Subtype /Image /Width " &
         Img (GID.Pixel_width (i)) & " /Height " & Img (GID.Pixel_height (i)) &
@@ -119,7 +119,7 @@ package body PDF_Out.Images is
       WL (pdf, "endobj");
     end Insert_Image_as_XObject;
 
-    procedure Insert_unloaded_local_image (dn : in out Dir_node) is
+    procedure Insert_unloaded_local_image (dn : in out Dir_Node) is
     begin
       if dn.local_resource and then dn.pdf_object_index = 0 then
         Insert_Image_as_XObject (dn.file_name);

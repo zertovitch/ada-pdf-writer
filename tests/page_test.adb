@@ -1,7 +1,7 @@
 with Ada.Text_IO;
 with PDF_Out;
 
-procedure Page_test is
+procedure Page_Test is
   pdf : PDF_Out.PDF_Out_File;
   use Ada.Text_IO;
 begin
@@ -16,4 +16,4 @@ begin
   end loop;
   pdf.Put_Line ("This is the last page." & Integer'Image (pdf.Page));
   pdf.Close;
-end Page_test;
+end Page_Test;

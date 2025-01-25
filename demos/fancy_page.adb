@@ -15,36 +15,34 @@ package body Fancy_Page is
     pdf.Font (Helvetica);
     pdf.Font_Size (18.7);
     pdf.Stroking_Color ((0.8, 0.1, 0.0));
-    pdf.Color ((0.7, 0.7, 0.0));
+    pdf.Filling_Color  ((0.7, 0.7, 0.0));
     pdf.Put ("Fancy header");  --  Red outline, yellow fill
-    pdf.Color (black);
+    pdf.Filling_Color  (black);
     pdf.Stroking_Color (black);
     pdf.Put (" for ");
     pdf.Stroking_Color ((0.0, 0.5, 0.1));
-    pdf.Color ((0.0, 0.3, 0.3));
+    pdf.Filling_Color  ((0.0, 0.3, 0.3));
     pdf.Put ("Ada PDF Writer Demo");  --  Green outline, cyan fill
-    pdf.Image (
-      "demos/ada_logo.jpg",
-      (X_Max (pg_layout) - ada_logo_width,
-       Y_Max (pg_layout) - ada_logo_height,
-       ada_logo_width,
-       ada_logo_height)
-    );
+    pdf.Image
+      ("demos/ada_logo.jpg",
+       (X_Max (pg_layout) - ada_logo_width,
+        Y_Max (pg_layout) - ada_logo_height,
+        ada_logo_width,
+        ada_logo_height));
     pdf.Stroking_Color ((0.0, 0.0, 0.3));  --  Dark blue
-    pdf.Color ((0.0, 0.1, 0.6));  --  A bit less dark blue
-    pdf.Draw (
-      (pdf.Left_Margin,
-       Y_Max (pg_layout) - pdf.Top_Margin + pt_font,
-       X_Max (pg_layout) - ada_logo_width - pdf.Left_Margin,
-       one_cm * 0.2),
-       fill_then_stroke
-    );
+    pdf.Filling_Color  ((0.0, 0.1, 0.6));  --  A bit less dark blue
+    pdf.Draw
+      ((pdf.Left_Margin,
+        Y_Max (pg_layout) - pdf.Top_Margin + pt_font,
+        X_Max (pg_layout) - ada_logo_width - pdf.Left_Margin,
+        one_cm * 0.2),
+        fill_then_stroke);
     --
     --  Back to normal
     --
     pdf.Text_Rendering_Mode (fill);
-    pdf.Color (black);
     pdf.Stroking_Color (black);
+    pdf.Filling_Color  (black);
     pdf.Font_Size (11.0);
   end Page_Header;
 

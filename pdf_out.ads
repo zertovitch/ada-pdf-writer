@@ -9,7 +9,7 @@
 
 --  Legal licensing note:
 
---  Copyright (c) 2014 .. 2023 Gautier de Montmollin
+--  Copyright (c) 2014 .. 2025 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -243,6 +243,7 @@ package PDF_Out is
   black : constant Color_Type := (0.0, 0.0, 0.0);
 
   procedure Color (pdf : in out PDF_Out_Stream; c : Color_Type);
+  procedure Filling_Color (pdf : in out PDF_Out_Stream; c : Color_Type) renames Color;
   procedure Stroking_Color (pdf : in out PDF_Out_Stream; c : Color_Type);
 
   type Rendering_Mode is (
@@ -299,15 +300,14 @@ package PDF_Out is
     (pdf                  : in out PDF_Out_Stream;
      control_1, control_2 :        Point;
      to                   :        Point);
-  --  All lines and curves and the eventual filling inside the path
+  --  All lines and curves and the possible filling inside the path
   --  will be drawn when path is completed, with Finish_Path:
 
-  procedure Finish_Path (
-    pdf        : in out PDF_Out_Stream;
-    close_path :        Boolean;
-    rendering  :        Path_Rendering_Mode;  --  fill, stroke, or both
-    rule       :        Inside_path_rule
-  );
+  procedure Finish_Path
+    (pdf        : in out PDF_Out_Stream;
+     close_path :        Boolean;
+     rendering  :        Path_Rendering_Mode;  --  fill, stroke, or both
+     rule       :        Inside_path_rule);
 
   ------------
   --  Misc  --
@@ -437,7 +437,7 @@ package PDF_Out is
   ----------------------------------------------------------------
 
   version   : constant String := "006";
-  reference : constant String := "25-Jun-2023";
+  reference : constant String := "25-Jan-2025";
   --  Hopefully the latest version is at one of those URLs:
   web  : constant String := "https://apdf.sourceforge.io/";
   web2 : constant String := "https://sourceforge.net/projects/apdf/";
@@ -456,30 +456,30 @@ private
   --  on a native n > 32 bits architecture (no performance hit on 64+
   --  bits architectures).
 
-  type Offset_table is array (PDF_Index_Type range <>) of Ada.Streams.Stream_IO.Count;
-  type p_Offset_table is access Offset_table;
+  type Offset_Table is array (PDF_Index_Type range <>) of Ada.Streams.Stream_IO.Count;
+  type p_Offset_Table is access Offset_Table;
 
-  type Page_table is array (PDF_Index_Type range <>) of PDF_Index_Type; -- object ID's of pages
-  type p_Page_table is access Page_table;
+  type Page_Table is array (PDF_Index_Type range <>) of PDF_Index_Type; -- object ID's of pages
+  type p_Page_Table is access Page_Table;
 
   --  Some unique objects like Pages need to have a pre-determined index,
   --  otherwise single Page objects don't know their parent's index.
   pages_idx : constant PDF_Index_Type := 1;
   last_fix_obj_idx : constant PDF_Index_Type := 1;
 
-  type Dir_node;
-  type p_Dir_node is access Dir_node;
+  type Dir_Node;
+  type p_Dir_Node is access Dir_Node;
 
   type Dir_node (name_len : Natural) is record
-    left, right      : p_Dir_node;
+    left, right      : p_Dir_Node;
     file_name        : String (1 .. name_len);
     image_index      : Positive;
     pdf_object_index : PDF_Index_Type := 0;  --  0 = not yet insterted into the PDF stream
     local_resource   : Boolean;      --  All True items to be listed into Resource dictionary
   end record;
 
-  type Page_zone is (nowhere, in_page, in_header, in_footer);
-  type Text_or_graphics is (text, graphics);
+  type Page_Zone is (nowhere, in_page, in_header, in_footer);
+  type Text_or_Graphics is (text, graphics);
 
   ------------------------------------------
   --  Raw Streams, with 'Read and 'Write  --
@@ -495,59 +495,58 @@ private
   --  variable of this type to reset values is not Ada compliant (LRM:3.9.3(8))
   --
   type PDF_Out_Pre_Root_Type is tagged record
-    pdf_stream    : PDF_Raw_Stream_Class;
-    start_index   : Ada.Streams.Stream_IO.Count;
-    is_created    : Boolean           := False;
-    is_closed     : Boolean           := False;
-    format        : PDF_type          := Default_PDF_type;
-    zone          : Page_zone         := nowhere;
-    text_switch   : Text_or_graphics  := graphics;
-    last_page     : PDF_Index_Type    := 0;
-    current_line  : Positive          := 1;  --  Mostly for Ada.Text_IO compatibility
-    current_col   : Positive          := 1;  --  Mostly for Ada.Text_IO compatibility
-    page_idx      : p_Page_table      := null;  --  page_idx(p): Object ID of page p
-    page_box      : Rectangle         := A4_portrait;
-    maximum_box   : Rectangle         := A4_portrait;
-    page_margins  : Margins_Type      := cm_2_5_margins;
-    objects       : PDF_Index_Type    := last_fix_obj_idx;
-    object_offset : p_Offset_table    := null;
+    pdf_stream     : PDF_Raw_Stream_Class;
+    start_index    : Ada.Streams.Stream_IO.Count;
+    is_created     : Boolean           := False;
+    is_closed      : Boolean           := False;
+    format         : PDF_type          := Default_PDF_type;
+    zone           : Page_Zone         := nowhere;
+    text_switch    : Text_or_Graphics  := graphics;
+    last_page      : PDF_Index_Type    := 0;
+    current_line   : Positive          := 1;  --  Mostly for Ada.Text_IO compatibility
+    current_col    : Positive          := 1;  --  Mostly for Ada.Text_IO compatibility
+    page_idx       : p_Page_Table      := null;  --  page_idx(p): Object ID of page p
+    page_box       : Rectangle         := A4_portrait;
+    maximum_box    : Rectangle         := A4_portrait;
+    page_margins   : Margins_Type      := cm_2_5_margins;
+    objects        : PDF_Index_Type    := last_fix_obj_idx;
+    object_offset  : p_Offset_Table    := null;
     stream_obj_buf : Unbounded_String;
-    img_dir_tree  : p_Dir_node        := null;
-    img_count     : Natural           := 0;
-    current_font  : Font_Type         := Helvetica;
-    font_size     : Real              := 11.0;
-    line_spacing  : Real              := default_line_spacing;
-    ext_font_name : Unbounded_String;
-    doc_title     : Unbounded_String;  --  Document information (14.3.3)
-    doc_author    : Unbounded_String;  --  Document information (14.3.3)
-    doc_subject   : Unbounded_String;  --  Document information (14.3.3)
-    doc_keywords  : Unbounded_String;  --  Document information (14.3.3)
-    doc_creator   : Unbounded_String;  --  Document information (14.3.3) : creator application
+    img_dir_tree   : p_Dir_Node        := null;
+    img_count      : Natural           := 0;
+    current_font   : Font_Type         := Helvetica;
+    font_size      : Real              := 11.0;
+    line_spacing   : Real              := default_line_spacing;
+    ext_font_name  : Unbounded_String;
+    doc_title      : Unbounded_String;  --  Document information (14.3.3)
+    doc_author     : Unbounded_String;  --  Document information (14.3.3)
+    doc_subject    : Unbounded_String;  --  Document information (14.3.3)
+    doc_keywords   : Unbounded_String;  --  Document information (14.3.3)
+    doc_creator    : Unbounded_String;  --  Document information (14.3.3) : creator application
   end record;
 
   type PDF_Out_Stream is abstract new PDF_Out_Pre_Root_Type with null record;
 
   --  For child packages
-  function Image_name (i : Positive) return String;
-  procedure New_object (pdf : in out PDF_Out_Stream'Class);
+  function Image_Name (i : Positive) return String;
+  procedure New_Object (pdf : in out PDF_Out_Stream'Class);
   procedure WL (pdf : in out PDF_Out_Stream'Class; s : String);
   pragma Inline (WL);
 
-  procedure Copy_File (
-    file_name   :        String;
-    into        : in out Ada.Streams.Root_Stream_Type'Class;
-    buffer_size :        Positive := 1024 * 1024
-  );
+  procedure Copy_File
+    (file_name   :        String;
+     into        : in out Ada.Streams.Root_Stream_Type'Class;
+     buffer_size :        Positive := 1024 * 1024);
 
   ------------------------
   --  Output to a file  --
   ------------------------
 
-  type PDF_file_acc is
+  type PDF_File_Acc is
     access Ada.Streams.Stream_IO.File_Type;
 
   type PDF_Out_File is new PDF_Out_Stream with record
-    pdf_file   : PDF_file_acc := null; -- access to the "physical" PDF file
+    pdf_file   : PDF_File_Acc := null; -- access to the "physical" PDF file
     file_name  : Unbounded_String;
   end record;
 
