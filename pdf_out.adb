@@ -5,7 +5,6 @@ with GID;
 
 with Ada.Characters.Conversions,
      Ada.Characters.Handling,
-     Ada.Numerics.Generic_Elementary_Functions,
      Ada.Strings.Fixed,
      Ada.Unchecked_Deallocation;
 
@@ -17,7 +16,6 @@ package body PDF_Out is
   use Interfaces;
 
   package CIO is new Ada.Text_IO.Integer_IO (Ada.Streams.Stream_IO.Count);
-  package REF is new Ada.Numerics.Generic_Elementary_Functions (Real);
 
   --  Very low level part which deals with transferring data endian-proof,
   --  and floats in the IEEE format. This is needed for having PDF Writer
@@ -239,7 +237,7 @@ package body PDF_Out is
 
   --  Compact real number image, taken from TeXCAD (TeX_Number in tc.adb)
   --
-  function Img (x : Real; prec : Positive := Real'Digits) return String is
+  function Img (x : Real; prec : Positive := max_displayed_digits) return String is
     s : String (1 .. 20 + prec);
     na, nb, np : Natural;
   begin
@@ -249,7 +247,7 @@ package body PDF_Out is
     np := 0;
     for i in s'Range loop
       case s (i) is
-        when '.' => np := i; exit;  --   Find a decimal point
+        when '.' => np := i; exit;    --   Find a decimal point
         when ' ' => na := i + 1;      -- * Trim spaces on left
         when others => null;
       end case;
@@ -262,7 +260,7 @@ package body PDF_Out is
         nb := nb - 1;                 -- * Remove '.' if it is at the end
       elsif s (na .. np - 1) = "-0" then
         na := na + 1;
-        s (na) := '-';               -- * Reduce "-0.x" to "-.x"
+        s (na) := '-';                -- * Reduce "-0.x" to "-.x"
       elsif s (na .. np - 1) = "0" then
         na := na + 1;                 -- * Reduce "0.x" to ".x"
       end if;
@@ -795,10 +793,10 @@ package body PDF_Out is
     );
   end Image;
 
-  function Get_pixel_dimensions (image_file_name : String) return Rectangle is
+  function Get_Pixel_Dimensions (image_file_name : String) return Rectangle is
   begin
     return PDF_Out.Images.Get_pixel_dimensions (image_file_name);
-  end Get_pixel_dimensions;
+  end Get_Pixel_Dimensions;
 
   -----------------------
   --  Vector graphics  --
@@ -816,25 +814,23 @@ package body PDF_Out is
 
   procedure Single_Line (pdf : in out PDF_Out_Stream; from, to : Point) is
   begin
-    Insert_Graphics_PDF_Code (pdf,
-      Img (from.x) & ' ' & Img (from.y) & " m " &
-      Img (to.x) & ' ' & Img (to.y) & " l s"
-    );
+    Insert_Graphics_PDF_Code
+      (pdf,
+       Img (from.x) & ' ' & Img (from.y) & " m " &
+       Img (to.x) & ' ' & Img (to.y) & " l s");
   end Single_Line;
 
   --    Table 59 - Path Construction Operators (8.5.2)
   --    Table 60 - Path-Painting Operators (8.5.3.1)
 
-  inside_path_rule_char : constant array (Inside_path_rule) of Character := (
-    nonzero_winding_number => ' ',
-    even_odd               => '*'
-  );
+  inside_path_rule_char : constant array (Inside_path_rule) of Character :=
+    (nonzero_winding_number => ' ',
+     even_odd               => '*');
 
-  path_drawing_operator : constant array (Path_Rendering_Mode) of Character := (
-    fill             => 'F',
-    stroke           => 'S',
-    fill_then_stroke => 'B'
-  );
+  path_drawing_operator : constant array (Path_Rendering_Mode) of Character :=
+    (fill             => 'F',
+     stroke           => 'S',
+     fill_then_stroke => 'B');
 
   procedure Draw (pdf : in out PDF_Out_Stream; what : Rectangle; rendering : Path_Rendering_Mode) is
   begin
@@ -851,24 +847,27 @@ package body PDF_Out is
     Insert_Graphics_PDF_Code (pdf, Img (to) & " l");
   end Line;
 
-  procedure Cubic_Bezier (pdf : in out PDF_Out_Stream; control_1, control_2 : Point; to : Point) is
+  procedure Cubic_Bezier
+    (pdf                  : in out PDF_Out_Stream;
+     control_1, control_2 : in     Point;
+     to                   : in     Point)
+  is
   begin
-    Insert_Graphics_PDF_Code (
-      pdf,
-      Img (control_1) & ' ' &
-      Img (control_2) & ' ' &
-      Img (to) & " c"
-    );
+    Insert_Graphics_PDF_Code
+      (pdf,
+       Img (control_1) & ' ' &
+       Img (control_2) & ' ' &
+       Img (to) & " c");
   end Cubic_Bezier;
 
   procedure Arc
     (pdf              : in out PDF_Out_Stream;
-     center           :        Point;
-     radius           :        Real;
-     angle_1, angle_2 :        Real;
-     line_to_start    :        Boolean)
+     center           : in     Point;
+     radius           : in     Real;
+     angle_1, angle_2 : in     Real;
+     line_to_start    : in     Boolean)
   is
-    use Ada.Numerics, REF;
+    use Ada.Numerics, Real_Elementary_Functions;
     sweep_angle : Real;
     n_curves : Integer;
     deg_to_rad  : constant := Pi / 180.0;
@@ -877,8 +876,9 @@ package body PDF_Out is
     sn, cs, sweep_angle_part, angle_part_start : Real;
     p, q : array (0 .. 3) of Point;
     v, t, q0 : Point;
-    --  This value looks like an optimum (it possibly minimizes
-    --  the distance from the curve to the actual arc):
+
+    --  The following value looks like an optimum (it possibly
+    --  minimizes the distance from the curve to the actual arc):
     scale : constant := 4.0 / 3.0;
   begin
     sweep_angle := angle_stop - angle_start;
@@ -942,12 +942,16 @@ package body PDF_Out is
     end loop;
   end Arc;
 
-  procedure Finish_Path (
-    pdf        : in out PDF_Out_Stream;
-    close_path :        Boolean;
-    rendering  :        Path_Rendering_Mode;  --  fill, stroke, or both
-    rule       :        Inside_path_rule
-  )
+  procedure Circle (pdf : in out PDF_Out_Stream; center : Point; radius : Real) is
+  begin
+    Arc (pdf, center, radius, 0.0, 360.0, False);
+  end Circle;
+
+  procedure Finish_Path
+    (pdf        : in out PDF_Out_Stream;
+     close_path :        Boolean;
+     rendering  :        Path_Rendering_Mode;  --  fill, stroke, or both
+     rule       :        Inside_path_rule)
   is
     cmd : String := path_drawing_operator (rendering) & inside_path_rule_char (rule);
   begin
@@ -1061,8 +1065,7 @@ package body PDF_Out is
       (x_min  => mb_x_min,
         y_min  => mb_y_min,
         width  => mb_x_max - mb_x_min,
-        height => mb_y_max - mb_y_min
-      );
+        height => mb_y_max - mb_y_min);
   end Page_Setup;
 
   function Layout (pdf : PDF_Out_Stream) return Rectangle is
@@ -1070,10 +1073,9 @@ package body PDF_Out is
     return pdf.page_box;
   end Layout;
 
-  procedure Reset (
-    pdf        : in out PDF_Out_Stream'Class;
-    PDF_format :        PDF_type := Default_PDF_type
-  )
+  procedure Reset
+    (pdf        : in out PDF_Out_Stream'Class;
+     PDF_format : in     PDF_Type := default_PDF_type)
   is
     dummy_pdf_with_defaults : PDF_Out_Pre_Root_Type;
   begin
@@ -1108,7 +1110,7 @@ package body PDF_Out is
       WL (pdf, "endobj");
     end Info;
 
-    procedure Pages_dictionary is
+    procedure Pages_Dictionary is
     begin
       New_fixed_index_object (pdf, pages_idx);
       WL (pdf, "  << /Type /Pages");
@@ -1129,9 +1131,9 @@ package body PDF_Out is
       --  Bounding box of all pages
       WL (pdf, "  >>");
       WL (pdf, "endobj");
-    end Pages_dictionary;
+    end Pages_Dictionary;
 
-    procedure Catalog_dictionary is
+    procedure Catalog_Dictionary is
     begin
       New_Object (pdf);
       cat_idx := pdf.objects;
@@ -1144,7 +1146,7 @@ package body PDF_Out is
       end if;
       WL (pdf, "  >>");
       WL (pdf, "endobj");
-    end Catalog_dictionary;
+    end Catalog_Dictionary;
 
     procedure Trailer is
     begin
@@ -1182,8 +1184,8 @@ package body PDF_Out is
     end if;
     Finish_Page (pdf);
     Info;
-    Pages_dictionary;
-    Catalog_dictionary;
+    Pages_Dictionary;
+    Catalog_Dictionary;
     XRef;
     Trailer;
     WL (pdf, "startxref"); -- offset of xref
@@ -1199,11 +1201,10 @@ package body PDF_Out is
   -- Output to a file --
   ----------------------
 
-  procedure Create (
-    pdf        : in out PDF_Out_File;
-    file_name  :        String;
-    PDF_format :        PDF_type := Default_PDF_type
-  )
+  procedure Create
+    (pdf        : in out PDF_Out_File;
+     file_name  : in     String;
+     PDF_format : in     PDF_Type := default_PDF_type)
   is
   begin
     Reset (pdf, PDF_format);
@@ -1308,10 +1309,9 @@ package body PDF_Out is
 
   --- ***
 
-  procedure Create (
-    pdf        : in out PDF_Out_String;
-    PDF_format :        PDF_type := Default_PDF_type
-  )
+  procedure Create
+    (pdf        : in out PDF_Out_String;
+     PDF_format : in     PDF_Type := default_PDF_type)
   is
   begin
     Reset (pdf, PDF_format);

@@ -59,7 +59,8 @@
 --
 --------------------------------------------------------------------------
 
-with Ada.Streams.Stream_IO,
+with Ada.Numerics.Generic_Elementary_Functions,
+     Ada.Streams.Stream_IO,
      Ada.Strings.Unbounded,
      Ada.Strings.Wide_Unbounded,
      Ada.Strings.Wide_Wide_Unbounded,
@@ -83,15 +84,16 @@ package PDF_Out is
   PDF_stream_not_closed,
   Not_implemented : exception;
 
-  type PDF_type is (
-    PDF_1_3  --  PDF 1.3
-  );
+  type PDF_Type is
+    (PDF_1_3);  --  PDF 1.3
 
-  Default_PDF_type : constant PDF_type := PDF_1_3;
+  default_PDF_type : constant PDF_Type := PDF_1_3;
 
   type Real is digits System.Max_Digits;
 
   package Real_IO is new Ada.Text_IO.Float_IO (Real);
+  package Real_Elementary_Functions is
+    new Ada.Numerics.Generic_Elementary_Functions (Real);
 
   type Point is record
     x, y : Real;
@@ -246,14 +248,13 @@ package PDF_Out is
   procedure Filling_Color (pdf : in out PDF_Out_Stream; c : Color_Type) renames Color;
   procedure Stroking_Color (pdf : in out PDF_Out_Stream; c : Color_Type);
 
-  type Rendering_Mode is (
-    fill, stroke, fill_then_stroke, invisible,
-    --  Same, but also add text to path for clipping.
-    fill_and_add_to_path,
-    stroke_and_add_to_path,
-    fill_then_stroke_and_add_to_path,
-    add_to_path
-  );
+  type Rendering_Mode is
+    (fill, stroke, fill_then_stroke, invisible,
+     --  Same, but also add text to path for clipping.
+     fill_and_add_to_path,
+     stroke_and_add_to_path,
+     fill_then_stroke_and_add_to_path,
+     add_to_path);
 
   procedure Text_Rendering_Mode (pdf : in out PDF_Out_Stream; r : Rendering_Mode);
 
@@ -265,7 +266,8 @@ package PDF_Out is
   procedure Image (pdf : in out PDF_Out_Stream; file_name : String; target : Rectangle);
 
   --  For calibrating the target rectangle in the Image procedure, you may need this:
-  function Get_pixel_dimensions (image_file_name : String) return Rectangle;
+  function Get_Pixel_Dimensions (image_file_name : String) return Rectangle;
+
   --  Caution: scaling is up to you! The rectangle returned by the function
   --  is (0.0, 0.0, width, height), with 1 pixel = 1pt.
 
@@ -299,19 +301,21 @@ package PDF_Out is
 
   procedure Cubic_Bezier
     (pdf                  : in out PDF_Out_Stream;
-     control_1, control_2 :        Point;
-     to                   :        Point);
+     control_1, control_2 : in     Point;
+     to                   : in     Point);
 
   --  Arc of a circle.
   --  Parameters as in PostScript Language Reference, 8.2.
-  --  Angles are in degrees, counterclockwise.
+  --  Angles are in degrees, counterclockwise from the (1,0) point.
   --
   procedure Arc
     (pdf              : in out PDF_Out_Stream;
-     center           :        Point;
-     radius           :        Real;
-     angle_1, angle_2 :        Real;
-     line_to_start    :        Boolean);
+     center           : in     Point;
+     radius           : in     Real;
+     angle_1, angle_2 : in     Real;
+     line_to_start    : in     Boolean);
+
+  procedure Circle (pdf : in out PDF_Out_Stream; center : Point; radius : Real);
 
   --  All lines and curves and the possible filling inside the path
   --  will be drawn when path is completed, with Finish_Path:
@@ -348,11 +352,13 @@ package PDF_Out is
   --
   procedure Insert_Graphics_PDF_Code (pdf : in out PDF_Out_Stream; code : String);
 
+  max_displayed_digits : constant Positive := Integer'Min (10, Real'Digits);
+
   --  Image (representation in digits) functions for numbers, designed to
-  --  take the least possible room, albeit without loss of precision.
+  --  take the least possible room, albeit without significant loss of precision.
   --  Useful for inserting PDF code.
   function Img (p : Integer) return String;
-  function Img (x : Real; prec : Positive := Real'Digits) return String;
+  function Img (x : Real; prec : Positive := max_displayed_digits) return String;
 
   --  Document information
   procedure Title (pdf : in out PDF_Out_Stream; s : String);
@@ -426,8 +432,8 @@ package PDF_Out is
 
   procedure Create
     (pdf        : in out PDF_Out_File;
-     file_name  :        String;
-     PDF_format :        PDF_type := Default_PDF_type);
+     file_name  : in     String;
+     PDF_format : in     PDF_Type := default_PDF_type);
 
   procedure Close (pdf : in out PDF_Out_File);
 
@@ -439,7 +445,7 @@ package PDF_Out is
 
   procedure Create
     (pdf        : in out PDF_Out_String;
-     PDF_format :        PDF_type := Default_PDF_type);
+     PDF_format : in     PDF_Type := default_PDF_type);
 
   procedure Close (pdf : in out PDF_Out_String);
 
@@ -449,8 +455,8 @@ package PDF_Out is
   --  Information about this package - e.g. for an "about" box  --
   ----------------------------------------------------------------
 
-  version   : constant String := "007, preview 1";
-  reference : constant String := "25-Jan-2025";
+  version   : constant String := "007, preview 2";
+  reference : constant String := "27-Jan-2025";
   --  Hopefully the latest version is at one of those URLs:
   web  : constant String := "https://apdf.sourceforge.io/";
   web2 : constant String := "https://sourceforge.net/projects/apdf/";
@@ -512,7 +518,7 @@ private
     start_index    : Ada.Streams.Stream_IO.Count;
     is_created     : Boolean           := False;
     is_closed      : Boolean           := False;
-    format         : PDF_type          := Default_PDF_type;
+    format         : PDF_Type          := default_PDF_type;
     zone           : Page_Zone         := nowhere;
     text_switch    : Text_or_Graphics  := graphics;
     last_page      : PDF_Index_Type    := 0;
