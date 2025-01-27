@@ -22,7 +22,7 @@ begin
   pdf.Page_Setup (page);
   for i in 1 .. Argument_Count loop
     --  Get image dimensions and look for a good fit into the page:
-    target := (one_inch / DPI) * Get_pixel_dimensions (Argument (i));
+    target := (one_inch / DPI) * Get_Pixel_Dimensions (Argument (i));
     left := pdf.Left_Margin;
     if left + target.width > page.width then
       left := 0.0;
