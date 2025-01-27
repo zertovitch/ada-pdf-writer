@@ -867,6 +867,9 @@ package body PDF_Out is
      angle_1, angle_2 : in     Real;
      line_to_start    : in     Boolean)
   is
+    --  Improved from Pascal code shown here:
+    --  https://stackoverflow.com/questions/26764342/drawing-arc-with-bezier-curves
+    --
     use Ada.Numerics, Real_Elementary_Functions;
     sweep_angle : Real;
     n_curves : Integer;
