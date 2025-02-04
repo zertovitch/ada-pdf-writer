@@ -105,6 +105,13 @@ package PDF_Out is
   function "*"(f : Real; P : Point) return Point;
   pragma Inline ("*");
 
+  function L1_Distance (P1, P2 : Point) return Real;
+  pragma Inline (L1_Distance);
+
+  --  Euclidean distance:
+  function L2_Distance_Squared (P1, P2 : Point) return Real;
+  pragma Inline (L2_Distance_Squared);
+
   type Rectangle is record
     x_min, y_min,
     width, height : Real;
@@ -210,8 +217,7 @@ package PDF_Out is
       Times_Roman,
       Zapf_Dingbats,
       --  Fonts imported into the PDF document
-      External_Font
-     );
+      External_Font);
 
   subtype Standard_Font_Type is Font_Type range Courier .. Zapf_Dingbats;
 
@@ -257,6 +263,11 @@ package PDF_Out is
      add_to_path);
 
   procedure Text_Rendering_Mode (pdf : in out PDF_Out_Stream; r : Rendering_Mode);
+
+  --  Ubiquitous 8-bit-per-channel Red-Green-Blue code.
+  type RGB_Code_Range is range 0 .. 16#FF_FF_FF#;
+
+  function Convert (rgb_code : RGB_Code_Range) return Color_Type;
 
   ----------------
   --  Graphics  --
@@ -315,7 +326,11 @@ package PDF_Out is
      angle_1, angle_2 : in     Real;
      line_to_start    : in     Boolean);
 
-  procedure Circle (pdf : in out PDF_Out_Stream; center : Point; radius : Real);
+  procedure Circle
+    (pdf       : in out PDF_Out_Stream;
+     center    : in     Point;
+     radius    : in     Real;
+     rendering : in     Path_Rendering_Mode);
 
   --  All lines and curves and the possible filling inside the path
   --  will be drawn when path is completed, with Finish_Path:
@@ -455,8 +470,8 @@ package PDF_Out is
   --  Information about this package - e.g. for an "about" box  --
   ----------------------------------------------------------------
 
-  version   : constant String := "007, preview 2";
-  reference : constant String := "27-Jan-2025";
+  version   : constant String := "007, preview 3";
+  reference : constant String := "04-Feb-2025";
   --  Hopefully the latest version is at one of those URLs:
   web  : constant String := "https://apdf.sourceforge.io/";
   web2 : constant String := "https://sourceforge.net/projects/apdf/";

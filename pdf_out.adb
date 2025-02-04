@@ -278,6 +278,16 @@ package body PDF_Out is
     return (f * P.x, f * P.y);
   end "*";
 
+  function L1_Distance (P1, P2 : Point) return Real is
+  begin
+    return abs (P1.x - P2.x) + abs (P1.y - P2.y);
+  end L1_Distance;
+
+  function L2_Distance_Squared (P1, P2 : Point) return Real is
+  begin
+    return (P1.x - P2.x) ** 2 + (P1.y - P2.y) ** 2;
+  end L2_Distance_Squared;
+
   function "+"(P : Point; r : Rectangle) return Rectangle is
   begin
     return (P.x + r.x_min, P.y + r.y_min, r.width, r.height);
@@ -776,6 +786,14 @@ package body PDF_Out is
     --  Tr = Set rendering mode (Table 106)
   end Text_Rendering_Mode;
 
+  function Convert (rgb_code : RGB_Code_Range) return Color_Type is
+  begin
+    return
+      (red   =>           Real (rgb_code mod 256) / 255.0,
+       green =>   Real ((rgb_code / 256) mod 256) / 255.0,
+       blue  => Real ((rgb_code / 65536) mod 256) / 255.0);
+  end Convert;
+
   function Image_Name (i : Positive) return String is
   begin
     return "/Ada_PDF_Img" & Img (i);
@@ -920,8 +938,9 @@ package body PDF_Out is
     cs := Cos (angle_start + sweep_angle_part * 0.5);
     sn := Sin (angle_start + sweep_angle_part * 0.5);
 
-    q0 := center + radius * (p (0).x * cs - p (0).y * sn,
-                        p (0).x * sn + p (0).y * cs);
+    q0 := center +
+            radius * (p (0).x * cs - p (0).y * sn,
+                      p (0).x * sn + p (0).y * cs);
 
     if line_to_start then
       Line (pdf, q0);
@@ -937,17 +956,24 @@ package body PDF_Out is
 
       for i in 1 .. 3 loop
         q (i) :=
-          center + radius * (p (i).x * cs - p (i).y * sn,
-                        p (i).x * sn + p (i).y * cs);
+          center +
+            radius * (p (i).x * cs - p (i).y * sn,
+                      p (i).x * sn + p (i).y * cs);
       end loop;
 
       Cubic_Bezier (pdf, q (1), q (2), q (3));
     end loop;
   end Arc;
 
-  procedure Circle (pdf : in out PDF_Out_Stream; center : Point; radius : Real) is
+  procedure Circle
+    (pdf       : in out PDF_Out_Stream;
+     center    : in     Point;
+     radius    : in     Real;
+     rendering : in     Path_Rendering_Mode)
+  is
   begin
     Arc (pdf, center, radius, 0.0, 360.0, False);
+    Finish_Path (pdf, False, rendering, nonzero_winding_number);
   end Circle;
 
   procedure Finish_Path
