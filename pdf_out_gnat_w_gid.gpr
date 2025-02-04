@@ -28,13 +28,14 @@ project PDF_Out_Gnat_w_GID is
 
 
 
-   for Main use (
-           "pdf_out_demo.adb",                --  Demos
+   for Main use
+          ("pdf_out_demo.adb",                --  Demos
            "color_pinstripe_printer.adb",
-           "pinstripe_printer.adb",
            "hilbert_curve.adb",
+           "k_means.adb",
            "koch_curve.adb",
            "peano_curve.adb",
+           "pinstripe_printer.adb",
            "sierpinski_arrowhead_curve.adb",
            "img2pdf.adb",                     --  Tools
            "arc_test.adb",                    --  Tests
