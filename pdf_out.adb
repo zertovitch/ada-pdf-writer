@@ -458,6 +458,7 @@ package body PDF_Out is
     pdf.last_page := pdf.last_page + 1;
     pdf.current_line := 1;
     pdf.current_col := 1;
+    pdf.current_annot := Null_Unbounded_String;
     PDF_Out.Images.Clear_local_resource_flags (pdf);
     --
     --  Page descriptor object:
@@ -476,10 +477,12 @@ package body PDF_Out is
     WL (pdf, "  <</Type /Page");
     WL (pdf, "    /Parent " & Img (pages_idx) & " 0 R");
     --  Contents stream object is object number n+1 (our choice):
-    WL (pdf, "    /Contents " & Img (pdf.objects + 1) & " 0 R");
+    WL (pdf, "    /Contents "  & Img (pdf.objects + 1) & " 0 R");
+    --  Annotations. Annotations array is object number n+2 (our choice):
+    WL (pdf, "    /Annots "    & Img (pdf.objects + 2) & " 0 R");
     --  Resources: a dictionary containing any resources required by the page.
-    --  Resources object is object number n+2 (our choice):
-    WL (pdf, "    /Resources " & Img (pdf.objects + 2) & " 0 R");
+    --  Resources object is object number n+3 (our choice):
+    WL (pdf, "    /Resources " & Img (pdf.objects + 3) & " 0 R");
     WL (pdf, "    /MediaBox [" & Img (pdf.page_box, absolute) & ']');
     WL (pdf, "  >>");
     WL (pdf, "endobj");
@@ -504,21 +507,46 @@ package body PDF_Out is
 
     appended_object_idx : PDF_Index_Type;
 
-    procedure Image_Item (dn : in out Dir_Node) is
-      img_obj : PDF_Index_Type;
+    procedure Annotations is
     begin
-      if dn.local_resource then
-        if dn.pdf_object_index = 0 then
-          img_obj := appended_object_idx;
-          appended_object_idx := appended_object_idx + 1;
-        else
-          img_obj := dn.pdf_object_index;  --  image has been loaded for a previous page
-        end if;
-        WL (pdf, Image_Name (dn.image_index) & ' ' & Img (img_obj) & " 0 R");
-      end if;
-    end Image_Item;
+      New_Object (pdf);
+      WL (pdf, "[");  --  It is an array (of annotations).
+      W  (pdf, To_String (pdf.current_annot));
+      WL (pdf, "]");
+      WL (pdf, "endobj");
+    end Annotations;
 
-    procedure Image_List is new PDF_Out.Images.Traverse_private (Image_Item);
+    procedure Resources is
+
+      procedure Image_Item (dn : in out Dir_Node) is
+        img_obj : PDF_Index_Type;
+      begin
+        if dn.local_resource then
+          if dn.pdf_object_index = 0 then
+            img_obj := appended_object_idx;
+            appended_object_idx := appended_object_idx + 1;
+          else
+            img_obj := dn.pdf_object_index;  --  image has been loaded for a previous page
+          end if;
+          WL (pdf, Image_Name (dn.image_index) & ' ' & Img (img_obj) & " 0 R");
+        end if;
+      end Image_Item;
+
+      procedure Image_List is new PDF_Out.Images.Traverse_private (Image_Item);
+
+    begin
+      New_Object (pdf);
+      WL (pdf, "<<");
+      --  Font resources:
+      PDF_Out.Fonts.Font_Dictionary (pdf);
+      appended_object_idx := pdf.objects + 1;  --  Images contents to be appended after this object
+      --  Image resources:
+      WL (pdf, "  /XObject <<");
+      Image_List (pdf);
+      WL (pdf, "  >>");
+      WL (pdf, ">>");
+      WL (pdf, "endobj");
+    end Resources;
 
   begin
     if pdf.zone = nowhere then
@@ -535,18 +563,13 @@ package body PDF_Out is
     pdf.zone := nowhere;
     Finish_substream (pdf);
     WL (pdf, "endobj");  --  end of page contents.
+
+    --  Annotations (7.7.3.3) for the page just finished:
+    Annotations;
+
     --  Resources Dictionary (7.8.3) for the page just finished:
-    New_Object (pdf);
-    WL (pdf, "<<");
-    --  Font resources:
-    PDF_Out.Fonts.Font_Dictionary (pdf);
-    appended_object_idx := pdf.objects + 1;  --  Images contents to be appended after this object
-    --  Image resources:
-    WL (pdf, "  /XObject <<");
-    Image_List (pdf);
-    WL (pdf, "  >>");
-    WL (pdf, ">>");
-    WL (pdf, "endobj");  --  end of Resources
+    Resources;
+
     PDF_Out.Images.Insert_unloaded_local_images (pdf);
   end Finish_Page;
 
@@ -994,6 +1017,24 @@ package body PDF_Out is
       Insert_Graphics_PDF_Code (pdf, cmd);
     end if;
   end Finish_Path;
+
+  procedure Hyperlink
+    (pdf     : in out PDF_Out_Stream;
+     area    : in     Rectangle;
+     visible : in     Boolean;
+     url     : in     String)
+  is
+  begin
+    Append
+      (pdf.current_annot,
+       "  << /Type /Annot /Subtype /Link /Rect [" &
+       Img (area, absolute) &
+       "] " & (if visible then "" else "/C []") &
+       " /A << /Type /Action /S /URI /URI (" &
+       url &
+       ") >> >>" &
+       NL);
+  end Hyperlink;
 
   --  Table 317 - Entries in the document information dictionary (14.3.3)
 

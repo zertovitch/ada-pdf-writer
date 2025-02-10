@@ -41,76 +41,102 @@ procedure PDF_Out_Demo is
     pdf : Fancy_Page.Fancy_PDF;
 
     procedure Arc_Demo is  --  Reused from arc_test.adb.
-    subtype Pie_Value is Float range 0.0 .. Float'Last;
+      subtype Pie_Value is Float range 0.0 .. Float'Last;
 
-    type Pie_Slice is record
-      value : Pie_Value;
-      color : PDF_Out.Color_Type;
-      --  Labels, etc. ...
-    end record;
+      type Pie_Slice is record
+        value : Pie_Value;
+        color : PDF_Out.Color_Type;
+        --  Labels, etc. ...
+      end record;
 
-    type Pie_Contents is array (Positive range <>) of Pie_Slice;
+      type Pie_Contents is array (Positive range <>) of Pie_Slice;
 
-    pie_1 : constant Pie_Contents :=
-      ((123.0, (1.0, 0.5, 0.5)),
-       (456.0, (0.5, 1.0, 0.5)),
-       (789.0, (0.5, 0.5, 1.0)));
+      pie_1 : constant Pie_Contents :=
+        ((123.0, (1.0, 0.5, 0.5)),
+         (456.0, (0.5, 1.0, 0.5)),
+         (789.0, (0.5, 0.5, 1.0)));
 
-    pull_apart : constant := -1;  --  All slices are pulled out
-    pull_none  : constant :=  0;  --  No slice is pulled out
+      pull_apart : constant := -1;  --  All slices are pulled out
+      pull_none  : constant :=  0;  --  No slice is pulled out
 
-    procedure Pie
-      (center      : Point;
-       radius      : Real;
-       start_angle : Real;
-       p           : Pie_Contents;
-       pull_out    : Integer := pull_none)
-    is
-      total : Pie_Value := 0.0;
-      angle_1, angle_2, angle_mid : Real := start_angle;
-      shift : Point;
-      use Ada.Numerics, Real_Elementary_Functions;
-      deg_to_rad  : constant := Pi / 180.0;
-      pull_factor : Real := 0.25;
-    begin
-      if pull_out = pull_apart then
-        pull_factor := pull_factor * 0.5;
-      end if;
-      for i in p'Range loop
-        total := total + p (i).value;
-      end loop;
-      for i in p'Range loop
-        angle_2 := angle_2 + Real (p (i).value / total) * 360.0;
-        if i = pull_out or pull_out = pull_apart then
-          angle_mid := deg_to_rad * (angle_1 + angle_2) * 0.5;
-          shift := radius * pull_factor * (Cos (angle_mid), Sin (angle_mid));
-        else
-          shift := (0.0, 0.0);
+      procedure Pie
+        (center      : Point;
+         radius      : Real;
+         start_angle : Real;
+         p           : Pie_Contents;
+         pull_out    : Integer := pull_none)
+      is
+        total : Pie_Value := 0.0;
+        angle_1, angle_2, angle_mid : Real := start_angle;
+        shift : Point;
+        use Ada.Numerics, Real_Elementary_Functions;
+        deg_to_rad  : constant := Pi / 180.0;
+        pull_factor : Real := 0.25;
+      begin
+        if pull_out = pull_apart then
+          pull_factor := pull_factor * 0.5;
         end if;
-        pdf.Move (shift + center);
-        pdf.Filling_Color (p (i).color);
-        pdf.Arc (shift + center, radius, angle_1, angle_2, True);
-        angle_1 := angle_2;
-        pdf.Line (shift + center);
-        pdf.Finish_Path (False, fill_then_stroke, nonzero_winding_number);
+        for i in p'Range loop
+          total := total + p (i).value;
+        end loop;
+        for i in p'Range loop
+          angle_2 := angle_2 + Real (p (i).value / total) * 360.0;
+          if i = pull_out or pull_out = pull_apart then
+            angle_mid := deg_to_rad * (angle_1 + angle_2) * 0.5;
+            shift := radius * pull_factor * (Cos (angle_mid), Sin (angle_mid));
+          else
+            shift := (0.0, 0.0);
+          end if;
+          pdf.Move (shift + center);
+          pdf.Filling_Color (p (i).color);
+          pdf.Arc (shift + center, radius, angle_1, angle_2, True);
+          angle_1 := angle_2;
+          pdf.Line (shift + center);
+          pdf.Finish_Path (False, fill_then_stroke, nonzero_winding_number);
+        end loop;
+      end Pie;
+
+      radius : constant := 40.0;
+
+    begin
+      pdf.Stroking_Color ((0.25, 0.0, 0.0));
+      pdf.Line_Width (2.0);
+      for pull in pull_apart .. 3 loop
+        Pie
+          ((pdf.Layout.x_min + pdf.Margins.left + radius,
+            pdf.Layout.y_min + pdf.Layout.height - pdf.Margins.top - radius * (1.0 + Real (1 + pull) * 2.5)),
+           radius,
+           90.0,
+           pie_1,
+           pull);
       end loop;
-    end Pie;
-
-    radius : constant := 40.0;
-
-  begin
-    pdf.Stroking_Color ((0.25, 0.0, 0.0));
-    pdf.Line_Width (2.0);
-    for pull in pull_apart .. 3 loop
-      Pie
-        ((pdf.Margins.left + radius,
-          pdf.Layout.height - pdf.Margins.top - radius * (1.0 + Real (1 + pull) * 2.5)),
-         radius,
-         90.0,
-         pie_1,
-         pull);
-    end loop;
     end Arc_Demo;
+
+    procedure Bar_Code_Demo is
+      x : constant Real := pdf.Layout.x_min + pdf.Margins.left;
+      y : constant Real := pdf.Layout.y_min + pdf.Layout.height - pdf.Margins.top;
+      width  : constant Real := pdf.Layout.width - pdf.Margins.right - pdf.Margins.left;
+      height : constant := 16.0;  --  font height + some margin...
+      --
+      url_rect : constant Rectangle :=
+        (x - 2.0,
+         y - 4.0,
+         width + 4.0,
+         height);
+    begin
+      pdf.Put_XY
+        (x,
+         y,
+         "Direct PDF vector graphics code inclusion - bar code and QR code from: http://ada-bar-codes.sf.net/");
+
+      --  Hyperlink with a big green rectangle:
+      pdf.Hyperlink (url_rect, False, "http://ada-bar-codes.sf.net/");
+      pdf.Stroking_Color ((0.0, 0.6, 0.0));
+      pdf.Draw (url_rect, stroke);
+
+      pdf.Insert_Graphics_PDF_Code (Bar_code.code_in_pdf);
+      pdf.Insert_Graphics_PDF_Code (QR_code.code_in_pdf);
+    end Bar_Code_Demo;
 
     mem_page_nb : Natural := 0;
     curve_max : constant := 8;
@@ -308,9 +334,8 @@ procedure PDF_Out_Demo is
       --  Bar code from Ada Bar Codes - http://ada-bar-codes.sf.net/  --
       ------------------------------------------------------------------
       pdf.New_Page;
-      pdf.Put ("Direct PDF vector graphics code inclusion - bar code and QR code from: http://ada-bar-codes.sf.net/");
-      pdf.Insert_Graphics_PDF_Code (Bar_code.code_in_pdf);
-      pdf.Insert_Graphics_PDF_Code (QR_code.code_in_pdf);
+      Bar_Code_Demo;
+
       --
       --  Finishing
       --

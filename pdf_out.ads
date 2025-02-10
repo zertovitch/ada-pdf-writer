@@ -341,9 +341,19 @@ package PDF_Out is
      rendering  :        Path_Rendering_Mode;  --  fill, stroke, or both
      rule       :        Inside_path_rule);
 
-  ------------
-  --  Misc  --
-  ------------
+  -------------------
+  --  Annotations  --
+  -------------------
+
+  procedure Hyperlink
+    (pdf     : in out PDF_Out_Stream;
+     area    : in     Rectangle;
+     visible : in     Boolean;
+     url     : in     String);
+
+  ---------------------
+  --  Miscellaneous  --
+  ---------------------
 
   --  In the likely case some PDF feature is not yet implemented in
   --  this package, you can insert direct PDF code - at your own risk ;-).
@@ -470,8 +480,8 @@ package PDF_Out is
   --  Information about this package - e.g. for an "about" box  --
   ----------------------------------------------------------------
 
-  version   : constant String := "007, preview 3";
-  reference : constant String := "04-Feb-2025";
+  version   : constant String := "007, preview 4";
+  reference : constant String := "10-Feb-2025";
   --  Hopefully the latest version is at one of those URLs:
   web  : constant String := "https://apdf.sourceforge.io/";
   web2 : constant String := "https://sourceforge.net/projects/apdf/";
@@ -552,6 +562,7 @@ private
     font_size      : Real              := 11.0;
     line_spacing   : Real              := default_line_spacing;
     ext_font_name  : Unbounded_String;
+    current_annot  : Unbounded_String;
     doc_title      : Unbounded_String;  --  Document information (14.3.3)
     doc_author     : Unbounded_String;  --  Document information (14.3.3)
     doc_subject    : Unbounded_String;  --  Document information (14.3.3)

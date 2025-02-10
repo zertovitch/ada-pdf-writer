@@ -37,6 +37,13 @@ package body Fancy_Page is
         X_Max (pg_layout) - ada_logo_width - pdf.Left_Margin,
         one_cm * 0.2),
         fill_then_stroke);
+    pdf.Hyperlink
+      ((pdf.Layout.x_min + pdf.Margins.left,
+        pdf.Layout.y_min + pdf.Layout.height - pdf.Margins.top,
+        pdf.Layout.width - pdf.Margins.right - pdf.Margins.left,
+        pdf.Margins.top),
+       False,
+       "http://apdf.sf.net/");
     --
     --  Back to normal
     --

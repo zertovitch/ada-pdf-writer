@@ -69,7 +69,7 @@ procedure K_Means is
     end loop;
     for c in Cluster_Range loop
       if count (c) = 0 then
-        null;  --  The centroid is undefined in this case.
+        null;  --  The cluster is not used -> centroid is undefined in this case.
       else
         centroid (c) := 1.0 / Real (count (c)) * centroid (c);
       end if;
@@ -77,24 +77,24 @@ procedure K_Means is
   end Compute_Centroids;
 
   procedure Reallocate is
-    cl, cl_new : Cluster_Range;
-    current : Real;
+    cluster, cluster_new : Cluster_Range;
+    current_dist : Real;
     --  Here we choose a metric, e.g. L1 or L2.
-    function Metric (P1, P2 : Point) return Real renames L1_Distance;
+    function Distance (P1, P2 : Point) return Real renames L1_Distance;
   begin
     for i in data'Range loop
-      cl := alloc (i);
-      cl_new := cl;
-      current := Metric (centroid (cl), data (i));
+      cluster := alloc (i);
+      cluster_new := cluster;
+      current_dist := Distance (centroid (cluster), data (i));
       for c in Cluster_Range loop
-        if c /= cl
+        if c /= cluster
           and then count (c) > 0
-          and then Metric (centroid (c), data (i)) < current
+          and then Distance (centroid (c), data (i)) < current_dist
         then
-          cl_new := c;
+          cluster_new := c;
         end if;
       end loop;
-      alloc (i) := cl_new;
+      alloc (i) := cluster_new;
     end loop;
   end Reallocate;
 
