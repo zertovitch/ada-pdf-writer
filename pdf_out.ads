@@ -503,7 +503,7 @@ private
   type Offset_Table is array (PDF_Index_Type range <>) of Ada.Streams.Stream_IO.Count;
   type p_Offset_Table is access Offset_Table;
 
-  type Page_Table is array (PDF_Index_Type range <>) of PDF_Index_Type; -- object ID's of pages
+  type Page_Table is array (PDF_Index_Type range <>) of PDF_Index_Type;  --  Object ID's of pages
   type p_Page_Table is access Page_Table;
 
   --  Some unique objects like Pages need to have a pre-determined index,
@@ -516,14 +516,16 @@ private
 
   type Dir_node (name_len : Natural) is record
     left, right      : p_Dir_Node;
-    file_name        : String (1 .. name_len);
     image_index      : Positive;
     pdf_object_index : PDF_Index_Type := 0;  --  0 = not yet insterted into the PDF stream
-    local_resource   : Boolean;      --  All True items to be listed into Resource dictionary
+    local_resource   : Boolean;              --  Items to be listed into a page's Resource dictionary
+    file_name        : String (1 .. name_len);
   end record;
 
   type Page_Zone is (nowhere, in_page, in_header, in_footer);
   type Text_or_Graphics is (text, graphics);
+
+  type Standard_Font_Set is array (Standard_Font_Type) of Boolean;
 
   ------------------------------------------
   --  Raw Streams, with 'Read and 'Write  --
@@ -539,35 +541,36 @@ private
   --  variable of this type to reset values is not Ada compliant (LRM:3.9.3(8))
   --
   type PDF_Out_Pre_Root_Type is tagged record
-    pdf_stream     : PDF_Raw_Stream_Class;
-    start_index    : Ada.Streams.Stream_IO.Count;
-    is_created     : Boolean           := False;
-    is_closed      : Boolean           := False;
-    format         : PDF_Type          := default_PDF_type;
-    zone           : Page_Zone         := nowhere;
-    text_switch    : Text_or_Graphics  := graphics;
-    last_page      : PDF_Index_Type    := 0;
-    current_line   : Positive          := 1;  --  Mostly for Ada.Text_IO compatibility
-    current_col    : Positive          := 1;  --  Mostly for Ada.Text_IO compatibility
-    page_idx       : p_Page_Table      := null;  --  page_idx(p): Object ID of page p
-    page_box       : Rectangle         := A4_portrait;
-    maximum_box    : Rectangle         := A4_portrait;
-    page_margins   : Margins_Type      := cm_2_5_margins;
-    objects        : PDF_Index_Type    := last_fix_obj_idx;
-    object_offset  : p_Offset_Table    := null;
-    stream_obj_buf : Unbounded_String;
-    img_dir_tree   : p_Dir_Node        := null;
-    img_count      : Natural           := 0;
-    current_font   : Font_Type         := Helvetica;
-    font_size      : Real              := 11.0;
-    line_spacing   : Real              := default_line_spacing;
-    ext_font_name  : Unbounded_String;
-    current_annot  : Unbounded_String;
-    doc_title      : Unbounded_String;  --  Document information (14.3.3)
-    doc_author     : Unbounded_String;  --  Document information (14.3.3)
-    doc_subject    : Unbounded_String;  --  Document information (14.3.3)
-    doc_keywords   : Unbounded_String;  --  Document information (14.3.3)
-    doc_creator    : Unbounded_String;  --  Document information (14.3.3) : creator application
+    pdf_stream            : PDF_Raw_Stream_Class;
+    start_index           : Ada.Streams.Stream_IO.Count;
+    is_created            : Boolean           := False;
+    is_closed             : Boolean           := False;
+    format                : PDF_Type          := default_PDF_type;
+    zone                  : Page_Zone         := nowhere;
+    text_switch           : Text_or_Graphics  := graphics;
+    last_page             : PDF_Index_Type    := 0;
+    current_line          : Positive          := 1;  --  Mostly for Ada.Text_IO compatibility
+    current_col           : Positive          := 1;  --  Mostly for Ada.Text_IO compatibility
+    page_idx              : p_Page_Table      := null;  --  page_idx(p): Object ID of page p
+    page_box              : Rectangle         := A4_portrait;
+    maximum_box           : Rectangle         := A4_portrait;
+    page_margins          : Margins_Type      := cm_2_5_margins;
+    objects               : PDF_Index_Type    := last_fix_obj_idx;
+    object_offset         : p_Offset_Table    := null;
+    stream_obj_buf        : Unbounded_String;
+    img_dir_tree          : p_Dir_Node        := null;
+    img_count             : Natural           := 0;
+    current_font          : Font_Type         := Helvetica;
+    font_size             : Real              := 11.0;
+    line_spacing          : Real              := default_line_spacing;
+    ext_font_name         : Unbounded_String;
+    current_annot         : Unbounded_String;
+    std_font_used_in_page : Standard_Font_Set := (others => False);
+    doc_title             : Unbounded_String;  --  Document information (14.3.3)
+    doc_author            : Unbounded_String;  --  Document information (14.3.3)
+    doc_subject           : Unbounded_String;  --  Document information (14.3.3)
+    doc_keywords          : Unbounded_String;  --  Document information (14.3.3)
+    doc_creator           : Unbounded_String;  --  Document information (14.3.3) : creator application
   end record;
 
   type PDF_Out_Stream is abstract new PDF_Out_Pre_Root_Type with null record;

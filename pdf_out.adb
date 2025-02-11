@@ -415,11 +415,15 @@ package body PDF_Out is
 
   procedure Insert_PDF_Font_Selection_Code (pdf : in out PDF_Out_Stream) is
   begin
-    Insert_Text_PDF_Code (pdf,
-      PDF_Out.Fonts.Current_Font_Dictionary_Name (pdf) &
-      ' ' & Img (pdf.font_size) & " Tf " &  --  Tf: 9.3 Text State Parameters and Operators
-      Img (pdf.font_size * pdf.line_spacing) & " TL"  --  TL: set text leading (9.3.5)
-    );
+    Insert_Text_PDF_Code
+      (pdf,
+       PDF_Out.Fonts.Current_Font_Dictionary_Name (pdf) &
+       ' ' & Img (pdf.font_size) & " Tf " &              --  Tf: 9.3 Text State Parameters and Operators
+       Img (pdf.font_size * pdf.line_spacing) & " TL");  --  TL: set text leading (9.3.5)
+
+    if pdf.current_font in Standard_Font_Type then
+      pdf.std_font_used_in_page (pdf.current_font) := True;
+    end if;
   end Insert_PDF_Font_Selection_Code;
 
   procedure Font (pdf : in out PDF_Out_Stream; f : Standard_Font_Type) is
@@ -456,9 +460,10 @@ package body PDF_Out is
       Finish_Page (pdf);
     end if;
     pdf.last_page := pdf.last_page + 1;
-    pdf.current_line := 1;
-    pdf.current_col := 1;
+    pdf.current_line  := 1;
+    pdf.current_col   := 1;
     pdf.current_annot := Null_Unbounded_String;
+    pdf.std_font_used_in_page := (others => False);
     PDF_Out.Images.Clear_local_resource_flags (pdf);
     --
     --  Page descriptor object:
