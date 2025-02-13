@@ -366,22 +366,38 @@ package body PDF_Out is
     WL (pdf, "%  --  Produced by " & producer);
   end Write_PDF_header;
 
-  procedure New_substream (pdf : in out PDF_Out_Stream'Class) is
+  procedure New_Substream (pdf : in out PDF_Out_Stream'Class) is
   begin
     pdf.stream_obj_buf := Null_Unbounded_String;
-  end New_substream;
+  end New_Substream;
 
-  procedure Finish_substream (pdf : in out PDF_Out_Stream'Class) is
+  procedure Finish_Substream (pdf : in out PDF_Out_Stream'Class) is
+    chunk_size : constant := 1024;
+    len, start, stop : Natural;
   begin
-    WL (pdf, "  << /Length" & Integer'Image (Length (pdf.stream_obj_buf)) & " >>");
-    --  Length could be alternatively stored in next object,
+    len := Length (pdf.stream_obj_buf);
+    WL (pdf, "  << /Length" & len'Image & " >>");
+    --  The length could be alternatively stored in the next PDF object,
     --  so we wouldn't need to buffer the stream - see 7.3.10, Example 3.
-    --  But we prefer the buffered version, which could be compressed in a future version
-    --  of this package.
+    --  But we prefer the buffered version, which could be compressed, in
+    --  a future version of this package.
     WL (pdf, "stream");
-    WL (pdf, To_String (pdf.stream_obj_buf));
+    if len > 0 then
+      --  Alternative to using To_String (pdf.stream_obj_buf): we
+      --  output the buffer sliced in small chunks.
+      --  Reason: the buffer can be very large and a call to To_String
+      --  may cause a stack overflow.
+      start := 1;
+      loop
+        stop := Integer'Min (len, start + chunk_size - 1);
+        W (pdf, Slice (pdf.stream_obj_buf, start, stop));
+        start := stop + 1;
+        exit when start > len;
+      end loop;
+    end if;
+    WL (pdf, "");
     WL (pdf, "endstream");
-  end Finish_substream;
+  end Finish_Substream;
 
   --  Internal - test page for experimenting PDF constructs (and how Adobe Reader reacts to them)
   --
@@ -494,7 +510,7 @@ package body PDF_Out is
     --  Page contents object:
     --
     New_Object (pdf);
-    New_substream (pdf);
+    New_Substream (pdf);
     if test_page_mode then
       Test_Page (pdf);
     else
@@ -566,7 +582,7 @@ package body PDF_Out is
       Flip_To (pdf, graphics);
     end if;
     pdf.zone := nowhere;
-    Finish_substream (pdf);
+    Finish_Substream (pdf);
     WL (pdf, "endobj");  --  end of page contents.
 
     --  Annotations (7.7.3.3) for the page just finished:
