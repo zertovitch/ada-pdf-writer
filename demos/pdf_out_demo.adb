@@ -116,7 +116,7 @@ procedure PDF_Out_Demo is
       x : constant Real := pdf.Layout.x_min + pdf.Margins.left;
       y : constant Real := pdf.Layout.y_min + pdf.Layout.height - pdf.Margins.top;
       width  : constant Real := pdf.Layout.width - pdf.Margins.right - pdf.Margins.left;
-      height : constant := 16.0;  --  font height + some margin...
+      height : constant Real := pdf.Get_Font_Size + 5.0;
       --
       url_rect : constant Rectangle :=
         (x - 2.0,
@@ -197,26 +197,24 @@ procedure PDF_Out_Demo is
       --  Ada Airlines boarding pass  --
       ----------------------------------
       pdf.New_Page;
-      pdf.Put_Line ("Just had a page break (and switched to landscape)...");
+      pdf.Put_Line ("Just had a page break - and switched to landscape. Click on the pass -> go to page 3.");
       declare
         z_from : constant String := "(EXM) EXEMPLAR AIRPORT";
         z_to   : constant String := "(DEM) DEMO INTL AIRPORT";
         z_date : constant String := "08 JAN 2016";
         --
-        procedure Boarding_pass (
-          y : Real;
-          passenger, from, to, date : String
-        )
-        is
+        procedure Boarding_pass (y : Real; passenger, from, to, date : String) is
           factor_bp : constant := 0.6;
           x0 : constant Real := pdf.Left_Margin * 2.0;
           y0 : constant Real := pdf.Bottom_Margin + y;
+          bp_mask_area : constant Rectangle := (x0, y0, factor_bp * 835.0, factor_bp * 315.0);
         begin
-          pdf.Image ("demos/bp_mask.jpg", (x0, y0, factor_bp * 835.0, factor_bp * 315.0));
+          pdf.Image ("demos/bp_mask.jpg", bp_mask_area);
           pdf.Put_XY (x0 +  15.0, y0 + 120.0, date);
           pdf.Put_XY (x0 + 158.0, y0 + 120.0, from);
           pdf.Put_XY (x0 + 158.0, y0 +  87.0, to);
           pdf.Put_XY (x0 + 158.0, y0 +  15.0, passenger);
+          pdf.Hyperlink (bp_mask_area, True, 3);
         end Boarding_pass;
       begin
         Boarding_pass (205.0, "ZERTE, JULES", z_from, z_to, z_date);
