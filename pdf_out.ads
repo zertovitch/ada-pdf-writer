@@ -231,6 +231,7 @@ package PDF_Out is
   --  In general the size is a scale factor (see Table 105, Tf operator).
   --  For standard fonts the unit seems to be the Point (pt).
   procedure Font_Size (pdf : in out PDF_Out_Stream; size : Real);
+  function Get_Font_Size (pdf : in out PDF_Out_Stream) return Real;
 
   procedure Line_Spacing (pdf : in out PDF_Out_Stream; factor : Real);  --  as multiple of font size
   default_line_spacing : constant := 1.2;
@@ -350,6 +351,12 @@ package PDF_Out is
      area    : in     Rectangle;
      visible : in     Boolean;
      url     : in     String);
+
+ procedure Hyperlink
+     (pdf    : in out PDF_Out_Stream;
+     area    : in     Rectangle;
+     visible : in     Boolean;
+     page    : in     Integer);
 
   ---------------------
   --  Miscellaneous  --
