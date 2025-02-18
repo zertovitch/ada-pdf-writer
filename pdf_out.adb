@@ -453,6 +453,11 @@ package body PDF_Out is
     pdf.font_size := size;
     Insert_PDF_Font_Selection_Code (pdf);
   end Font_Size;
+  
+  function Get_Font_Size (pdf : in out PDF_Out_Stream) return Real is
+  begin
+    return pdf.font_size;
+  end Get_Font_Size;
 
   procedure Line_Spacing (pdf : in out PDF_Out_Stream; factor : Real) is
   begin
@@ -1054,6 +1059,22 @@ package body PDF_Out is
        " /A << /Type /Action /S /URI /URI (" &
        url &
        ") >> >>" &
+       NL);
+  end Hyperlink;
+  
+  procedure Hyperlink
+    (pdf     : in out PDF_Out_Stream;
+     area    : in     Rectangle;
+     visible : in     Boolean;
+     page    : in     Integer)
+  is
+  begin
+    Append
+      (pdf.current_annot,
+       "  << /Type /Annot /Subtype /Link /Rect [" &
+       Img (area, absolute) &
+       "] " & (if visible then "" else "/C []") &
+       " /Dest [" & page'Image(2..page'Image'Last) & " /XYZ null null null ] >>" &
        NL);
   end Hyperlink;
 
