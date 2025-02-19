@@ -453,7 +453,7 @@ package body PDF_Out is
     pdf.font_size := size;
     Insert_PDF_Font_Selection_Code (pdf);
   end Font_Size;
-  
+
   function Get_Font_Size (pdf : in out PDF_Out_Stream) return Real is
   begin
     return pdf.font_size;
@@ -1061,21 +1061,32 @@ package body PDF_Out is
        ") >> >>" &
        NL);
   end Hyperlink;
-  
+
   procedure Hyperlink
     (pdf     : in out PDF_Out_Stream;
      area    : in     Rectangle;
      visible : in     Boolean;
-     page    : in     Integer)
+     page    : in     Positive;
+     y_pos   : in     Integer := unspecified_position)
   is
+
   begin
-    Append
-      (pdf.current_annot,
-       "  << /Type /Annot /Subtype /Link /Rect [" &
-       Img (area, absolute) &
-       "] " & (if visible then "" else "/C []") &
-       " /Dest [" & page'Image(2..page'Image'Last) & " /XYZ null null null ] >>" &
-       NL);
+    if pdf.old_page_idx = null then
+      null;  --  You need to produce the same PDF document twice!
+    elsif PDF_Index_Type (page) not in pdf.old_page_idx'Range then
+      null;  --  Out of range
+    else
+      Append
+        (pdf.current_annot,
+         "  << /Type /Annot /Subtype /Link /Rect [" &
+         Img (area, absolute) &
+         "] " & (if visible then "" else "/C []") &
+         " /Dest [" & pdf.old_page_idx (PDF_Index_Type (page))'Image &
+         " 0 R /XYZ null" &
+         (if y_pos = unspecified_position then " null" else y_pos'Image) &
+         " null ] >>" &
+         NL);
+    end if;
   end Hyperlink;
 
   --  Table 317 - Entries in the document information dictionary (14.3.3)
@@ -1190,6 +1201,7 @@ package body PDF_Out is
      PDF_format : in     PDF_Type := default_PDF_type)
   is
     dummy_pdf_with_defaults : PDF_Out_Pre_Root_Type;
+    mem_old_page_index : constant p_Page_Table := pdf.old_page_idx;
   begin
     --  Check if we are trying to re-use a half-finished object (ouch!):
     if pdf.is_created and not pdf.is_closed then
@@ -1199,6 +1211,8 @@ package body PDF_Out is
     dummy_pdf_with_defaults.format := PDF_format;
     --  Now we reset pdf:
     PDF_Out_Pre_Root_Type (pdf) := dummy_pdf_with_defaults;
+    --  ... but we restore the old page index:
+    pdf.old_page_idx := mem_old_page_index;
     --  Set a default title (replaced when procedure Title is called).
     --  In Adobe Reader, this content can be copied to the clipboard.
     pdf.doc_title := "Document created with: " & To_Unbounded_String (producer);
@@ -1303,7 +1317,8 @@ package body PDF_Out is
     WL (pdf, "startxref"); -- offset of xref
     WL (pdf, Img (Integer (xref_offset)));
     WL (pdf, "%%EOF");
-    Dispose (pdf.page_idx);
+    Dispose (pdf.old_page_idx);
+    pdf.old_page_idx := pdf.page_idx;
     Dispose (pdf.object_offset);
     PDF_Out.Images.Clear_image_directory (pdf);
     pdf.is_closed := True;

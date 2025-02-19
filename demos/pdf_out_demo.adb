@@ -193,11 +193,12 @@ procedure PDF_Out_Demo is
       pdf.New_Line;
       pdf.Finish_Page;  --  Needed for having the footer right before changing orientation.
       pdf.Page_Setup (A4_landscape);
+
       ----------------------------------
       --  Ada Airlines boarding pass  --
       ----------------------------------
       pdf.New_Page;
-      pdf.Put_Line ("Just had a page break - and switched to landscape. Click on the pass -> go to page 3.");
+      pdf.Put_Line ("Just had a page break - and switched to landscape. Click on the pass -> go to page 7.");
       declare
         z_from : constant String := "(EXM) EXEMPLAR AIRPORT";
         z_to   : constant String := "(DEM) DEMO INTL AIRPORT";
@@ -214,7 +215,7 @@ procedure PDF_Out_Demo is
           pdf.Put_XY (x0 + 158.0, y0 + 120.0, from);
           pdf.Put_XY (x0 + 158.0, y0 +  87.0, to);
           pdf.Put_XY (x0 + 158.0, y0 +  15.0, passenger);
-          pdf.Hyperlink (bp_mask_area, True, 3);
+          pdf.Hyperlink (bp_mask_area, True, 7);
         end Boarding_pass;
       begin
         Boarding_pass (205.0, "ZERTE, JULES", z_from, z_to, z_date);

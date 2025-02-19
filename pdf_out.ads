@@ -346,17 +346,25 @@ package PDF_Out is
   --  Annotations  --
   -------------------
 
+  --  Link to an Internet / Intranet resource outside the document.
   procedure Hyperlink
     (pdf     : in out PDF_Out_Stream;
      area    : in     Rectangle;
      visible : in     Boolean;
      url     : in     String);
 
- procedure Hyperlink
-     (pdf    : in out PDF_Out_Stream;
+  unspecified_position : constant := -1;
+
+  --  Link to a page within the document.
+  --  NB: you need to produce the same PDF document twice
+  --  in order to have a correct hyperlink.
+  --
+  procedure Hyperlink
+    (pdf     : in out PDF_Out_Stream;
      area    : in     Rectangle;
      visible : in     Boolean;
-     page    : in     Integer);
+     page    : in     Positive;
+     y_pos   : in     Integer := unspecified_position);
 
   ---------------------
   --  Miscellaneous  --
@@ -487,8 +495,8 @@ package PDF_Out is
   --  Information about this package - e.g. for an "about" box  --
   ----------------------------------------------------------------
 
-  version   : constant String := "007, preview 4";
-  reference : constant String := "10-Feb-2025";
+  version   : constant String := "007, preview 5";
+  reference : constant String := "19-Feb-2025";
   --  Hopefully the latest version is at one of those URLs:
   web  : constant String := "https://apdf.sourceforge.io/";
   web2 : constant String := "https://sourceforge.net/projects/apdf/";
@@ -559,6 +567,7 @@ private
     current_line          : Positive          := 1;  --  Mostly for Ada.Text_IO compatibility
     current_col           : Positive          := 1;  --  Mostly for Ada.Text_IO compatibility
     page_idx              : p_Page_Table      := null;  --  page_idx(p): Object ID of page p
+    old_page_idx          : p_Page_Table      := null;  --  Needed for internal Hyperlink.
     page_box              : Rectangle         := A4_portrait;
     maximum_box           : Rectangle         := A4_portrait;
     page_margins          : Margins_Type      := cm_2_5_margins;
