@@ -10,9 +10,9 @@ procedure Insert_Mascot (pdf : in out PDF_Out.PDF_Out_Stream'Class; w, h, xm, ym
   NL : constant Character := ASCII.LF;
   use type PDF_Out.Real;
 begin
-  pdf.Insert_Graphics_PDF_Code (
-    --  Summary of PDF operators: Table 51 in PDF reference.
-    "q q" & NL &
+  pdf.Insert_Graphics_PDF_Code
+   --  Summary of PDF operators: Table 51 in PDF reference.
+   ("q q" & NL &
     --  0 -1 2470 2809 rectclip
     PDF_Out.Img (w * wf) & " 0 0 " & NL & PDF_Out.Img (h * hf) & ' ' &
     PDF_Out.Img (xm) & ' ' & PDF_Out.Img (ym) & " cm" & NL &
@@ -258,6 +258,5 @@ begin
     "2048.668 1372.469 m 1846.328 1446.508 1771.379 1280.875 2279.621 851.493" & NL &
     " c 2268.895 1088.379 2225.633 1730.856 2048.668 1372.469 c h" & NL &
     "2048.668 1372.469 m S" & NL &
-    "Q Q"
-  );
+    "Q Q");
 end Insert_Mascot;

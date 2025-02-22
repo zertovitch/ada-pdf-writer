@@ -79,8 +79,7 @@ procedure PDF_Out_Demo is
           (bordu,
            (pdf.Left_Margin, pdf.Bottom_Margin) +
            (Real (n) * 60.0, Real (n) * 100.0 - 50.0) +
-            factor * target
-          );
+            factor * target);
       end loop;
       pdf.Color (black);
       for x in -curve_max .. curve_max loop
@@ -183,11 +182,11 @@ procedure PDF_Out_Demo is
             Bezier_Curves_Figure ((0.0, y0 - 50.0));
             pdf.Finish_Path (close_it, rend, rule);
             pdf.Color (black);
-            pdf.Put_XY (150.0, y0 + 70.0,
-              "rend = " & Path_Rendering_Mode'Image (rend) &
-              ", rule = " & Inside_path_rule'Image (rule) &
-              ", close path = " & Boolean'Image (close_it)
-            );
+            pdf.Put_XY
+              (150.0, y0 + 70.0,
+               "rend = " & Path_Rendering_Mode'Image (rend) &
+               ", rule = " & Inside_path_rule'Image (rule) &
+               ", close path = " & Boolean'Image (close_it));
             y0 := y0 - 45.0;
           end loop;
         end loop;

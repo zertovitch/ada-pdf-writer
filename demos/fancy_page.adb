@@ -59,12 +59,11 @@ package body Fancy_Page is
     --  Footer line through the page:
     pdf.Line_Width (1.0);
     pdf.Stroking_Color (black);
-    pdf.Single_Line (
-      (pg_layout.x_min + pdf.Left_Margin,
-       pg_layout.y_min + pdf.Bottom_Margin),
-      (X_Max (pg_layout) - pdf.Right_Margin,
-       pg_layout.y_min + pdf.Bottom_Margin)
-    );
+    pdf.Single_Line
+      ((pg_layout.x_min + pdf.Left_Margin,
+        pg_layout.y_min + pdf.Bottom_Margin),
+       (X_Max (pg_layout) - pdf.Right_Margin,
+        pg_layout.y_min + pdf.Bottom_Margin));
     --  Page numbering:
     pdf.Color (black);
     pdf.Font (Helvetica);
