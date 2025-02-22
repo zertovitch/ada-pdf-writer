@@ -53,7 +53,7 @@ You find the full license and copyright notice in pdf_out.ads.
 Portability
 ===========
 PDF Writer can be compiled for any target machine, and with any compiler
-for Ada 2005 or later language versions.
+for Ada 2012 or later language versions.
 
 How to build PDF Writer and its demo
 ====================================
