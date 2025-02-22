@@ -81,10 +81,9 @@ package body PDF_Out is
       else
         actually_read :=
           Integer'Min (buffer'Length, Integer (Size (file) - Index (file) + 1));
-        Byte_buffer'Read (
-          Stream (file),
-          buffer (buffer'First .. buffer'First + actually_read - 1)
-        );
+        Byte_buffer'Read
+          (Stream (file),
+           buffer (buffer'First .. buffer'First + actually_read - 1));
       end if;
     end if;
   end Block_Read;
@@ -174,7 +173,7 @@ package body PDF_Out is
   procedure Flip_To (pdf : in out PDF_Out_Stream'Class; new_state : Text_or_Graphics) is
   begin
     No_Nowhere (pdf);
-    --  WLd(pdf,  " % Text_or_graphics before: " & pdf.text_switch'Image);
+    --  WLd (pdf,  " % Text_or_graphics before: " & pdf.text_switch'Image);
     if pdf.text_switch /= new_state then
       pdf.text_switch := new_state;
       case new_state is
@@ -182,7 +181,7 @@ package body PDF_Out is
         when graphics => End_Text (pdf);
       end case;
     end if;
-    --  WLd(pdf,  " % Text_or_graphics after: " & pdf.text_switch'Image);
+    --  WLd (pdf,  " % Text_or_graphics after: " & pdf.text_switch'Image);
   end Flip_To;
 
   -----------------------------
@@ -219,7 +218,7 @@ package body PDF_Out is
     if p < 0 then
       return s;
     else
-      return s (s'First + 1 .. s'Last); -- Skip the *%"%! front space
+      return s (s'First + 1 .. s'Last);  --  Skip the *%"%! front space
     end if;
   end Img;
 
@@ -229,7 +228,7 @@ package body PDF_Out is
     if p < 0 then
       return s;
     else
-      return s (s'First + 1 .. s'Last); -- Skip the *%"%! front space
+      return s (s'First + 1 .. s'Last);  --  Skip the *%"%! front space
     end if;
   end Img;
 
@@ -320,10 +319,10 @@ package body PDF_Out is
     case mode is
       when absolute =>
         return Img (box.x_min) & ' ' & Img (box.y_min) & ' ' &
-               Img (X_Max (box)) & ' ' & Img (Y_Max (box)) & ' ';
+               Img (X_Max (box)) & ' ' & Img (Y_Max (box));
       when relative =>
         return Img (box.x_min) & ' ' & Img (box.y_min) & ' ' &
-               Img (box.width) & ' ' & Img (box.height) & ' ';
+               Img (box.width) & ' ' & Img (box.height);
     end case;
   end Img;
 
@@ -376,7 +375,7 @@ package body PDF_Out is
     len, start, stop : Natural;
   begin
     len := Length (pdf.stream_obj_buf);
-    WL (pdf, "  << /Length" & len'Image & " >>");
+    WL (pdf, "  << /Length " & Img (len) & " >>");
     --  The length could be alternatively stored in the next PDF object,
     --  so we wouldn't need to buffer the stream - see 7.3.10, Example 3.
     --  But we prefer the buffered version, which could be compressed, in
@@ -853,11 +852,11 @@ package body PDF_Out is
   begin
     No_Nowhere (pdf);
     PDF_Out.Images.Image_ref (pdf, file_name, image_index);
-    Insert_Graphics_PDF_Code (pdf, "q " &
-      Img (target.width) & " 0 0 " & Img (target.height) &
-      ' ' & Img (target.x_min) & ' ' & Img (target.y_min) & " cm " &  --  cm: Table 57
-      Image_Name (image_index) & " Do Q"
-    );
+    Insert_Graphics_PDF_Code
+      (pdf, "q " &
+       Img (target.width) & " 0 0 " & Img (target.height) &
+       ' ' & Img (target.x_min) & ' ' & Img (target.y_min) & " cm " &  --  cm: Table 57
+       Image_Name (image_index) & " Do Q");
   end Image;
 
   function Get_Pixel_Dimensions (image_file_name : String) return Rectangle is
@@ -1081,7 +1080,7 @@ package body PDF_Out is
          "  << /Type /Annot /Subtype /Link /Rect [" &
          Img (area, absolute) &
          "] " & (if visible then "" else "/C []") &
-         " /Dest [" & pdf.old_page_idx (PDF_Index_Type (page))'Image &
+         " /Dest [" & Img (pdf.old_page_idx (PDF_Index_Type (page))) &
          " 0 R /XYZ null" &
          (if y_pos = unspecified_position then " null" else y_pos'Image) &
          " null ] >>" &
@@ -1248,8 +1247,8 @@ package body PDF_Out is
       if pdf.last_page > 0 then
         WL (pdf, "     /Count " & Img (pdf.last_page));
       end if;
-      WL (pdf, "     /MediaBox [" & Img (pdf.maximum_box, absolute) & ']'
-      );
+      WL (pdf, "     /MediaBox [" & Img (pdf.maximum_box, absolute) & ']');
+
       --  7.7.3.3 Page Objects - MediaBox
       --  Boundaries of the physical medium on which the page shall be displayed or printed
       --  7.7.3.4 Inheritance of Page Attributes

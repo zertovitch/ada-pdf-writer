@@ -2,7 +2,7 @@
 --
 --  PDF_OUT - A low level package for writing Adobe Acrobat PDF (*) files
 --
---  Pure Ada 95 code, 100% portable: OS-, CPU- and compiler- independent.
+--  Pure Ada 2012+ code, 100% portable: OS-, CPU- and compiler- independent.
 --
 --  Version / date / download info: see the version, reference, web strings
 --    defined at the end of the public part of this package.

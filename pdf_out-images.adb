@@ -18,8 +18,8 @@ package body PDF_Out.Images is
              file_name         => file_name,
              image_index       => pdf.img_count,
              pdf_object_index  => 0,  --  0 = not yet insterted into the PDF stream
-             local_resource    => True)
-          );
+             local_resource    => True));
+
           image_index := pdf.img_count;
       elsif file_name > node.file_name then
         Insert (file_name, node.right);
@@ -106,12 +106,12 @@ package body PDF_Out.Images is
            GID.Detailed_format (i) & ", file name = " & file_name);
       end if;
       New_Object (pdf);
-      WL (pdf,
-        "<< /Type /XObject /Subtype /Image /Width " &
-        Img (GID.Pixel_width (i)) & " /Height " & Img (GID.Pixel_height (i)) &
-        " /ColorSpace /DeviceRGB /BitsPerComponent " & Img (GID.Bits_per_pixel (i) / 3) &
-        " /Length " & Img (file_size) & " /Filter /DCTDecode >>"
-      );
+      WL
+        (pdf,
+         "<< /Type /XObject /Subtype /Image /Width " &
+         Img (GID.Pixel_width (i)) & " /Height " & Img (GID.Pixel_height (i)) &
+         " /ColorSpace /DeviceRGB /BitsPerComponent " & Img (GID.Bits_per_pixel (i) / 3) &
+         " /Length " & Img (file_size) & " /Filter /DCTDecode >>");
       WL (pdf, "stream");
       Copy_File (file_name, pdf.pdf_stream.all);
       WL (pdf, "");
