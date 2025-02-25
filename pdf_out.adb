@@ -453,7 +453,7 @@ package body PDF_Out is
     Insert_PDF_Font_Selection_Code (pdf);
   end Font_Size;
 
-  function Get_Font_Size (pdf : in out PDF_Out_Stream) return Real is
+  function Get_Font_Size (pdf : PDF_Out_Stream) return Real is
   begin
     return pdf.font_size;
   end Get_Font_Size;
