@@ -91,8 +91,8 @@ procedure Arc_Test is
         else
           shift := (0.0, 0.0);
         end if;
-        Move (pdf, shift + center);
         Filling_Color (pdf, p (i).color);
+        Move (pdf, shift + center);
         Arc (pdf, shift + center, radius, angle_1, angle_2, True);
         angle_1 := angle_2;
         Line (pdf, shift + center);

@@ -1,7 +1,6 @@
 with GID;
 
-with Ada.Exceptions,
-     Ada.Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 
 package body PDF_Out.Images is
 
@@ -100,10 +99,10 @@ package body PDF_Out.Images is
       GID.Load_image_header (i, Stream (file).all, try_tga => False);
       Close (file);
       if GID.Format (i) /= GID.JPEG then
-        Ada.Exceptions.Raise_Exception
-          (Not_implemented'Identity,
-           "So far only JPEG images can be inserted. This image is of type " &
-           GID.Detailed_format (i) & ", file name = " & file_name);
+        raise Not_implemented
+          with
+            "So far only JPEG images can be inserted. This image is of type " &
+            GID.Detailed_format (i) & ", file name = " & file_name;
       end if;
       New_Object (pdf);
       WL

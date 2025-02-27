@@ -19,4 +19,6 @@ private package PDF_Out.Fonts is
 
   function Current_Font_Dictionary_Name (pdf : PDF_Out_Stream'Class) return String;
 
+  function Width (f : Standard_Font_Type; size : Real; latin_1_text : String) return Real;
+
 end PDF_Out.Fonts;

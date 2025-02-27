@@ -233,6 +233,11 @@ package PDF_Out is
   procedure Font_Size (pdf : in out PDF_Out_Stream; size : Real);
   function Get_Font_Size (pdf : PDF_Out_Stream) return Real;
 
+  --  Get the bounding box (bottom left corner = (0.0, 0.0) of a text
+  --  with current font settings.
+  --
+  function Bounding_Box (pdf : PDF_Out_Stream; text : String) return Rectangle;
+
   procedure Line_Spacing (pdf : in out PDF_Out_Stream; factor : Real);  --  as multiple of font size
   default_line_spacing : constant := 1.2;
   procedure Line_Spacing_Pt (pdf : in out PDF_Out_Stream; pt : Real);   --  in Point (pt) units
@@ -495,8 +500,8 @@ package PDF_Out is
   --  Information about this package - e.g. for an "about" box  --
   ----------------------------------------------------------------
 
-  version   : constant String := "007";
-  reference : constant String := "22-Feb-2025";
+  version   : constant String := "008";
+  reference : constant String := "27-Feb-2025";
   --  Hopefully the latest version is at one of those URLs:
   web  : constant String := "https://apdf.sourceforge.io/";
   web2 : constant String := "https://sourceforge.net/projects/apdf/";

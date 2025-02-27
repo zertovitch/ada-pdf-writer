@@ -458,6 +458,15 @@ package body PDF_Out is
     return pdf.font_size;
   end Get_Font_Size;
 
+  function Bounding_Box (pdf : PDF_Out_Stream; text : String) return Rectangle is
+  begin
+    if pdf.current_font in Standard_Font_Type then
+      return (0.0, 0.0, Fonts.Width (pdf.current_font, pdf.font_size, text), pdf.font_size);
+    else
+      raise Not_implemented with "So far only standard fonts are supported";
+    end if;
+  end Bounding_Box;
+
   procedure Line_Spacing (pdf : in out PDF_Out_Stream; factor : Real) is
   begin
     pdf.line_spacing := factor;
@@ -880,10 +889,7 @@ package body PDF_Out is
 
   procedure Single_Line (pdf : in out PDF_Out_Stream; from, to : Point) is
   begin
-    Insert_Graphics_PDF_Code
-      (pdf,
-       Img (from.x) & ' ' & Img (from.y) & " m " &
-       Img (to.x) & ' ' & Img (to.y) & " l s");
+    Insert_Graphics_PDF_Code (pdf, Img (from) & " m " & Img (to) & " l s");
   end Single_Line;
 
   --    Table 59 - Path Construction Operators (8.5.2)

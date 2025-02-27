@@ -115,7 +115,8 @@ procedure PDF_Out_Demo is
       Boarding_pass (5.0, "ZERTE, ROMEOTTE", z_from, z_to, z_date);
     end Boarding_Pass_Demo;
 
-    procedure Fonts_Demo is
+    procedure Fonts_Demo_Simple is
+      --  The PDF rendering machine is in charge of the text position.
     begin
       for std_fnt in Standard_Font_Type loop
         pdf.Font_Size (10.0);
@@ -131,7 +132,48 @@ procedure PDF_Out_Demo is
         pdf.New_Line;
       end loop;
       pdf.Font_Size (11.0);
-    end Fonts_Demo;
+    end Fonts_Demo_Simple;
+
+    procedure Fonts_Demo_Boxed is
+      --  In this variant, the bottom-left corner for each text is set by us,
+      --  not by the PDF rendering machine.
+
+      procedure Put_Boxed (p : Point; text : String; new_x : out Real) is
+        r : Rectangle;
+      begin
+        pdf.Stroking_Color ((0.8, 0.8, 0.2));
+        r := pdf.Bounding_Box (text);
+        pdf.Draw (p + r, stroke);
+        pdf.Put_XY (p.x, p.y, text);
+        new_x := p.x + r.width;
+      end Put_Boxed;
+
+      p0 : constant Point :=
+        (pdf.Layout.x_min                     + pdf.Margins.left,
+         pdf.Layout.y_min + pdf.Layout.height - pdf.Margins.top);
+
+      p : Point;
+      x2 : Real;
+
+    begin
+      for std_fnt in Standard_Font_Type loop
+        pdf.Font_Size (10.0);
+        pdf.Font (Helvetica);
+        p := p0 + (0.0, -Real (Standard_Font_Type'Pos (std_fnt)) * 30.0);
+        Put_Boxed (p, "Displaying standard font: " & Standard_Font_Type'Image (std_fnt) & ' ', x2);
+        pdf.Font (std_fnt);
+        pdf.Font_Size (8.0);
+        p.x := x2;
+        Put_Boxed (p, "Hello! (8pt) ", x2);
+        pdf.Font_Size (16.0);
+        p.x := x2;
+        Put_Boxed (p, "Hello! (16pt) ", x2);
+        pdf.Font_Size (24.0);
+        p.x := x2;
+        Put_Boxed (p, "Hello! (24pt) ", x2);
+      end loop;
+      pdf.Font_Size (11.0);
+    end Fonts_Demo_Boxed;
 
     procedure Lines_and_Shapes_Demo is
     begin
@@ -240,8 +282,8 @@ procedure PDF_Out_Demo is
           else
             shift := (0.0, 0.0);
           end if;
-          pdf.Move (shift + center);
           pdf.Filling_Color (p (i).color);
+          pdf.Move (shift + center);
           pdf.Arc (shift + center, radius, angle_1, angle_2, True);
           angle_1 := angle_2;
           pdf.Line (shift + center);
@@ -315,7 +357,9 @@ procedure PDF_Out_Demo is
       --  Testing standard fonts  --
       ------------------------------
       pdf.New_Page;
-      Fonts_Demo;
+      Fonts_Demo_Simple;
+      pdf.New_Page;
+      Fonts_Demo_Boxed;
 
       ------------------------------------------------------
       --  Some vector graphics - lines and closed shapes  --
