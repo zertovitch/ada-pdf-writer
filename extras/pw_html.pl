@@ -876,11 +876,11 @@ sub create_index_file
   
   print INDEX <<"EOF";
 <HTML>
-<HEAD><TITLE>Ada PDF Writer Source Browser</TITLE>
-<meta name=\"keywords\" content=\"Ada, programming, pdf\">
-<link rel=\"Shortcut Icon\" href=../pw.ico>
-</HEAD>
-<FRAMESET COLS='250,*'>
+  <HEAD><TITLE>Ada PDF Writer Source Browser</TITLE>
+  <meta name=\"keywords\" content=\"Ada, programming, pdf\">
+  <link rel=\"Shortcut Icon\" href=../pw.ico>
+  </HEAD>
+  <FRAMESET border='2' COLS='250,*'>
 <NOFRAME>
 EOF
   ;
@@ -894,12 +894,12 @@ EOF
   
   print INDEX <<"EOF";
 </NOFRAME>
-<FRAMESET ROWS='50%,50%'>
-<FRAME NAME=files SRC=files.htm>
-<FRAME NAME=funcs SRC=funcs.htm>
-</FRAMESET>
-<FRAME NAME=main SRC=main.htm>
-</FRAMESET>
+    <FRAMESET border='2' ROWS='50%,50%'>
+      <FRAME NAME=files SRC=files.htm>
+      <FRAME NAME=funcs SRC=funcs.htm>
+    </FRAMESET>
+    <FRAME NAME=main SRC=main.htm>
+  </FRAMESET>
 </HTML>
 EOF
   ;
