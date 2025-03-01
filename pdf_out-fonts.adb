@@ -1,3 +1,5 @@
+with Interfaces;
+
 package body PDF_Out.Fonts is
 
   --  9.6.2.2  Standard Type 1 Fonts (Standard 14 Fonts)
@@ -74,7 +76,7 @@ package body PDF_Out.Fonts is
     end if;
   end Current_Font_Dictionary_Name;
 
-  type Standard_Font_Width_Data_Array is array (Character) of Natural;
+  type Standard_Font_Width_Data_Array is array (Character) of Interfaces.Integer_64;
 
   standard_font_width_data :
     constant array (Standard_Font_Type) of Standard_Font_Width_Data_Array :=
@@ -354,10 +356,31 @@ package body PDF_Out.Fonts is
   function Width (f : Standard_Font_Type; size : Real; latin_1_text : String) return Real is
     sum : Real := 0.0;
   begin
+    --  TBD: take into account non-default character spacing (9.3.2),
+    --  word spacing (9.3.3), horizontal scaling (9.3.4).
+    --  Table 105 (9.3.1) indicates how to set them on the PDF rendering machine.
     for c of latin_1_text loop
       sum := sum + Real (standard_font_width_data (f)(c));
     end loop;
     return sum * 0.001 * size;
   end Width;
+
+  function Vertical_Offset (f : Standard_Font_Type; size : Real) return Real is
+  (size *
+   (case f is
+      when Courier                => -0.25,
+      when Courier_Bold           => -0.25,
+      when Courier_Bold_Oblique   => -0.25,
+      when Courier_Oblique        => -0.25,
+      when Helvetica              => -0.25,
+      when Helvetica_Bold         => -0.25,
+      when Helvetica_Bold_Oblique => -0.25,
+      when Helvetica_Oblique      => -0.25,
+      when Symbol                 => -0.25,
+      when Times_Bold             => -0.25,
+      when Times_Bold_Italic      => -0.25,
+      when Times_Italic           => -0.25,
+      when Times_Roman            => -0.25,
+      when Zapf_Dingbats          => -0.18));
 
 end PDF_Out.Fonts;

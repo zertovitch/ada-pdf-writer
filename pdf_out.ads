@@ -127,6 +127,8 @@ package PDF_Out is
   function X_Max (r : Rectangle) return Real;
   function Y_Max (r : Rectangle) return Real;
 
+  function Expand (r : Rectangle; left, right, up, down : Real) return Rectangle;
+
   use Ada.Strings.Unbounded;
 
   ------------------------------
@@ -233,8 +235,20 @@ package PDF_Out is
   procedure Font_Size (pdf : in out PDF_Out_Stream; size : Real);
   function Get_Font_Size (pdf : PDF_Out_Stream) return Real;
 
-  --  Get the bounding box (bottom left corner = (0.0, 0.0) of a text
-  --  with current font settings.
+  --  Get the bounding box of a text with current font settings.
+  --  The origin (0, 0) is the point where the text is meant to be displayed
+  --  with Put_XY (pdf, 0.0, 0.0, text) - see the arrow in the diagram below.
+  --  Then, Draw (pdf, Bounding_Box (pdf, text)) will frame the text displayed
+  --  by Put_XY. See the Hyperlink method for an example.
+  --
+  --               +-------------- ...
+  --               |     __
+  --               |    /  \
+  --               |    |  |
+  --       _______\|    \__|
+  --              /|       |
+  --               |       |
+  --               +-------------- ...
   --
   function Bounding_Box (pdf : PDF_Out_Stream; text : String) return Rectangle;
 
@@ -358,6 +372,13 @@ package PDF_Out is
      visible : in     Boolean;
      url     : in     String);
 
+  procedure Hyperlink
+    (pdf     : in out PDF_Out_Stream;
+     origin  : in     Point;
+     text    : in     String;
+     visible : in     Boolean;
+     url     : in     String);
+
   unspecified_position : constant := -1;
 
   --  Link to a page within the document.
@@ -367,6 +388,14 @@ package PDF_Out is
   procedure Hyperlink
     (pdf     : in out PDF_Out_Stream;
      area    : in     Rectangle;
+     visible : in     Boolean;
+     page    : in     Positive;
+     y_pos   : in     Integer := unspecified_position);
+
+  procedure Hyperlink
+    (pdf     : in out PDF_Out_Stream;
+     origin  : in     Point;
+     text    : in     String;
      visible : in     Boolean;
      page    : in     Positive;
      y_pos   : in     Integer := unspecified_position);
@@ -500,8 +529,8 @@ package PDF_Out is
   --  Information about this package - e.g. for an "about" box  --
   ----------------------------------------------------------------
 
-  version   : constant String := "008";
-  reference : constant String := "27-Feb-2025";
+  version   : constant String := "008, preview 1";
+  reference : constant String := "01-Mar-2025";
   --  Hopefully the latest version is at one of those URLs:
   web  : constant String := "https://apdf.sourceforge.io/";
   web2 : constant String := "https://sourceforge.net/projects/apdf/";
@@ -621,7 +650,7 @@ private
 
   --  Set the index on the file
   overriding procedure Set_Index (pdf : in out PDF_Out_File;
-                                  to :        Ada.Streams.Stream_IO.Positive_Count);
+                                  to  : in     Ada.Streams.Stream_IO.Positive_Count);
 
   --  Return the index of the file
   overriding function Index (pdf : PDF_Out_File) return Ada.Streams.Stream_IO.Count;
@@ -641,8 +670,8 @@ private
   --  Read data from the stream.
   overriding procedure Read
     (Stream : in out Unbounded_Stream;
-     Item   : out Ada.Streams.Stream_Element_Array;
-     Last   : out Ada.Streams.Stream_Element_Offset);
+     Item   :    out Ada.Streams.Stream_Element_Array;
+     Last   :    out Ada.Streams.Stream_Element_Offset);
 
   --  write data to the stream, starting from the current index.
   --  Data will be overwritten from index is already available.
@@ -666,7 +695,7 @@ private
 
   --  Set the index on the PDF string stream
   overriding procedure Set_Index (pdf : in out PDF_Out_String;
-                                  to :        Ada.Streams.Stream_IO.Positive_Count);
+                                  to  : in     Ada.Streams.Stream_IO.Positive_Count);
 
   --  Return the index of the PDF string stream
   overriding function Index (pdf : PDF_Out_String) return Ada.Streams.Stream_IO.Count;

@@ -307,6 +307,12 @@ package body PDF_Out is
     return r.y_min + r.height;
   end Y_Max;
 
+  function Expand (r : Rectangle; left, right, up, down : Real) return Rectangle is
+  ((x_min  => r.x_min - left,
+    y_min  => r.y_min - down,
+    width  => r.width + left + right,
+    height => r.height + down + up));
+
   type Abs_Rel_Mode is (absolute, relative);
 
   function Img (p : Point) return String is
@@ -461,7 +467,11 @@ package body PDF_Out is
   function Bounding_Box (pdf : PDF_Out_Stream; text : String) return Rectangle is
   begin
     if pdf.current_font in Standard_Font_Type then
-      return (0.0, 0.0, Fonts.Width (pdf.current_font, pdf.font_size, text), pdf.font_size);
+      return
+        (x_min  => 0.0,
+         y_min  => Fonts.Vertical_Offset (pdf.current_font, pdf.font_size),
+         width  => Fonts.Width (pdf.current_font, pdf.font_size, text),
+         height => pdf.font_size);
     else
       raise Not_implemented with "So far only standard fonts are supported";
     end if;
@@ -1067,6 +1077,24 @@ package body PDF_Out is
        NL);
   end Hyperlink;
 
+  link_margin : constant := 4.0;  --  Margin around a textual link.
+
+  procedure Hyperlink
+    (pdf     : in out PDF_Out_Stream;
+     origin  : in     Point;
+     text    : in     String;
+     visible : in     Boolean;
+     url     : in     String)
+  is
+  begin
+    Put_XY (pdf, origin.x, origin.y, text);
+    Hyperlink
+      (pdf,
+       origin + Expand (Bounding_Box (pdf, text), link_margin, link_margin, link_margin, link_margin),
+       visible,
+       url);
+  end Hyperlink;
+
   procedure Hyperlink
     (pdf     : in out PDF_Out_Stream;
      area    : in     Rectangle;
@@ -1092,6 +1120,24 @@ package body PDF_Out is
          " null ] >>" &
          NL);
     end if;
+  end Hyperlink;
+
+  procedure Hyperlink
+    (pdf     : in out PDF_Out_Stream;
+     origin  : in     Point;
+     text    : in     String;
+     visible : in     Boolean;
+     page    : in     Positive;
+     y_pos   : in     Integer := unspecified_position)
+  is
+  begin
+    Put_XY (pdf, origin.x, origin.y, text);
+    Hyperlink
+      (pdf,
+       origin + Expand (Bounding_Box (pdf, text), link_margin, link_margin, link_margin, link_margin),
+       visible,
+       page,
+       y_pos);
   end Hyperlink;
 
   --  Table 317 - Entries in the document information dictionary (14.3.3)
@@ -1360,7 +1406,7 @@ package body PDF_Out is
 
   --  Set the index on the file
   overriding procedure Set_Index (pdf : in out PDF_Out_File;
-                                  to :        Ada.Streams.Stream_IO.Positive_Count)
+                                  to  : in     Ada.Streams.Stream_IO.Positive_Count)
   is
   begin
     Ada.Streams.Stream_IO.Set_Index (pdf.pdf_file.all, to);
@@ -1388,7 +1434,9 @@ package body PDF_Out is
 
   overriding procedure Read
     (Stream : in out Unbounded_Stream;
-     Item   : out Stream_Element_Array;     Last   : out Stream_Element_Offset) is
+     Item   :    out Stream_Element_Array;
+     Last   :    out Stream_Element_Offset)
+  is
   begin
     --  Item is read from the stream. If (and only if) the stream is
     --  exhausted, Last will be < Item'Last. In that case, T'Read will
@@ -1412,7 +1460,8 @@ package body PDF_Out is
 
   overriding procedure Write
     (Stream : in out Unbounded_Stream;
-     Item   : Stream_Element_Array) is
+     Item   : in     Stream_Element_Array)
+  is
   begin
     for I in Item'Range loop
       if Length (Stream.Unb) < Stream.Loc then
@@ -1469,7 +1518,7 @@ package body PDF_Out is
 
   --  Set the index on the PDF string stream
   overriding procedure Set_Index (pdf : in out PDF_Out_String;
-                                  to :        Ada.Streams.Stream_IO.Positive_Count)
+                                  to  : in     Ada.Streams.Stream_IO.Positive_Count)
   is
   begin
     Set_Index (pdf.pdf_memory, Integer (to));

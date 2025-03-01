@@ -309,25 +309,14 @@ procedure PDF_Out_Demo is
 
     procedure Bar_Code_Demo is
       x : constant Real := pdf.Layout.x_min + pdf.Margins.left;
-      y : constant Real := pdf.Layout.y_min + pdf.Layout.height - pdf.Margins.top;
-      width  : constant Real := pdf.Layout.width - pdf.Margins.right - pdf.Margins.left;
-      height : constant Real := pdf.Get_Font_Size + 5.0;
-      --
-      url_rect : constant Rectangle :=
-        (x - 2.0,
-         y - 4.0,
-         width + 4.0,
-         height);
+      y : constant Real := pdf.Layout.y_min + pdf.Layout.height - pdf.Margins.top - pdf.Get_Font_Size * 2.0;
     begin
-      pdf.Put_XY
-        (x,
-         y,
-         "Direct PDF vector graphics code inclusion - bar code and QR code from: http://ada-bar-codes.sf.net/");
-
-      --  Hyperlink with a big green rectangle:
-      pdf.Hyperlink (url_rect, False, "http://ada-bar-codes.sf.net/");
-      pdf.Stroking_Color ((0.0, 0.6, 0.0));
-      pdf.Draw (url_rect, stroke);
+      --  Hyperlink with a surrounding rectangle:
+      pdf.Hyperlink
+        ((x, y),
+         "Direct PDF vector graphics code inclusion - bar code and QR code from: http://ada-bar-codes.sf.net/",
+         True,
+         "http://ada-bar-codes.sf.net/");
 
       pdf.Insert_Graphics_PDF_Code (Bar_code.code_in_pdf);
       pdf.Insert_Graphics_PDF_Code (QR_code.code_in_pdf);

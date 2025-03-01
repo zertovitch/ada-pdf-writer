@@ -19,6 +19,14 @@ private package PDF_Out.Fonts is
 
   function Current_Font_Dictionary_Name (pdf : PDF_Out_Stream'Class) return String;
 
+  ---------------------------------
+  --  Metrics of standard fonts  --
+  ---------------------------------
+
   function Width (f : Standard_Font_Type; size : Real; latin_1_text : String) return Real;
+
+  --  Vertical offset from origin to bottom of a glyph.
+  --
+  function Vertical_Offset (f : Standard_Font_Type; size : Real) return Real;
 
 end PDF_Out.Fonts;
