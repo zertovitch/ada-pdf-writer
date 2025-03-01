@@ -5,20 +5,20 @@
 --    library included in a subdirectory. So, the project is standalone. But if *your* project
 --    uses both Ada PDF Writer and GID project files, then the GID sources will be visible
 --    at two different locations, and GNAT will rightfully complain about it.
---    In that case, you'd perhaps prefer to use the pdf_out_gnat_w_gid.gpr project file.
+--    In that case, you'd perhaps prefer to use the pdf_out_w_gid.gpr project file.
 --
 --      Home page:       http://apdf.sf.net/
 --      Project page 1:  http://sf.net/projects/apdf/
 --      Project page 2:  https://github.com/zertovitch/ada-pdf-writer
 --      Alire crate:     https://alire.ada.dev/crates/apdf
 --
---  Build me with "gprbuild -P pdf_out_gnat",
---  or "gnatmake -P pdf_out_gnat", or open me with GNAT Studio.
+--  Build me with "gprbuild -P pdf_out",
+--  or "gnatmake -P pdf_out", or open me with GNAT Studio.
 --
 --
 --
 
-project PDF_Out_Gnat is
+project PDF_Out is
 
    type PDF_Build_Mode_Type is ("Debug", "Fast");
    PDF_Build_Mode : PDF_Build_Mode_Type := external ("PDF_Build_Mode", "Debug");
@@ -103,4 +103,4 @@ project PDF_Out_Gnat is
       for Default_Switches ("adacontrol") use ("-f", "verif.aru");
    end Ide;
 
-end PDF_Out_Gnat;
+end PDF_Out;

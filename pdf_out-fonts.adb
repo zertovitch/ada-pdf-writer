@@ -76,7 +76,7 @@ package body PDF_Out.Fonts is
     end if;
   end Current_Font_Dictionary_Name;
 
-  type Standard_Font_Width_Data_Array is array (Character) of Interfaces.Integer_64;
+  type Standard_Font_Width_Data_Array is array (Character) of Interfaces.Integer_16;
 
   standard_font_width_data :
     constant array (Standard_Font_Type) of Standard_Font_Width_Data_Array :=
