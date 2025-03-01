@@ -46,9 +46,9 @@ project PDF_Out_Gnat is
 
    case PDF_Build_Mode is
       when "Debug" =>
-         for Object_Dir use "obj_debug";
+         for Object_Dir use "obj/debug";
       when "Fast" =>
-         for Object_Dir use "obj_fast";
+         for Object_Dir use "obj/fast";
    end case;
 
    Common_Options :=

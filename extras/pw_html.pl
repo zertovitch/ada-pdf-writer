@@ -235,7 +235,7 @@ sub create_header
 <meta name=\"keywords\" content=\"Ada, programming, pdf\">
 <link rel=\"Shortcut Icon\" href=../pw.ico>
 </HEAD>
-<BODY bgcolor=#fff3f1>\n";
+<BODY bgcolor=#fffcfb>\n";
   
   if (($main eq "_main_") or ($adafile ne ""))
   {
@@ -281,7 +281,7 @@ sub create_footer
   local ($adafile) = shift;
   local ($string) = "";
   $string = "</PRE>" if ($adafile ne "");
-  return $string . "<br><font color=#fcf0ec>
+  return $string . "<br><font color=#ffffff>
   Ada PDF Writer: Ada package for writing PDF files (.pdf).
   Ada programming.</font>
   </BODY></HTML>\n";
@@ -292,7 +292,7 @@ sub create_ada_frame_footer
   local ($adafile) = shift;
   local ($string) = "";
   $string = "</PRE>" if ($adafile ne "");
-  return $string . "<br><font color=#feebed>
+  return $string . "<br><font color=#ffffff>
   Ada PDF Writer: Ada package for writing PDF files (.pdf).
   Ada programming.</font>
   <hr>
@@ -961,7 +961,7 @@ sub create_file_index
       {
 	if ($last_letter ne '')
 	{
-	  print INDEX_FILE "</UL><font color=#fef0ee>Ada programming.</font></BODY></HTML>\n";
+	  print INDEX_FILE "</UL><font color=#ffffff>Ada programming.</font></BODY></HTML>\n";
 	  close (INDEX_FILE);
 	}
 	$last_letter = &uppercases (substr ($_, 0, 1));
@@ -969,7 +969,7 @@ sub create_file_index
 	|| die "couldn't write $output_dir/files/$last_letter.htm";
 	print INDEX_FILE <<"EOF";
 <HTML><HEAD><TITLE>$last_letter</TITLE></HEAD>
-<BODY bgcolor=#fff3f1>
+<BODY bgcolor=#fffcfb>
 <H2><foNt face="Calibri, Arial">Files - $last_letter</foNt></H2>
 <A HREF=../files.htm TARGET=_self><foNt face="Calibri, Arial">[index]</foNt></A>
 <foNt face="Calibri, Arial"><UL COMPACT TYPE=DISC>
@@ -984,7 +984,7 @@ EOF
       ".htm TARGET=main>$_</A>\n";   ## Problem with TARGET when in no_frame mode!
     }
     
-    print INDEX_FILE "</UL><font color=#fef0fe>Ada programming.</font></foNt></BODY></HTML>\n";
+    print INDEX_FILE "</UL><font color=#ffffff>Ada programming.</font></foNt></BODY></HTML>\n";
     close INDEX_FILE;
   }
   else
@@ -1032,7 +1032,7 @@ sub create_function_index
       {
 	if ($last_letter ne '')
 	{
-	  print INDEX_FILE "</UL><font color=#fef0fe>Ada programming.</font></BODY></HTML>\n";
+	  print INDEX_FILE "</UL><font color=#ffffff>Ada programming.</font></BODY></HTML>\n";
 	  close (INDEX_FILE);
 	}
 	
@@ -1048,7 +1048,7 @@ sub create_function_index
 		|| die "couldn't write $output_dir/funcs/$initial.htm";
 	    print INDEX_FILE <<"EOF";
 <HTML><HEAD><TITLE>$initial</TITLE></HEAD>
-<BODY bgcolor=#fff3f1>
+<BODY bgcolor=#fffcfb>
 <H2><foNt face="Calibri, Arial">Func. / Proc. - $initial</foNt></H2>
 <A HREF=../funcs.htm TARGET=_self><foNt face="Calibri, Arial">[index]</foNt></A>
 <foNt face="Calibri, Arial"><UL COMPACT TYPE=DISC>
@@ -1069,7 +1069,7 @@ EOF
       }
     }
     
-    print INDEX_FILE "</UL><font color=#fef0fe>Ada programming.</font></foNt></BODY></HTML>\n";
+    print INDEX_FILE "</UL><font color=#ffffff>Ada programming.</font></foNt></BODY></HTML>\n";
     close INDEX_FILE;
   }
   else
