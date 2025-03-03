@@ -8,7 +8,7 @@ echo   pdf.Put_Line ("Hello world !);>>hello.adb
 echo   pdf.Close;>>hello.adb
 echo end Hello;>>hello.adb
 
-gprbuild -P ..\pdf_out_gnat.gpr
+gprbuild -P ..\pdf_out.gpr
 
 rem Call GNATMake without project file (because of the extra example): we will have the .ali here.
 gnatmake hello.adb -I.. -I..\gid -aO..\obj/debug -j0

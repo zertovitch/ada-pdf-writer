@@ -1,6 +1,7 @@
 with GID.Buffering;
 
 package body GID.Color_tables is
+  use Interfaces;
 
   procedure Convert (c, d : in U8; rgb : out RGB_Color_8_Bit) is
   begin
@@ -13,7 +14,7 @@ package body GID.Color_tables is
     rgb.blue := U8 ((U16 (rgb.blue) * 255) / 31);
   end Convert;
 
-  procedure Load_palette (image : in out Image_descriptor) is
+  procedure Load_palette (image : in out Image_Descriptor) is
     c, d : U8;
     use GID.Buffering;
   begin
@@ -21,7 +22,7 @@ package body GID.Color_tables is
       return;
     end if;
     declare
-      palette : Color_table renames image.palette.all;
+      palette : Color_Table renames image.palette.all;
     begin
       for i in palette'Range loop
         case image.format is
@@ -58,7 +59,7 @@ package body GID.Color_tables is
           when others =>
             raise unsupported_image_subformat with
               "Palette loading not implemented for " &
-              Image_format_type'Image (image.format);
+              Image_Format_Type'Image (image.format);
         end case;
       end loop;
     end;

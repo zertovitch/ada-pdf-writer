@@ -8,37 +8,39 @@
 
 with GID.Buffering,
      GID.Color_tables,
+     GID.Decoding_BMP,
      GID.Decoding_JPG,
      GID.Decoding_PNG,
      GID.Decoding_PNM;
 
-with Ada.Unchecked_Deallocation;
+with Ada.Text_IO, Ada.Unchecked_Deallocation;
 
 package body GID.Headers is
+  use Interfaces;
 
   -------------------------------------------------------
   -- The very first: read signature to identify format --
   -------------------------------------------------------
 
-  procedure Load_signature (
-    image   : in out Image_descriptor;
-    try_tga :        Boolean := False
-
-  )
+  procedure Load_Signature
+    (image   : in out Image_Descriptor;
+     try_tga :        Boolean          := False)
   is
     use Bounded_255;
     c : Character;
     FITS_challenge : String (1 .. 5);  --  without the initial
     GIF_challenge  : String (1 .. 5);  --  without the initial
-    QOI_challenge  : String (1 .. 3);  --  without the initial
-    QOI_signature  : constant String := "oif";
     PNG_challenge  : String (1 .. 7);  --  without the initial
     PNG_signature  : constant String := "PNG" & ASCII.CR & ASCII.LF & ASCII.SUB & ASCII.LF;
     PNM_challenge  : Character;
+    QOI_challenge  : String (1 .. 3);  --  without the initial
+    QOI_signature  : constant String := "oif";
+    RIFF_challenge : String (1 .. 3);  --  without the initial
+    RIFF_signature : constant String := "IFF";
     TIFF_challenge : String (1 .. 3);  --  without the initial
     TIFF_signature : String (1 .. 2);
     procedure Dispose is
-      new Ada.Unchecked_Deallocation (Color_table, p_Color_table);
+      new Ada.Unchecked_Deallocation (Color_Table, p_Color_Table);
   begin
     --  Some cleanup
     Dispose (image.palette);
@@ -117,6 +119,12 @@ package body GID.Headers is
           image.RLE_encoded := True;
           return;
         end if;
+      when 'R' =>
+        String'Read (image.stream, RIFF_challenge);
+        if RIFF_challenge = RIFF_signature then
+          image.format := RIFF;
+          return;
+        end if;
       when others =>
         if try_tga then
           image.detailed_format := To_Bounded_String ("TGA");
@@ -127,7 +135,7 @@ package body GID.Headers is
         end if;
     end case;
     raise unknown_image_format;
-  end Load_signature;
+  end Load_Signature;
 
   --  Define reading of unsigned numbers from a byte stream
 
@@ -151,7 +159,7 @@ package body GID.Headers is
   generic
     type Number is mod <>;
   procedure Big_endian_number_buffered (
-    from : in out Input_buffer;
+    from : in out Input_Buffer;
     n    :    out Number
   );
     pragma Inline (Big_endian_number_buffered);
@@ -161,7 +169,7 @@ package body GID.Headers is
   procedure Read_any_endian_number (
     from : in     Stream_Access;
     n    :    out Number;
-    endi : in     Endianess_type
+    endi : in     Endianess_Type
   );
     pragma Inline (Read_any_endian_number);
 
@@ -198,7 +206,7 @@ package body GID.Headers is
   end Big_endian_number;
 
   procedure Big_endian_number_buffered (
-    from : in out Input_buffer;
+    from : in out Input_Buffer;
     n    :    out Number
   )
   is
@@ -214,7 +222,7 @@ package body GID.Headers is
   procedure Read_any_endian_number (
     from : in     Stream_Access;
     n    :    out Number;
-    endi : in     Endianess_type
+    endi : in     Endianess_Type
   )
   is
     procedure Read_Intel is new Read_Intel_x86_number (Number);
@@ -241,10 +249,12 @@ package body GID.Headers is
   -- BMP header --
   ----------------
 
-  procedure Load_BMP_header (image : in out Image_descriptor) is
-    n, dummy : U32;
+  procedure Load_BMP_Header (image : in out Image_Descriptor) is
+    n, dummy, header_size : U32;
     w, dummy16 : U16;
-    pragma Unreferenced (dummy, dummy16);
+    dummy8 : U8;
+    use Bounded_255, Decoding_BMP;
+    compression : BMP_Compression;
   begin
     --   Pos= 3, read the file size
     Read_Intel (image.stream, dummy);
@@ -254,60 +264,120 @@ package body GID.Headers is
     --            For 256 colors, this is usually 36 04 00 00
     Read_Intel (image.stream, dummy);
     --   Pos= 15. The beginning of Bitmap information header.
-    --   Data expected:  28H, denoting 40 byte header
-    Read_Intel (image.stream, dummy);
-    --   Pos= 19. Bitmap width, in pixels.  Four bytes
+    --   BITMAPINFOHEADER, BITMAPV5HEADER
+    --   biSize, bV5Size
+    Read_Intel (image.stream, header_size);
+    case header_size is
+      when   0 ..  39 =>
+        raise error_in_image_data
+          with "BMP Bitmap Info Header is too small:" & header_size'Image;
+      when  40 ..  51      => null;
+      when  52 .. 107      => Append (image.detailed_format, " v2");
+      when 108 .. 123      => Append (image.detailed_format, " v4");
+      when 124 .. U32'Last => Append (image.detailed_format, " v5");
+    end case;
+    --   Pos= 19. Bitmap width, in pixels: biWidth, bV5Width
     Read_Intel (image.stream, n);
     image.width :=  Positive_32 (n);
-    --   Pos= 23. Bitmap height, in pixels.  Four bytes
+    --   Pos= 23. Bitmap height, in pixels: biHeight, bV5Height
     Read_Intel (image.stream, n);
     image.height := Positive_32 (n);
-    --   Pos= 27, skip two bytes.  Data is number of Bitmap planes.
-    Read_Intel (image.stream, dummy16); -- perform the skip
-    --   Pos= 29, Number of bits per pixel
-    --   Value 8, denoting 256 color, is expected
+    --   Pos= 27: Bitmap planes: biPlanes, bV5Planes
+    Read_Intel (image.stream, w);
+    --  "The number of planes for the target device.
+    --   This value must be set to 1."
+    if w /= 1 then
+      raise error_in_image_data
+        with "BMP: invalid number of planes:" & w'Image & "; must be 1";
+    end if;
+    --   Pos= 29, Number of bits per pixel: biBitCount, bV5BitCount
     Read_Intel (image.stream, w);
     case w is
       when 1 | 4 | 8 | 24 =>
         null;
+      when 0 | 16 | 32 =>
+        raise unsupported_image_subformat with "BMP bit depth" & w'Image;
       when others =>
-        raise unsupported_image_subformat with "BMP bit depth =" & U16'Image (w);
+        raise error_in_image_data with "BMP invalid bit depth" & w'Image;
     end case;
     image.bits_per_pixel := Integer (w);
-    --   Pos= 31, read four bytes
-    Read_Intel (image.stream, n);          -- Type of compression used
-    --  BI_RLE8 = 1
-    --  BI_RLE4 = 2
-    if n /= 0 then
-      raise unsupported_image_subformat with "BMP: RLE compression";
+    --   Pos= 31, Type of compression: biCompression, bV5Compression
+    Read_Intel (image.stream, n);
+    if n > BMP_Compression'Pos (BMP_Compression'Last) then
+      raise unsupported_image_subformat
+        with "BMP: unknown compression code" & n'Image;
+    else
+      compression := BMP_Compression'Val (n);
+      case compression is
+        when BI_RGB =>
+          image.RLE_encoded := False;
+        when BI_RLE8 =>
+          image.RLE_encoded := True;
+          if image.bits_per_pixel /= 8 then
+            raise error_in_image_data
+              with
+                "BMP: for BI_RLE8 compression, invalid number of bpp:" &
+                image.bits_per_pixel'Image & "; must be 8";
+          end if;
+        when BI_RLE4 =>
+          if image.bits_per_pixel /= 4 then
+            raise error_in_image_data
+              with
+                "BMP: for BI_RLE4 compression, invalid number of bpp:" &
+                image.bits_per_pixel'Image & "; must be 4";
+          end if;
+        when others =>
+          image.RLE_encoded := False;
+      end case;
+      case compression is
+        when BI_RGB =>
+          null;  --  Supported -    !!  TBD: support BI_RLE8, BI_RLE4.
+        when others =>
+          raise unsupported_image_subformat
+            with "BMP: unsupported compression: " & compression'Image;
+      end case;
     end if;
     --
-    Read_Intel (image.stream, dummy); -- Pos= 35, image size
-    Read_Intel (image.stream, dummy); -- Pos= 39, horizontal resolution
-    Read_Intel (image.stream, dummy); -- Pos= 43, vertical resolution
-    Read_Intel (image.stream, n); -- Pos= 47, number of palette colors
+    --   Pos= 35, Image size: biSizeImage, bV5SizeImage
+    Read_Intel (image.stream, dummy);
+    --   Pos= 39, horizontal resolution: biXPelsPerMeter, bV5XPelsPerMeter
+    Read_Intel (image.stream, dummy);
+    --   Pos= 43, vertical resolution: biYPelsPerMeter, bV5YPelsPerMeter
+    Read_Intel (image.stream, dummy);
+    --   Pos= 47, number of palette colors: biClrUsed, bV5ClrUsed
+    Read_Intel (image.stream, n);
     if image.bits_per_pixel <= 8 then
       if n = 0 then
-        image.palette := new Color_table (0 .. 2**image.bits_per_pixel - 1);
+        image.palette := new Color_Table (0 .. 2**image.bits_per_pixel - 1);
       else
-        image.palette := new Color_table (0 .. Natural (n) - 1);
+        image.palette := new Color_Table (0 .. Natural (n) - 1);
       end if;
     end if;
-    Read_Intel (image.stream, dummy); -- Pos= 51, number of important colors
-    --   Pos= 55 (36H), - start of palette
+    --   Pos= 51, number of important colors: biClrImportant, bV5ClrImportant
+    Read_Intel (image.stream, dummy);
+    --   Skip the rest of the header.
+    for skip in 41 .. header_size loop
+      U8'Read (image.stream, dummy8);
+    end loop;
+    --   Start of palette
     Color_tables.Load_palette (image);
-  end Load_BMP_header;
+  end Load_BMP_Header;
 
-  procedure Load_FITS_header (image : in out Image_descriptor) is
+  -----------------
+  -- FITS header --
+  -----------------
+
+  procedure Load_FITS_Header (image : in out Image_Descriptor) is
   begin
-    raise known_but_unsupported_image_format;
-  end Load_FITS_header;
+    raise known_but_unsupported_image_format
+      with "FITS format not yet supported";
+  end Load_FITS_Header;
 
   ----------------
   -- GIF header --
   ----------------
 
-  procedure Load_GIF_header (image : in out Image_descriptor) is
+  procedure Load_GIF_Header (image : in out Image_Descriptor) is
     --  GIF - logical screen descriptor
     screen_width, screen_height           : U16;
     packed, background, aspect_ratio_code : U8;
@@ -347,76 +417,103 @@ package body GID.Headers is
       --      "GIF: global palette has more colors than the image" &
       --       image.subformat_id'img & image.bits_per_pixel'img;
       --  end if;
-      image.palette := new Color_table (0 .. 2**(image.subformat_id) - 1);
+      image.palette := new Color_Table (0 .. 2**(image.subformat_id) - 1);
       Color_tables.Load_palette (image);
     end if;
-  end Load_GIF_header;
+  end Load_GIF_Header;
 
   -----------------
   -- JPEG header --
   -----------------
 
-  procedure Load_JPEG_header (image : in out Image_descriptor) is
-    --  http://en.wikipedia.org/wiki/JPEG
-    use GID.Decoding_JPG, GID.Buffering;
-    sh : Segment_head;
+  procedure Load_JPEG_Header (image : in out Image_Descriptor) is
+    use Decoding_JPG, Buffering, Ada.Text_IO;
+    head : Segment_Head;
     b : U8;
   begin
     --  We have already passed the SOI (Start of Image) segment marker (FFD8).
     image.JPEG_stuff.restart_interval := 0;
     Attach_Stream (image.buffer, image.stream);
     loop
-      Read (image, sh);
-      case sh.kind is
-        when DHT => -- Huffman Table
-          Read_DHT (image, Natural (sh.length));
+      Read (image, False, 0, head);
+      case head.kind is
+        when DHT =>
+          --  Huffman Table
+          Read_DHT (image, Natural (head.length));
         when DQT =>
-          Read_DQT (image, Natural (sh.length));
-        when DRI => -- Restart Interval
+          Read_DQT (image, Natural (head.length));
+        when DRI =>
+          --  Restart Interval
           Read_DRI (image);
         when SOF_0 .. SOF_15 =>
-          Read_SOF (image, sh);
-          exit; -- we've got header-style informations, then it's time to quit
+          Read_SOF (image, head);
+            --  We've got frame-header-style informations (SOF),
+            --  then it's time to quit:
+          exit;
         when APP_1 =>
-          Read_EXIF (image, Natural (sh.length));
+          Read_EXIF (image, Natural (head.length));
+        when COM =>
+          --  B.2.4.5 Comment
+          if some_trace then
+            New_Line;
+            Put_Line ("JPEG Comment (during Load_JPEG_Header):  --------");
+            for i in 1 .. head.length loop
+              Get_Byte (image.buffer, b);
+              Put (Character'Val (b));
+            end loop;
+            New_Line;
+            Put_Line ("-------------------------------------------------");
+            New_Line;
+          else
+            Skip_Segment_Data (image, head);
+          end if;
         when others =>
-          --  Skip segment data
-          for i in 1 .. sh.length loop
-            Get_Byte (image.buffer, b);
-          end loop;
+          Skip_Segment_Data (image, head);
       end case;
     end loop;
-  end Load_JPEG_header;
-
-  procedure Load_QOI_header (image : in out Image_descriptor) is
-    val_32 : U32;
-    channels, colorspace : U8;
-  begin
-    Buffering.Attach_Stream (image.buffer, image.stream);
-    Read_any_endian (image.stream, val_32, big);
-    image.width := Positive_32 (val_32);
-    Read_any_endian (image.stream, val_32, big);
-    image.height := Positive_32 (val_32);
-    U8'Read (image.stream, channels);
-    image.bits_per_pixel := Positive (channels) * 8;
-    image.transparency := channels = 4;
-    U8'Read (image.stream, colorspace);
-  end Load_QOI_header;
+  end Load_JPEG_Header;
 
   ----------------
   -- PNG header --
   ----------------
 
-  procedure Load_PNG_header (image : in out Image_descriptor) is
+  procedure Load_PNG_Header (image : in out Image_Descriptor) is
     use Decoding_PNG, Buffering;
-    ch : Chunk_head;
+    ch : Chunk_Header;
     n, dummy : U32;
-    pragma Unreferenced (dummy);
     b, color_type : U8;
+
+    procedure Read_Palette is
+    begin
+      loop
+        Read_Chunk_Header (image, ch);
+        case ch.kind is
+          when IEND =>
+            raise error_in_image_data with
+              "PNG: a palette (PLTE) is expected here, found IEND";
+          when PLTE =>
+            if ch.length rem 3 /= 0 then
+              raise error_in_image_data with
+                "PNG: palette chunk byte length must be a multiple of 3";
+            end if;
+            image.palette := new Color_Table (0 .. Integer (ch.length / 3) - 1);
+            Color_tables.Load_palette (image);
+            Big_endian_buffered (image.buffer, dummy); -- Chunk's CRC
+            exit;
+          when others =>
+            --  Skip chunk data and CRC
+            for i in 1 .. ch.length + 4 loop
+              Get_Byte (image.buffer, b);
+            end loop;
+        end case;
+      end loop;
+    end Read_Palette;
+
     palette : Boolean := False;
+
   begin
     Buffering.Attach_Stream (image.buffer, image.stream);
-    Read (image, ch);
+    Read_Chunk_Header (image, ch);
     if ch.kind /= IHDR then
       raise error_in_image_data with "PNG: expected 'IHDR' chunk as first chunk in PNG stream";
     end if;
@@ -504,39 +601,25 @@ package body GID.Headers is
         "PNG: unknown filtering; ISO/IEC 15948:2003 knows only 'method 0'";
     end if;
     Get_Byte (image.buffer, b);
-    image.interlaced := b = 1; -- Adam7
-    Big_endian_buffered (image.buffer, dummy); -- Chunk's CRC
+    image.progressive := b = 1;  --  Adam7
+    Big_endian_buffered (image.buffer, dummy);  --  Chunk's CRC
     if palette then
-      loop
-        Read (image, ch);
-        case ch.kind is
-          when IEND =>
-            raise error_in_image_data with
-              "PNG: a palette (PLTE) is expected here, found IEND";
-          when PLTE =>
-            if ch.length rem 3 /= 0 then
-              raise error_in_image_data with
-                "PNG: palette chunk byte length must be a multiple of 3";
-            end if;
-            image.palette := new Color_table (0 .. Integer (ch.length / 3) - 1);
-            Color_tables.Load_palette (image);
-            Big_endian_buffered (image.buffer, dummy); -- Chunk's CRC
-            exit;
-          when others =>
-            --  Skip chunk data and CRC
-            for i in 1 .. ch.length + 4 loop
-              Get_Byte (image.buffer, b);
-            end loop;
-        end case;
-      end loop;
+      Read_Palette;
     end if;
-  end Load_PNG_header;
+    image.PNG_stuff :=
+      (frame_width  => image.width,
+       frame_height => image.height,
+       x_offset     => 0,
+       y_offset     => 0,
+       dispose_op   => PNG_Defs.APNG_DISPOSE_OP_NONE,
+       blend_op     => PNG_Defs.APNG_BLEND_OP_SOURCE);
+  end Load_PNG_Header;
 
   --------------------------------
   -- PNM (PBM, PGM, PPM) header --
   --------------------------------
 
-  procedure Load_PNM_header (image : in out Image_descriptor) is
+  procedure Load_PNM_Header (image : in out Image_Descriptor) is
     use Decoding_PNM;
     depth_val : Integer;
   begin
@@ -563,13 +646,42 @@ package body GID.Headers is
   exception
     when Constraint_Error =>
       raise error_in_image_data with "PNM: invalid numeric value in PNM header";
-  end Load_PNM_header;
+  end Load_PNM_Header;
+
+  ----------------
+  -- QOI header --
+  ----------------
+
+  procedure Load_QOI_Header (image : in out Image_Descriptor) is
+    val_32 : U32;
+    channels, colorspace : U8;
+  begin
+    Buffering.Attach_Stream (image.buffer, image.stream);
+    Read_any_endian (image.stream, val_32, big);
+    image.width := Positive_32 (val_32);
+    Read_any_endian (image.stream, val_32, big);
+    image.height := Positive_32 (val_32);
+    U8'Read (image.stream, channels);
+    image.bits_per_pixel := Positive (channels) * 8;
+    image.transparency := channels = 4;
+    U8'Read (image.stream, colorspace);
+  end Load_QOI_Header;
+
+  -----------------
+  -- RIFF header --
+  -----------------
+
+  procedure Load_RIFF_Header (image : in out Image_Descriptor) is
+  begin
+    raise known_but_unsupported_image_format
+      with "RIFF (for WebP) not yet supported";
+  end Load_RIFF_Header;
 
   ------------------------
   -- TGA (Targa) header --
   ------------------------
 
-  procedure Load_TGA_header (image : in out Image_descriptor) is
+  procedure Load_TGA_Header (image : in out Image_Descriptor) is
     --  TGA FILE HEADER, p.6
     --
     image_ID_length : U8; -- Field 1
@@ -619,21 +731,21 @@ package body GID.Headers is
     image.RLE_encoded := (image_type and 8) /= 0;
     --
     if color_map_type /= 0 then
-      image.palette := new Color_table (
-        Integer (first_entry_index) ..
-        Integer (first_entry_index) + Integer (color_map_length) - 1
-      );
+      image.palette := new Color_Table
+        (Integer (first_entry_index) ..
+         Integer (first_entry_index) + Integer (color_map_length) - 1);
+      --
       image.subformat_id := Integer (color_map_entry_size);
       case image.subformat_id is -- = palette's bit depth
-        when 8 =>       -- Grey
+        when  8 =>  --  Grey
           null;
-        when 15 => -- RGB 3*5 bit
+        when 15 =>  --  RGB 3*5 bit
           null;
-        when 16 => -- RGBA 3*5+1 bit
+        when 16 =>  --  RGBA 3*5+1 bit
           image.transparency := True;
-        when 24 => -- RGB 3*8 bit
+        when 24 =>  --  RGB 3*8 bit
           null;
-        when 32 => -- RGBA 4*8 bit
+        when 32 =>  --  RGBA 4*8 bit
           image.transparency := True;
         when others =>
           raise error_in_image_data with
@@ -679,9 +791,9 @@ package body GID.Headers is
     --  * Color map data (palette)
     Color_tables.Load_palette (image);
     --  * Image data: Read by Load_image_contents.
-  end Load_TGA_header;
+  end Load_TGA_Header;
 
-  procedure Load_TIFF_header (image : in out Image_descriptor) is
+  procedure Load_TIFF_Header (image : in out Image_Descriptor) is
     first_IFD_offset : U32;
     --
     --  IFD: Image File Directory. Basically, the image header.
@@ -692,8 +804,9 @@ package body GID.Headers is
   begin
     Read_any_endian (image.stream, first_IFD_offset, image.endianess);
     raise known_but_unsupported_image_format with
-      "TIFF is not appropriate for streaming. Use PNG, BMP (lossless) or JPEG instead." &
+      "TIFF is not appropriate for streaming. " &
+      "Use PNG, BMP (lossless) or JPEG instead." &
       "Info: IFD Offset=" & U32'Image (first_IFD_offset);
-  end Load_TIFF_header;
+  end Load_TIFF_Header;
 
 end GID.Headers;

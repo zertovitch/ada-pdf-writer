@@ -9,18 +9,18 @@ with Ada.Text_IO;
 
 package body GID.Decoding_GIF is
 
+  use Interfaces;
+
   generic
     type Number is mod <>;
-  procedure Read_Intel_x86_number (
-    from : in out Input_buffer;
-    n    :    out Number
-  );
-    pragma Inline (Read_Intel_x86_number);
+  procedure Read_Intel_x86_Number
+    (from : in out Input_Buffer;
+     n    :    out Number);
+    pragma Inline (Read_Intel_x86_Number);
 
-  procedure Read_Intel_x86_number (
-    from : in out Input_buffer;
-    n    :    out Number
-  )
+  procedure Read_Intel_x86_Number
+    (from : in out Input_Buffer;
+     n    :    out Number)
   is
     b : U8;
     m : Number := 1;
@@ -31,20 +31,19 @@ package body GID.Decoding_GIF is
       n := n + m * Number (b);
       m := m * 256;
     end loop;
-  end Read_Intel_x86_number;
+  end Read_Intel_x86_Number;
 
-  procedure Read_Intel is new Read_Intel_x86_number (U16);
+  procedure Read_Intel is new Read_Intel_x86_Number (U16);
 
   ----------
   -- Load --
   ----------
 
-  procedure Load (
-    image     : in out Image_descriptor;
-    next_frame :    out Ada.Calendar.Day_Duration
-  )
+  procedure Load
+    (image      : in out Image_Descriptor;
+     next_frame :    out Ada.Calendar.Day_Duration)
   is
-    local : Image_descriptor;
+    local : Image_Descriptor;
     --  With GIF, each frame is a local image with an eventual
     --  palette, different dimensions, etc. ...
 
@@ -66,17 +65,17 @@ package body GID.Decoding_GIF is
     Y, tlY, brY : Natural;
 
     --  Code information
-    subtype Code_size_range is Natural range 2 .. 12;
-    CurrSize : Code_size_range;
+    subtype Code_Size_Range is Natural range 2 .. 12;
+    code_size_as_in_frame_header : Code_Size_Range;
 
-    subtype Color_type is U8;
-    Transp_color   : Color_type := 0;
+    subtype Color_Type is U8;
+    transp_color : Color_Type := 0;
 
     --  GIF data is stored in blocks and sub-blocks.
     --  We initialize block_read and block_size to force
     --  reading and buffering the next sub-block
-    block_size   : Natural := 0;
-    block_read   : Natural := 0;
+    block_size : Natural := 0;
+    block_read : Natural := 0;
 
     function Read_Byte return U8 is
     pragma Inline (Read_Byte);
@@ -96,76 +95,77 @@ package body GID.Decoding_GIF is
     bits_in : U8 := 8;
     bits_buf : U8;
 
-    --  Local procedure to read the next code from the file
-    function Read_Code return Natural is
-      bit_mask : Natural := 1;
-      code : Natural := 0;
-    begin
-      --  Read the code, bit by bit
-      for Counter  in reverse  0 .. CurrSize - 1  loop
-        --  Next bit
-        bits_in := bits_in + 1;
-        --  Maybe, a new byte needs to be loaded with a further 8 bits
-        if bits_in = 9 then
-          bits_buf := Read_Byte;
-          bits_in := 1;
-        end if;
-        --  Add the current bit to the code
-        if (bits_buf  and  1) > 0 then
-          code := code + bit_mask;
-        end if;
-        bit_mask := bit_mask * 2;
-        bits_buf := bits_buf / 2;
-      end loop;
-      return code;
-    end Read_Code;
-
     generic
       --  Parameter(s) that are constant through
       --  the whole image. Macro-expanded generics and
       --  some optimization will trim corresponding "if's"
-      interlaced     : Boolean;
-      transparency   : Boolean;
-      pixel_mask     : U32;
+      interlaced   : Boolean;
+      transparency : Boolean;
+      pixel_mask   : U32;
       --
-    procedure GIF_Decode;
+    procedure GIF_Decode_Frame;
 
-    procedure GIF_Decode is
+    procedure GIF_Decode_Frame is
 
-      procedure Pixel_with_palette (b : U8) is
-      pragma Inline (Pixel_with_palette);
-        function Times_257 (x : Primary_color_range) return Primary_color_range is
-        pragma Inline (Times_257);
-        begin
-          return 16 * (16 * x) + x;  --  this is 257 * x, = 16#0101# * x
-          --  Numbers 8-bit -> no OA warning at instanciation. Returns x if type Primary_color_range is mod 2**8.
-        end Times_257;
-        full_opaque : constant Primary_color_range := Primary_color_range'Last;
+      curr_size : Code_Size_Range;
+
+      --  Local procedure to read the next code from the file
+      function Read_Code return Natural is
+        bit_mask : Natural := 1;
+        code : Natural := 0;
       begin
-        if transparency and then b = Transp_color then
+        --  Read the code, bit by bit
+        for counter  in reverse  0 .. curr_size - 1  loop
+          --  Next bit
+          bits_in := bits_in + 1;
+          --  Maybe, a new byte needs to be loaded with a further 8 bits
+          if bits_in = 9 then
+            bits_buf := Read_Byte;
+            bits_in := 1;
+          end if;
+          --  Add the current bit to the code
+          if (bits_buf and 1) > 0 then
+            code := code + bit_mask;
+          end if;
+          bit_mask := bit_mask * 2;
+          bits_buf := bits_buf / 2;
+        end loop;
+        return code;
+      end Read_Code;
+
+      procedure Pixel_with_Palette (b : U8) is
+      pragma Inline (Pixel_with_Palette);
+        function Times_257 (x : Primary_Color_Range) return Primary_Color_Range
+        is
+        (16 * (16 * x) + x) with Inline;  --  This is 257 * x, = 16#0101# * x
+        --  Numbers are 8-bit -> no OA warning at instantiation.
+        --  Returns x if type Primary_Color_Range is mod 2**8.
+
+        full_opaque : constant Primary_Color_Range := Primary_Color_Range'Last;
+      begin
+        if transparency and then b = transp_color then
           Put_Pixel (0, 0, 0, 0);
           return;
         end if;
-        case Primary_color_range'Modulus is
+        case Primary_Color_Range'Modulus is
           when 256 =>
-            Put_Pixel (
-              Primary_color_range (local.palette (Integer (b)).red),
-              Primary_color_range (local.palette (Integer (b)).green),
-              Primary_color_range (local.palette (Integer (b)).blue),
-              full_opaque
-            );
+            Put_Pixel
+              (Primary_Color_Range (local.palette (Integer (b)).red),
+               Primary_Color_Range (local.palette (Integer (b)).green),
+               Primary_Color_Range (local.palette (Integer (b)).blue),
+               full_opaque);
           when 65_536 =>
-            Put_Pixel (
-              Times_257 (Primary_color_range (local.palette (Integer (b)).red)),
-              Times_257 (Primary_color_range (local.palette (Integer (b)).green)),
-              Times_257 (Primary_color_range (local.palette (Integer (b)).blue)),
-              --  Times_257 makes max intensity FF go to FFFF
-              full_opaque
-            );
+            Put_Pixel
+              (Times_257 (Primary_Color_Range (local.palette (Integer (b)).red)),
+               Times_257 (Primary_Color_Range (local.palette (Integer (b)).green)),
+               Times_257 (Primary_Color_Range (local.palette (Integer (b)).blue)),
+               --  Times_257 makes max intensity FF go to FFFF
+               full_opaque);
           when others =>
-            raise invalid_primary_color_range with "GIF: color range not supported";
+            raise invalid_primary_color_range
+              with "GIF: color range not supported";
         end case;
-      end Pixel_with_palette;
+      end Pixel_with_Palette;
 
       --  Interlacing
       Interlace_pass : Natural range 1 .. 4 := 1;
@@ -174,19 +174,19 @@ package body GID.Decoding_GIF is
       --  Local procedure to draw a pixel
       procedure Next_Pixel (code : Natural) is
       pragma Inline (Next_Pixel);
-        c : constant Color_type := Color_type (U32 (code) and pixel_mask);
+        c : constant Color_Type := Color_Type (U32 (code) and pixel_mask);
       begin
         --  Actually draw the pixel on screen buffer
         if X < Integer (image.width) then
-          if interlaced and mode = nice then
+          if interlaced and then mode = redundant then
             for i in reverse 0 .. Span loop
               if Y + i < Integer (image.height) then
                 Set_X_Y (X, Integer (image.height) - (Y + i) - 1);
-                Pixel_with_palette (c);
+                Pixel_with_Palette (c);
               end if;
             end loop;
           elsif Y < Integer (image.height) then
-            Pixel_with_palette (c);
+            Pixel_with_Palette (c);
           end if;
         end if;
 
@@ -228,7 +228,7 @@ package body GID.Decoding_GIF is
             if mode = fast and then Y < Integer (image.height) then
               Set_X_Y (X, Integer (image.height) - Y - 1);
             end if;
-          else -- not interlaced
+          else  --  Not interlaced
             Y := Y + 1;
             if Y < Integer (image.height) then
               Set_X_Y (X, Integer (image.height) - Y - 1);
@@ -243,31 +243,33 @@ package body GID.Decoding_GIF is
       --  The string table
       Prefix : array (0 .. 4096) of Natural := (others => 0);
       Suffix : array (0 .. 4096) of Natural := (others => 0);
-      --  Top of Stack was 1024 until files from
-      --    https://www.kaggle.com/c/carvana-image-masking-challenge
-      --  broke it (July 2017)...
-      Stack  : array (0 .. 2048) of Natural;
+      --  Top of Stack was 1024 until files from...
+      --        https://www.kaggle.com/c/carvana-image-masking-challenge
+      --  ... broke it (July 2017). -> Doubled.
+      --  Doubled again (Feb. 2024) for ./test/img/gif_sparse_10k_x_10k.gif.
+      stack : array (0 .. 4096) of Natural;
 
       --  Special codes (specific to GIF's flavour of LZW)
-      ClearCode : constant Natural := 2 ** CurrSize; -- Reset code
-      EndingCode : constant Natural := ClearCode + 1; -- End of file
-      FirstFree : constant Natural := ClearCode + 2; -- Strings start here
+      Clear_Code  : constant Natural := 2 ** code_size_as_in_frame_header;  --  Reset code
+      Ending_Code : constant Natural := Clear_Code + 1;  --  End of file
+      First_Free  : constant Natural := Clear_Code + 2;  --  Strings start here
 
-      Slot         : Natural := FirstFree;  --  Last read code
-      InitCodeSize : constant Code_size_range := CurrSize + 1;
-      TopSlot      : Natural := 2 ** InitCodeSize; --  Highest code for current size
-      Code         : Natural;
-      StackPtr     : Integer := 0;
-      Fc           : Integer := 0;
-      Oc           : Integer := 0;
-      C            : Integer;
-      BadCodeCount : Natural := 0;  --  the number of bad codes found
+      Init_Code_Size : constant Code_Size_Range := code_size_as_in_frame_header + 1;
 
-    begin -- GIF_Decode
+      slot           : Natural := First_Free;           --  Last read code
+      top_slot       : Natural := 2 ** Init_Code_Size;  --  Highest code for current size
+      code           : Natural;
+      stack_idx      : Integer := 0;
+      Fc             : Integer := 0;
+      Oc             : Integer := 0;
+      C              : Integer;
+      bad_code_count : Natural := 0;
+
+    begin  --  GIF_Decode
       --  The decoder source and the cool comments are kindly donated by
       --  André van Splunter.
       --
-      CurrSize := InitCodeSize;
+      curr_size := Init_Code_Size;
       --  This is the main loop.  For each code we get we pass through the
       --  linked list of prefix codes, pushing the corresponding "character"
       --  for each code onto the stack.  When the list reaches a single
@@ -276,26 +278,26 @@ package body GID.Decoding_GIF is
       --  included for the clear code, and the whole thing ends when we get
       --  an ending code.
       C := Read_Code;
-      while C /= EndingCode loop
+      while C /= Ending_Code loop
          --  If the code is a clear code, reinitialize all necessary items.
-         if C = ClearCode then
-            CurrSize := InitCodeSize;
-            Slot     := FirstFree;
-            TopSlot  := 2 ** CurrSize;
+         if C = Clear_Code then
+            curr_size := Init_Code_Size;
+            slot      := First_Free;
+            top_slot  := 2 ** curr_size;
             --  Continue reading codes until we get a non-clear code
             --  (Another unlikely, but possible case...)
             C := Read_Code;
-            while C = ClearCode loop
+            while C = Clear_Code loop
                C := Read_Code;
             end loop;
             --  If we get an ending code immediately after a clear code
             --  (Yet another unlikely case), then break out of the loop.
-            exit when C = EndingCode;
+            exit when C = Ending_Code;
             --  Finally, if the code is beyond the range of already set codes,
             --  (This one had better NOT happen...  I have no idea what will
             --  result from this, but I doubt it will look good...) then set
             --  it to color zero.
-            if C >= Slot then
+            if C >= slot then
                C := 0;
             end if;
             Oc := C;
@@ -306,27 +308,34 @@ package body GID.Decoding_GIF is
             --  In this case, it's not a clear code or an ending code, so
             --  it must be a code code...  So we can now decode the code into
             --  a stack of character codes. (Clear as mud, right?)
-            Code := C;
+            code := C;
             --  Here we go again with one of those off chances...  If, on the
             --  off chance, the code we got is beyond the range of those
             --  already set up (Another thing which had better NOT happen...)
             --  we trick the decoder into thinking it actually got the last
             --  code read. (Hmmn... I'm not sure why this works...
             --  But it does...)
-            if Code >= Slot then
-               if Code > Slot then
-                  BadCodeCount := BadCodeCount + 1;
+            if code >= slot then
+               if code > slot then
+                  bad_code_count := bad_code_count + 1;
                end if;
-               Code := Oc;
-               Stack (StackPtr) := Fc rem 256;
-               StackPtr := StackPtr + 1;
+               code := Oc;
+               if stack_idx > stack'Last then
+                 --  In case this is compiled with range checks suppressed...
+                 raise Constraint_Error with "GIF stack exhausted [1]";
+               end if;
+               stack (stack_idx) := Fc rem 256;
+               stack_idx := stack_idx + 1;
             end if;
             --  Here we scan back along the linked list of prefixes, pushing
             --  helpless characters (ie. suffixes) onto the stack as we do so.
-            while Code >= FirstFree loop
-               Stack (StackPtr) := Suffix (Code);
-               StackPtr := StackPtr + 1;
-               Code := Prefix (Code);
+            while code >= First_Free loop
+               if stack_idx > stack'Last then
+                 raise Constraint_Error with "GIF stack exhausted [2]";
+               end if;
+               stack (stack_idx) := Suffix (code);
+               stack_idx := stack_idx + 1;
+               code := Prefix (code);
             end loop;
             --  Push the last character on the stack, and set up the new
             --  prefix and suffix, and if the required slot number is greater
@@ -334,37 +343,37 @@ package body GID.Decoding_GIF is
             --  size.  (NOTE - If we are all full, we *don't* save the new
             --  suffix and prefix...  I'm not certain if this is correct...
             --  it might be more proper to overwrite the last code...
-            Stack (StackPtr) := Code rem 256;
-            if Slot < TopSlot then
-               Suffix (Slot) := Code rem 256;
-               Fc := Code;
-               Prefix (Slot) := Oc;
-               Slot := Slot + 1;
+            if stack_idx > stack'Last then
+              raise Constraint_Error with "GIF stack exhausted [3]";
+            end if;
+            stack (stack_idx) := code rem 256;
+            if slot < top_slot then
+               Suffix (slot) := code rem 256;
+               Fc := code;
+               Prefix (slot) := Oc;
+               slot := slot + 1;
                Oc := C;
             end if;
-            if Slot >= TopSlot then
-               if CurrSize < 12 then
-                  TopSlot := TopSlot * 2;
-                  CurrSize := CurrSize + 1;
+            if slot >= top_slot then
+               if curr_size < 12 then
+                  top_slot  := top_slot * 2;
+                  curr_size := curr_size + 1;
                end if;
             end if;
             --  Now that we've pushed the decoded string (in reverse order)
             --  onto the stack, lets pop it off and output it...
             loop
-               Next_Pixel (Stack (StackPtr));
-               exit when StackPtr = 0;
-               StackPtr := StackPtr - 1;
+               Next_Pixel (stack (stack_idx));
+               exit when stack_idx = 0;
+               stack_idx := stack_idx - 1;
             end loop;
          end if;
          C := Read_Code;
       end loop;
-      if full_trace and then BadCodeCount > 0 then
-        Ada.Text_IO.Put_Line (
-         "Found" & Integer'Image (BadCodeCount) &
-         " bad codes"
-        );
+      if full_trace and then bad_code_count > 0 then
+        Ada.Text_IO.Put_Line ("Found" & bad_code_count'Image & " bad codes");
       end if;
-    end GIF_Decode;
+    end GIF_Decode_Frame;
 
     --  Here we have several specialized instances of GIF_Decode,
     --  with parameters known at compile-time -> optimizing compilers
@@ -372,13 +381,13 @@ package body GID.Decoding_GIF is
     --  not at run-time.
     --
     procedure GIF_Decode_interlaced_transparent_8 is
-      new GIF_Decode (interlaced => True,  transparency => True,  pixel_mask => 255);
+      new GIF_Decode_Frame (interlaced => True,  transparency => True,  pixel_mask => 255);
     procedure GIF_Decode_straight_transparent_8 is
-      new GIF_Decode (interlaced => False, transparency => True,  pixel_mask => 255);
+      new GIF_Decode_Frame (interlaced => False, transparency => True,  pixel_mask => 255);
     procedure GIF_Decode_interlaced_opaque_8 is
-      new GIF_Decode (interlaced => True,  transparency => False, pixel_mask => 255);
+      new GIF_Decode_Frame (interlaced => True,  transparency => False, pixel_mask => 255);
     procedure GIF_Decode_straight_opaque_8 is
-      new GIF_Decode (interlaced => False, transparency => False, pixel_mask => 255);
+      new GIF_Decode_Frame (interlaced => False, transparency => False, pixel_mask => 255);
     --
     procedure Skip_sub_blocks is
       temp : U8;
@@ -394,11 +403,75 @@ package body GID.Decoding_GIF is
       end loop sub_blocks_sequence;
     end Skip_sub_blocks;
 
-    temp, temp2, label : U8;
-    delay_frame : U16;
-    c : Character;
-    frame_interlaced : Boolean;
+    temp, temp2 : U8;
     frame_transparency : Boolean := False;
+
+    procedure GIF_Extension is
+      label : U8;
+      delay_frame : U16;
+      c : Character;
+    begin
+      Get_Byte (image.buffer, label);
+      case label is
+        when 16#F9# =>  --  See: 23. Graphic Control Extension
+          if full_trace then
+            Ada.Text_IO.Put_Line (" - 16#F9#: Graphic Control Extension");
+          end if;
+          Get_Byte (image.buffer, temp);
+          if temp /= 4 then
+            raise error_in_image_data with "GIF: error in Graphic Control Extension";
+          end if;
+          Get_Byte (image.buffer, temp);
+          --  Reserved                      3 Bits
+          --  Disposal Method               3 Bits
+          --  User Input Flag               1 Bit
+          --  Transparent Color Flag        1 Bit
+          frame_transparency := (temp and 1) = 1;
+          Read_Intel (image.buffer, delay_frame);
+          image.next_frame :=
+            image.next_frame + Ada.Calendar.Day_Duration (delay_frame) / 100.0;
+          next_frame := image.next_frame;
+          Get_Byte (image.buffer, temp);
+          transp_color := Color_Type (temp);
+          --  Zero sub-block:
+          Get_Byte (image.buffer, temp);
+        when 16#FE# =>  --  See: 24. Comment Extension
+          if full_trace then
+            Ada.Text_IO.Put_Line (" - 16#FE#: Comment Extension");
+            sub_blocks_sequence :
+            loop
+              Get_Byte (image.buffer, temp);  --  Load sub-block length byte
+              exit sub_blocks_sequence when temp = 0;
+              --  Null sub-block = end of sub-block sequence
+              for i in 1 .. temp loop
+                Get_Byte (image.buffer, temp2);
+                c := Character'Val (temp2);
+                Ada.Text_IO.Put (c);
+              end loop;
+            end loop sub_blocks_sequence;
+            Ada.Text_IO.New_Line;
+          else
+            Skip_sub_blocks;
+          end if;
+        when 16#01# =>  --  See: 25. Plain Text Extension
+          if full_trace then
+            Ada.Text_IO.Put_Line (" - 16#01#: Plain Text Extension");
+          end if;
+          Skip_sub_blocks;
+        when 16#FF# =>  --  See: 26. Application Extension
+          if full_trace then
+            Ada.Text_IO.Put_Line (" - 16#FF#: Application Extension");
+          end if;
+          Skip_sub_blocks;
+        when others =>
+          if full_trace then
+            Ada.Text_IO.Put_Line (" - Unused extension:" & label'Image);
+          end if;
+          Skip_sub_blocks;
+      end case;
+    end GIF_Extension;
+
+    frame_interlaced : Boolean;
     local_palette  : Boolean;
     --
     separator :  Character;
@@ -407,92 +480,34 @@ package body GID.Decoding_GIF is
     custom_pixel_mask : U32;
     BitsPerPixel  : Natural;
 
-  begin -- Load
+  begin  --  Load
     next_frame := 0.0;
     --  Scan various GIF blocks, until finding an image
     loop
       Get_Byte (image.buffer, temp);
       separator := Character'Val (temp);
       if full_trace then
-        Ada.Text_IO.Put (
-          "GIF separator [" & separator &
-          "][" & U8'Image (temp) & ']'
-        );
+        Ada.Text_IO.Put
+          ("GIF separator [" & separator & "][" & temp'Image & ']');
       end if;
       case separator is
-        when ',' => -- 16#2C#
+        when ',' =>  --  16#2C#
           exit;
           --  Image descriptor will begin
           --  See: 20. Image Descriptor
-        when ';' => -- 16#3B#
+        when ';' =>  --  16#3B#
           if full_trace then
-            Ada.Text_IO.Put (" - End of GIF");
+            Ada.Text_IO.Put (" - End of GIF image / animation");
           end if;
+          next_frame := 0.0;
           image.next_frame := 0.0;
-          next_frame := image.next_frame;
-          return; -- End of GIF image
-        when '!' => -- 16#21# Extensions
+          Feedback (100);
+          return;
+        when '!' =>  --  16#21# Extensions
           if full_trace then
-            Ada.Text_IO.Put (" - Extension");
+            Ada.Text_IO.Put (" - Extension to GIF format");
           end if;
-          Get_Byte (image.buffer, label);
-          case label is
-            when 16#F9# => -- See: 23. Graphic Control Extension
-              if full_trace then
-                Ada.Text_IO.Put_Line (" - 16#F9#: Graphic Control Extension");
-              end if;
-              Get_Byte (image.buffer, temp);
-              if temp /= 4 then
-                raise error_in_image_data with "GIF: error in Graphic Control Extension";
-              end if;
-              Get_Byte (image.buffer, temp);
-              --  Reserved                      3 Bits
-              --  Disposal Method               3 Bits
-              --  User Input Flag               1 Bit
-              --  Transparent Color Flag        1 Bit
-              frame_transparency := (temp and 1) = 1;
-              Read_Intel (image.buffer, delay_frame);
-              image.next_frame :=
-                image.next_frame + Ada.Calendar.Day_Duration (delay_frame) / 100.0;
-              next_frame := image.next_frame;
-              Get_Byte (image.buffer, temp);
-              Transp_color := Color_type (temp);
-              --  zero sub-block:
-              Get_Byte (image.buffer, temp);
-            when 16#FE# => -- See: 24. Comment Extension
-              if full_trace then
-                Ada.Text_IO.Put_Line (" - 16#FE#: Comment Extension");
-                sub_blocks_sequence :
-                loop
-                  Get_Byte (image.buffer, temp); -- load sub-block length byte
-                  exit sub_blocks_sequence when temp = 0;
-                  --  null sub-block = end of sub-block sequence
-                  for i in 1 .. temp loop
-                    Get_Byte (image.buffer, temp2);
-                    c := Character'Val (temp2);
-                    Ada.Text_IO.Put (c);
-                  end loop;
-                end loop sub_blocks_sequence;
-                Ada.Text_IO.New_Line;
-              else
-                Skip_sub_blocks;
-              end if;
-            when 16#01# => -- See: 25. Plain Text Extension
-              if full_trace then
-                Ada.Text_IO.Put_Line (" - 16#01#: Plain Text Extension");
-              end if;
-              Skip_sub_blocks;
-            when 16#FF# => -- See: 26. Application Extension
-              if full_trace then
-                Ada.Text_IO.Put_Line (" - 16#FF#: Application Extension");
-              end if;
-              Skip_sub_blocks;
-            when others =>
-              if full_trace then
-                Ada.Text_IO.Put_Line (" - Unused extension:" & U8'Image (label));
-              end if;
-              Skip_sub_blocks;
-          end case;
+          GIF_Extension;
         when ASCII.NUL =>
           --  Occurs in some buggy GIFs (2016).
           --  Seems a 2nd zero, the 1st marking the end of sub-block list.
@@ -535,7 +550,7 @@ package body GID.Decoding_GIF is
       BitsPerPixel := 1 + Natural (Descriptor.Depth and 7);
       new_num_of_colours := 2 ** BitsPerPixel;
       --  21. Local Color Table
-      local.palette := new Color_table (0 .. new_num_of_colours - 1);
+      local.palette := new Color_Table (0 .. new_num_of_colours - 1);
       Color_tables.Load_palette (local);
       image.buffer := local.buffer;
     elsif image.palette = null then
@@ -545,27 +560,25 @@ package body GID.Decoding_GIF is
       new_num_of_colours := 2 ** image.subformat_id;
       --  usually <= 2** image.bits_per_pixel
       --  Just copy main palette
-      local.palette := new Color_table'(image.palette.all);
+      local.palette := new Color_Table'(image.palette.all);
     end if;
     custom_pixel_mask := U32 (new_num_of_colours - 1);
 
     if full_trace then
-      Ada.Text_IO.Put_Line (
-        " - Image, interlaced: " & Boolean'Image (frame_interlaced) &
-        "; local palette: " & Boolean'Image (local_palette) &
-        "; transparency: " & Boolean'Image (frame_transparency) &
-        "; transparency index:" & Color_type'Image (Transp_color)
-      );
+      Ada.Text_IO.Put_Line
+        (" - Image, interlaced: " & frame_interlaced'Image &
+         "; local palette: " & local_palette'Image &
+         "; transparency: " & frame_transparency'Image &
+         "; transparency index:" & transp_color'Image);
     end if;
 
     --  Get initial code size
     Get_Byte (image.buffer, temp);
-    if Natural (temp) not in Code_size_range then
+    if Natural (temp) not in Code_Size_Range then
       raise error_in_image_data with
-        "GIF: wrong LZW code size (must be in 2..12), is" &
-        U8'Image (temp);
+        "GIF: wrong LZW code size (must be in 2 .. 12), is" & temp'Image;
     end if;
-    CurrSize := Natural (temp);
+    code_size_as_in_frame_header := Natural (temp);
 
     --  Start at top left of image
     X := Natural (Descriptor.ImageLeft);
@@ -576,21 +589,21 @@ package body GID.Decoding_GIF is
       --  "Rare" formats -> no need of best speed
       declare
         --  We create an instance with dynamic parameters
-        procedure GIF_Decode_general is
-          new GIF_Decode (frame_interlaced, frame_transparency, custom_pixel_mask);
+        procedure GIF_Decode_General is
+          new GIF_Decode_Frame (frame_interlaced, frame_transparency, custom_pixel_mask);
       begin
-        GIF_Decode_general;
+        GIF_Decode_General;
       end;
     else
       --  8 bit, usual format: we try to make things
-      --  faster with specialized instanciations...
+      --  faster by using specialized instantiations...
       if frame_interlaced then
         if frame_transparency then
           GIF_Decode_interlaced_transparent_8;
         else
           GIF_Decode_interlaced_opaque_8;
         end if;
-      else -- straight (non-interlaced)
+      else  --  Straight (non-interlaced)
         if frame_transparency then
           GIF_Decode_straight_transparent_8;
         else
@@ -600,7 +613,7 @@ package body GID.Decoding_GIF is
     end if;
     Feedback (100);
     --
-    Get_Byte (image.buffer, temp); -- zero-size sub-block
+    Get_Byte (image.buffer, temp);  --  Zero-size sub-block
   end Load;
 
 end GID.Decoding_GIF;

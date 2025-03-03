@@ -1,6 +1,6 @@
 @echo off
 
-gprbuild -P pdf_out_gnat
+gprbuild -P pdf_out
 
 if %errorlevel% == 9009 goto error
 

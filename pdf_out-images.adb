@@ -37,12 +37,12 @@ package body PDF_Out.Images is
   function Get_pixel_dimensions (image_file_name : String) return Rectangle is
     use Ada.Streams.Stream_IO;
     file : File_Type;
-    i : GID.Image_descriptor;
+    i : GID.Image_Descriptor;
   begin
     Open (file, In_File, image_file_name);
-    GID.Load_image_header (i, Stream (file).all, try_tga => False);
+    GID.Load_Image_Header (i, Stream (file).all, try_tga => False);
     Close (file);
-    return (0.0, 0.0, Real (GID.Pixel_width (i)), Real (GID.Pixel_height (i)));
+    return (0.0, 0.0, Real (GID.Pixel_Width (i)), Real (GID.Pixel_Height (i)));
   end Get_pixel_dimensions;
 
   procedure Traverse_private (pdf : PDF_Out_Stream) is
@@ -91,25 +91,25 @@ package body PDF_Out.Images is
       file_size : Natural;
       use Ada.Streams.Stream_IO;
       file : File_Type;
-      i : GID.Image_descriptor;
+      i : GID.Image_Descriptor;
       use GID;
     begin
       Open (file, In_File, file_name);
       file_size := Integer (Size (file));
-      GID.Load_image_header (i, Stream (file).all, try_tga => False);
+      GID.Load_Image_Header (i, Stream (file).all, try_tga => False);
       Close (file);
       if GID.Format (i) /= GID.JPEG then
         raise Not_implemented
           with
             "So far only JPEG images can be inserted. This image is of type " &
-            GID.Detailed_format (i) & ", file name = " & file_name;
+            GID.Detailed_Format (i) & ", file name = " & file_name;
       end if;
       New_Object (pdf);
       WL
         (pdf,
          "<< /Type /XObject /Subtype /Image /Width " &
-         Img (GID.Pixel_width (i)) & " /Height " & Img (GID.Pixel_height (i)) &
-         " /ColorSpace /DeviceRGB /BitsPerComponent " & Img (GID.Bits_per_pixel (i) / 3) &
+         Img (GID.Pixel_Width (i)) & " /Height " & Img (GID.Pixel_Height (i)) &
+         " /ColorSpace /DeviceRGB /BitsPerComponent " & Img (GID.Bits_per_Pixel (i) / 3) &
          " /Length " & Img (file_size) & " /Filter /DCTDecode >>");
       WL (pdf, "stream");
       Copy_File (file_name, pdf.pdf_stream.all);
