@@ -11,14 +11,19 @@ echo end Hello;>>hello.adb
 gprbuild -P ..\pdf_out.gpr
 
 rem Call GNATMake without project file (because of the extra example): we will have the .ali here.
-gnatmake hello.adb -I.. -I..\gid -aO..\obj/debug -j0
+gnatmake hello.adb -I.. -I../gid -aO../obj/debug -j0
 
-rem Hello without local references
-perl pw_html.pl     hello.adb -d -I.. -I..\gid -opw_html
+set params=-opw_html -b#fffcfb -ipw_head.txt -jpw_top.txt -kpw_bottom.txt
+set params=%params%  -I../obj/debug -I.. -I../gid -I../demos -I../tests -I../tools
+
+rem Here we invoke GNATHTML ( https://github.com/zertovitch/ali_parse )
+
+rem Hello (TBD for GNATHTML "-f" switch for local references: we don't want them for Hello)
+gnathtml hello.adb %params%
 
 rem The rest with local references
-perl pw_html.pl     pdf_out_demo.adb pdf_out.ads pdf_out.adb img2pdf.adb page_test.adb validation_test.adb color_pinstripe_printer.adb hilbert_curve.adb k_means.adb koch_curve.adb peano_curve.adb -I..\obj/debug -I.. -I..\gid -I..\demos -I..\tests -I..\tools -f -d -opw_html
+gnathtml pdf_out_demo.adb pdf_out.ads pdf_out.adb img2pdf.adb page_test.adb validation_test.adb color_pinstripe_printer.adb hilbert_curve.adb k_means.adb koch_curve.adb peano_curve.adb %params%
 
-del *.ali
-del *.o
-del *.exe
+del hello.ali
+del hello.o
+del hello.exe
