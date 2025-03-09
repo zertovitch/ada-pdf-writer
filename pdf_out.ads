@@ -529,8 +529,8 @@ package PDF_Out is
   --  Information about this package - e.g. for an "about" box  --
   ----------------------------------------------------------------
 
-  version   : constant String := "008, preview 1";
-  reference : constant String := "01-Mar-2025";
+  version   : constant String := "008";
+  reference : constant String := "09-Mar-2025";
   --  Hopefully the latest version is at one of those URLs:
   web  : constant String := "https://apdf.sourceforge.io/";
   web2 : constant String := "https://sourceforge.net/projects/apdf/";

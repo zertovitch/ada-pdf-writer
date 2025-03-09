@@ -22,7 +22,7 @@ rem Hello (TBD for GNATHTML "-f" switch for local references: we don't want them
 gnathtml hello.adb %params%
 
 rem The rest with local references
-gnathtml pdf_out_demo.adb pdf_out.ads pdf_out.adb img2pdf.adb page_test.adb validation_test.adb color_pinstripe_printer.adb hilbert_curve.adb k_means.adb koch_curve.adb peano_curve.adb %params%
+gnathtml pdf_out_demo.adb pdf_out.ads pdf_out.adb img2pdf.adb page_test.adb validation_test.adb color_pinstripe_printer.adb hilbert_curve.adb k_means.adb koch_curve.adb peano_curve.adb -f %params%
 
 del hello.ali
 del hello.o
