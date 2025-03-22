@@ -144,7 +144,7 @@ procedure PDF_Out_Demo is
         pdf.Stroking_Color ((0.8, 0.8, 0.2));
         r := pdf.Bounding_Box (text);
         pdf.Draw (p + r, stroke);
-        pdf.Put_XY (p.x, p.y, text);
+        pdf.Put_XY (p, text);
         new_x := p.x + r.width;
       end Put_Boxed;
 

@@ -197,6 +197,7 @@ package PDF_Out is
 
   procedure Text_XY (pdf : in out PDF_Out_Stream; x, y : Real);
   procedure Put_XY (pdf : in out PDF_Out_Stream; x, y : Real; str : String);
+  procedure Put_XY (pdf : in out PDF_Out_Stream; pt : Point; str : String);
 
   function Col (pdf : in PDF_Out_Stream) return Positive;
   function Line (pdf : in PDF_Out_Stream) return Positive;
@@ -530,7 +531,7 @@ package PDF_Out is
   ----------------------------------------------------------------
 
   version   : constant String := "008";
-  reference : constant String := "09-Mar-2025";
+  reference : constant String := "22-Mar-2025";
   --  Hopefully the latest version is at one of those URLs:
   web  : constant String := "https://apdf.sourceforge.io/";
   web2 : constant String := "https://sourceforge.net/projects/apdf/";
