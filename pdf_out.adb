@@ -17,46 +17,14 @@ package body PDF_Out is
 
   package CIO is new Ada.Text_IO.Integer_IO (Ada.Streams.Stream_IO.Count);
 
-  --  Very low level part which deals with transferring data endian-proof,
-  --  and floats in the IEEE format. This is needed for having PDF Writer
-  --  totally portable on all systems and processor architectures.
-
-  type Byte_buffer is array (Integer range <>) of Unsigned_8;
-
-  --  Put numbers with correct endianess as bytes:
-  generic
-    type Number is mod <>;
-    size : Positive;
-  function Intel_x86_buffer (n : Number) return Byte_buffer;
-  pragma Inline (Intel_x86_buffer);
-
-  function Intel_x86_buffer (n : Number) return Byte_buffer is
-    b : Byte_buffer (1 .. size);
-    m : Number := n;
-  begin
-    for i in b'Range loop
-      b (i) := Unsigned_8 (m and 255);
-      m := m / 256;
-    end loop;
-    return b;
-  end Intel_x86_buffer;
-
-  function Intel_32 is new Intel_x86_buffer (Unsigned_32, 4);
-  pragma Unreferenced (Intel_32);
-
-  function Intel_16 (n : Unsigned_16) return Byte_buffer is
-    pragma Inline (Intel_16);
-  begin
-    return (Unsigned_8 (n and 255), Unsigned_8 (Shift_Right (n, 8)));
-  end Intel_16;
-  pragma Unreferenced (Intel_16);
+  type Byte_Buffer is array (Integer range <>) of Unsigned_8;
 
   --  Workaround for the severe xxx'Read xxx'Write performance
   --  problems in the GNAT and ObjectAda compilers (as in 2009)
   --  This is possible if and only if Byte = Stream_Element and
   --  arrays types are both packed and aligned the same way.
   --
-  subtype Size_test_a is Byte_buffer (1 .. 19);
+  subtype Size_test_a is Byte_Buffer (1 .. 19);
   subtype Size_test_b is Ada.Streams.Stream_Element_Array (1 .. 19);
   workaround_possible : constant Boolean :=
     Size_test_a'Size = Size_test_b'Size and
@@ -64,7 +32,7 @@ package body PDF_Out is
 
   procedure Block_Read
     (file          : in     Ada.Streams.Stream_IO.File_Type;
-     buffer        :    out Byte_buffer;
+     buffer        :    out Byte_Buffer;
      actually_read :    out Natural)
   is
     SE_Buffer   : Stream_Element_Array (1 .. buffer'Length);
@@ -81,7 +49,7 @@ package body PDF_Out is
       else
         actually_read :=
           Integer'Min (buffer'Length, Integer (Size (file) - Index (file) + 1));
-        Byte_buffer'Read
+        Byte_Buffer'Read
           (Stream (file),
            buffer (buffer'First .. buffer'First + actually_read - 1));
       end if;
@@ -90,7 +58,7 @@ package body PDF_Out is
 
   procedure Block_Write
     (stream : in out Ada.Streams.Root_Stream_Type'Class;
-     buffer : in     Byte_buffer)
+     buffer : in     Byte_Buffer)
   is
     pragma Inline (Block_Write);
     SE_Buffer   : Stream_Element_Array (1 .. buffer'Length);
@@ -100,7 +68,7 @@ package body PDF_Out is
     if workaround_possible then
       Ada.Streams.Write (stream, SE_Buffer);
     else
-      Byte_buffer'Write (stream'Access, buffer);
+      Byte_Buffer'Write (stream'Access, buffer);
       --  ^ This was 30x to 70x slower on GNAT 2009
       --    Test in the Zip-Ada project.
     end if;
@@ -113,7 +81,7 @@ package body PDF_Out is
      buffer_size :        Positive := 1024 * 1024)
   is
     f : File_Type;
-    buf : Byte_buffer (1 .. buffer_size);
+    buf : Byte_Buffer (1 .. buffer_size);
     actually_read : Natural;
   begin
     Open (f, In_File, file_name);
@@ -366,7 +334,7 @@ package body PDF_Out is
     case pdf.format is
       when PDF_1_3 =>
         WL (pdf, "%PDF-1.3");
-        Byte_buffer'Write (pdf.pdf_stream, (16#25#, 16#C2#, 16#A5#, 16#C2#, 16#B1#, 16#C3#, 16#AB#, 10));
+        Byte_Buffer'Write (pdf.pdf_stream, (16#25#, 16#C2#, 16#A5#, 16#C2#, 16#B1#, 16#C3#, 16#AB#, 10));
     end case;
     WL (pdf, "%  --  Produced by " & producer);
   end Write_PDF_header;
@@ -1056,10 +1024,18 @@ package body PDF_Out is
     if close_path then
       cmd := Ada.Characters.Handling.To_Lower (cmd);
     end if;
-    --  Insert the s, S, f, f*, b, b*, B, B* of Table 60 - Path-Painting Operators (8.5.3.1)
-    if cmd = "s*" or cmd = "S*" or cmd = "F " or cmd = "F*" then
-      Insert_Graphics_PDF_Code (pdf, "n");  --  End the path object without filling or stroking it.
+    if cmd in "s*" | "S*" | "F*" then
+      --  Undefined operator.
+      --  End the path object without filling or stroking it.
+      Insert_Graphics_PDF_Code (pdf, "n");
+    elsif cmd = "F " then
+      --  "Equivalent to f; included only for compatibility.
+      --   Although PDF reader applications shall be able to accept
+      --   this operator, PDF writer applications should use f instead."
+      Insert_Graphics_PDF_Code (pdf, "f");
     else
+      --  Insert the s, S, f, f*, F, b, b*, B, B* of
+      --  Table 60 - Path-Painting Operators (8.5.3.1)
       Insert_Graphics_PDF_Code (pdf, cmd);
     end if;
   end Finish_Path;
