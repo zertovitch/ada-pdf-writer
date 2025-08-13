@@ -21,15 +21,22 @@ small procedure:
 
 **Full description in: `pdf_writer.txt`**
 
+#### Features:
 * Ideal for the dynamic production of reports, invoices, tickets, labels, delivery notes, charts, maps etc.
-* Vector graphics
-* Inclusion of JPEG images
+* Lightweight API
 * Object oriented
 * Task safe
 * Endian-neutral
 * Multi-platform, but native code build
 * Unconditionally portable code: OS-, CPU-, compiler- independent code
 * Pure Ada 2012: this package can be used in projects in Ada 2012 and later language versions
+
+#### PDF and layout features provided:
+* Texts of any size and color; multiple fonts
+* Vector graphics (lines, arcs, circles, Bezier curves, filled forms)
+* Hyperlinks (internal and external)
+* Inclusion of JPEG images
+* Margins, headers and footers
 
 ### License
 
