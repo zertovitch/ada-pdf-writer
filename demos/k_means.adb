@@ -78,7 +78,7 @@ procedure K_Means is
 
   procedure Reallocate is
     cluster, cluster_new : Cluster_Range;
-    current_dist : Real;
+    current_dist, new_dist : Real;
     --  Here we choose a metric, e.g. L1 or L2.
     function Distance (P1, P2 : Point) return Real renames L1_Distance;
   begin
@@ -87,11 +87,12 @@ procedure K_Means is
       cluster_new := cluster;
       current_dist := Distance (centroid (cluster), data (i));
       for c in Cluster_Range loop
-        if c /= cluster
-          and then count (c) > 0
-          and then Distance (centroid (c), data (i)) < current_dist
-        then
-          cluster_new := c;
+        if c /= cluster and then count (c) > 0 then
+          new_dist := Distance (centroid (c), data (i));
+          if new_dist < current_dist then
+             cluster_new := c;
+             current_dist := new_dist;
+          end if;
         end if;
       end loop;
       alloc (i) := cluster_new;
