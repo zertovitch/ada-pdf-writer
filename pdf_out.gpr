@@ -16,9 +16,9 @@
 --  **  library included in a subdirectory. So, the project is standalone. But if *your* project  **
 --  **  uses both Ada PDF Writer and GID project files, then the GID sources will be visible      **
 --  **  at two different locations, and GNAT will rightfully complain about it.                   **
---  **  In that case, you'd perhaps prefer to use the pdf_out_w_gid.gpr project file.             **
+--  **  In that case, you'd perhaps prefer to use the pdf_out_project_tree.gpr project file.      **
 --  **                                                                                            **
---  **  See "pdf_out_w_gid.gpr" for the other variant.                                            **
+--  **  See "pdf_out_project_tree.gpr" for the other variant.                                     **
 --  ************************************************************************************************
 --
 

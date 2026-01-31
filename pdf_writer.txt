@@ -25,24 +25,24 @@ Contents
   PDF Writer
   ==========
 
-  - pdf_out.ads            : package specification
-  - pdf_out.adb            : package body
-  - pdf_out-*              : private children packages (needed but not relevant for users)
+  - pdf_out.ads              : package specification
+  - pdf_out.adb              : package body
+  - pdf_out-*                : private children packages (needed but not relevant for users)
+                             
+  - pdf_out.gpr              : project file for the GNAT compiler, using a local GID copy
+  - pdf_out_project_tree.gpr : project file for the GNAT compiler, with reference to GID as project (*)
+  - pdf_out.prj              : project file for the ObjectAda (10+) compiler
 
-  - pdf_out.gpr            : project file for the GNAT compiler, using a local GID copy
-  - pdf_out_w_gid.gpr      : project file for the GNAT compiler, with reference to GID as project (*)
-  - pdf_out.prj            : project file for the ObjectAda (10+) compiler
+  - pdf_writer.txt           : this file
 
-  - pdf_writer.txt         : this file
+  - demos/pdf_out_demo.adb   : main demo procedure
+  - demos/*                  : all demos
+  - tests/*                  : tests
+  - tools/*                  : tools using PDF_Out
+                             
+  - gid/*                    : local copy of GID, the Generic Image Decoder
 
-  - demos/pdf_out_demo.adb : main demo procedure
-  - demos/*                : all demos
-  - tests/*                : tests
-  - tools/*                : tools using PDF_Out
-
-  - gid/*                  : local copy of GID, the Generic Image Decoder
-
-(*) The alternative project file for GNAT, pdf_out_w_gid.gpr, will reference
+(*) The alternative project file for GNAT, pdf_out_project_tree.gpr, will reference
     the project file for GID (the Generic Image Decoder), gid.gpr,
     and *not* use the local copy of the GID library.
     This is useful if:

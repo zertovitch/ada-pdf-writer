@@ -6,8 +6,8 @@
 --      Project page 2:  https://github.com/zertovitch/ada-pdf-writer
 --      Alire crate:     https://alire.ada.dev/crates/apdf
 --
---  Build me with "gprbuild -P pdf_out_w_gid",
---  or "gnatmake -P pdf_out_w_gid", or open me with GNAT Studio.
+--  Build me with "gprbuild -P pdf_out_project_tree",
+--  or "gnatmake -P pdf_out_project_tree", or open me with GNAT Studio.
 --
 --  ******************************************************************************************************
 --  **  This variant is a hierarchical .gpr project, which refers to another .gpr project.              **
@@ -25,7 +25,7 @@
 
 with "gid.gpr";  --  <--------- *Here* is GID referenced as a dependent project file.
 
-project PDF_Out_w_GID is
+project PDF_Out_Project_Tree is
 
    type PDF_Build_Mode_Type is ("Debug", "Fast");
    PDF_Build_Mode : PDF_Build_Mode_Type := external ("PDF_Build_Mode", "Debug");
@@ -112,4 +112,4 @@ project PDF_Out_w_GID is
       for Default_Switches ("adacontrol") use ("-f", "verif.aru");
    end Ide;
 
-end PDF_Out_w_GID;
+end PDF_Out_Project_Tree;
