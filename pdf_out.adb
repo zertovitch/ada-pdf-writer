@@ -378,15 +378,15 @@ package body PDF_Out is
   begin
     WLd (pdf, "10 10 200 200 re S"); -- rectangle, stroke
     WLd (pdf, "  BT");            --  Begin Text object (9.4). Text matrix and text line matrix:= I
-    WLd (pdf, "    /Ada_PDF_Std_Font_Helvetica 24 Tf");   --  F1 font, 24 pt size (9.3 Text State Parameters and Operators)
+    WLd (pdf, "    /Ada_PDF_Std_Font_Helvetica 24 Tf");   --  See 9.3 Text State Parameters and Operators
     WLd (pdf, "    0.5 0 0 rg");  --  red, nonstroking colour (Table 74)
-    WLd (pdf, "    0.25 G");     --  25% gray stroking colour (Table 74)
+    WLd (pdf, "    0.25 G");      --  25% gray stroking colour (Table 74)
     WLd (pdf, "    2 Tr");        --  Tr: Set rendering mode as "Fill, then stroke text" (Table 106)
     WLd (pdf, "    20 539 Td");
-    WLd (pdf, "    (Hello World !) Tj"); -- Tj: Show a text string (9.4.3 Text-Showing Operators)
-    WLd (pdf, "    16 TL");       --  TL: set text leading (distance between lines, 9.3.5)
-    WLd (pdf, "    T*");          --  T*: Move to the start of the next line (9.4.2)
-    WLd (pdf, "    20 20 200 200 re S"); -- rectangle, stroke (within text region)
+    WLd (pdf, "    (Hello World !) Tj"); --  Tj: Show a text string (9.4.3 Text-Showing Operators)
+    WLd (pdf, "    16 TL");              --  TL: set text leading (distance between lines, 9.3.5)
+    WLd (pdf, "    T*");                 --  T*: Move to the start of the next line (9.4.2)
+    WLd (pdf, "    20 20 200 200 re S"); --  rectangle, stroke (within text region)
     WLd (pdf, "    /Ada_PDF_Std_Font_Helvetica-Oblique 12 Tf");
     WLd (pdf, "    0 Tr");        --  Tr: Set rendering mode as default: "Fill text" (Table 106)
     WLd (pdf, "    0 g");         --  black (default)

@@ -1,12 +1,6 @@
 --  This is a GNAT, GCC or GNAT Studio project file
 --  for the Ada PDF Writer project.
 --
---    This variant of the project file refers to the GID (Generic Image Decoder)
---    library as an external project. This is the best fit for a multi-project setup,
---    for instance through the Alire system (Ada LIbrary REpository, https://alire.ada.dev/ ).
---    For a fully standalone project file, see the pdf_out.gpr variant.
---
---
 --      Home page:       http://apdf.sf.net/
 --      Project page 1:  http://sf.net/projects/apdf/
 --      Project page 2:  https://github.com/zertovitch/ada-pdf-writer
@@ -14,6 +8,19 @@
 --
 --  Build me with "gprbuild -P pdf_out_w_gid",
 --  or "gnatmake -P pdf_out_w_gid", or open me with GNAT Studio.
+--
+--  ******************************************************************************************************
+--  **  This variant is a hierarchical .gpr project, which refers to another .gpr project.              **
+--  **                                                                                                  **
+--  **  The project file refers to the GID (Generic Image Decoder) library as an external project.      **
+--  **  This is the best fit for a multi-project setup.                                                 **
+--  **  For instance, Alire (Ada LIbrary REpository) uses it.                                           **
+--  **  The crate https://alire.ada.dev/crates/apdf refers to the GID crate                             **
+--  **  which contains its own .gpr project file. That way, Alire is able to retrieve all               **
+--  **  resources and build everything automatically.                                                   **
+--  **                                                                                                  **
+--  **  See "pdf_out.gpr" for the other, "flat" standalone variant.                                     **
+--  ******************************************************************************************************
 --
 
 with "gid.gpr";  --  <--------- *Here* is GID referenced as a dependent project file.
@@ -43,7 +50,7 @@ project PDF_Out_w_GID is
            "validation_test.adb");
 
    for Exec_Dir use ".";
-   for Create_Missing_Dirs use "True";  --  Flips by default the "-p" switch
+   for Create_Missing_Dirs use "True";  --  Flips the "-p" switch
 
    case PDF_Build_Mode is
       when "Debug" =>
@@ -63,6 +70,7 @@ project PDF_Out_w_GID is
     ("-gnatyaknpr",  --  Style: check all casings: a:attribute, k:keywords, n:package Standard identifiers, p:pragma, r:identifier references
      "-gnatybfhiu",  --  Style: check b:no blanks at end of lines, f:no ff/vtabs, h: no htabs, i:if-then layout, u:no unnecessary blank lines
      "-gnatyO",      --  Style: check that overriding subprograms are explicitly marked as such.
+     "-gnatyM120",   --  Style: check line length <= 120 characters
      "-gnatyx",      --  Style: check x:no extra parens
      "-gnatye",      --  Style: check e:end/exit labels present
      "-gnatyc",      --  Style: check c:comment format (two spaces)

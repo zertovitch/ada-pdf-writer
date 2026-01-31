@@ -1,12 +1,6 @@
 --  This is a GNAT, GCC or GNAT Studio project file
 --  for the Ada PDF Writer project (standalone variant).
 --
---    This variant of the project file refers to a copy of the GID (Generic Image Decoder)
---    library included in a subdirectory. So, the project is standalone. But if *your* project
---    uses both Ada PDF Writer and GID project files, then the GID sources will be visible
---    at two different locations, and GNAT will rightfully complain about it.
---    In that case, you'd perhaps prefer to use the pdf_out_w_gid.gpr project file.
---
 --      Home page:       http://apdf.sf.net/
 --      Project page 1:  http://sf.net/projects/apdf/
 --      Project page 2:  https://github.com/zertovitch/ada-pdf-writer
@@ -15,7 +9,17 @@
 --  Build me with "gprbuild -P pdf_out",
 --  or "gnatmake -P pdf_out", or open me with GNAT Studio.
 --
---
+--  ************************************************************************************************
+--  **  This variant is a single, "flat", .gpr project, which handles all sources.                **
+--  **                                                                                            **
+--  **  The project file refers to a *copy* of the GID (Generic Image Decoder)                    **
+--  **  library included in a subdirectory. So, the project is standalone. But if *your* project  **
+--  **  uses both Ada PDF Writer and GID project files, then the GID sources will be visible      **
+--  **  at two different locations, and GNAT will rightfully complain about it.                   **
+--  **  In that case, you'd perhaps prefer to use the pdf_out_w_gid.gpr project file.             **
+--  **                                                                                            **
+--  **  See "pdf_out_w_gid.gpr" for the other variant.                                            **
+--  ************************************************************************************************
 --
 
 project PDF_Out is
@@ -42,7 +46,7 @@ project PDF_Out is
            "validation_test.adb");
 
    for Exec_Dir use ".";
-   for Create_Missing_Dirs use "True";  --  Flips by default the "-p" switch
+   for Create_Missing_Dirs use "True";  --  Flips the "-p" switch
 
    case PDF_Build_Mode is
       when "Debug" =>
@@ -53,7 +57,6 @@ project PDF_Out is
 
    Common_Options :=
     ("-gnatwa",                        --  Warnings switches (a:turn on all info/warnings marked with +)
-     "-gnatwAeJ",
      --  "-gnatwh",                        --  Warnings switches (h:turn on warnings for hiding declarations)
      --  "-gnatwcijkmopruvz.c.n.p.t.w.x",  --  Warnings switches (run "gnatmake" for full list)
      "-gnatf",  --  Full errors. Verbose details, all undefined references
@@ -63,6 +66,7 @@ project PDF_Out is
     ("-gnatyaknpr",  --  Style: check all casings: a:attribute, k:keywords, n:package Standard identifiers, p:pragma, r:identifier references
      "-gnatybfhiu",  --  Style: check b:no blanks at end of lines, f:no ff/vtabs, h: no htabs, i:if-then layout, u:no unnecessary blank lines
      "-gnatyO",      --  Style: check that overriding subprograms are explicitly marked as such.
+     "-gnatyM120",   --  Style: check line length <= 120 characters
      "-gnatyx",      --  Style: check x:no extra parens
      "-gnatye",      --  Style: check e:end/exit labels present
      "-gnatyc",      --  Style: check c:comment format (two spaces)
