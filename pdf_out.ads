@@ -9,7 +9,7 @@
 
 --  Legal licensing note:
 
---  Copyright (c) 2014 .. 2025 Gautier de Montmollin
+--  Copyright (c) 2014 .. 2026 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -82,7 +82,8 @@ package PDF_Out is
 
   PDF_stream_not_created,
   PDF_stream_not_closed,
-  Not_implemented : exception;
+  Not_implemented,
+  Invalid_Value : exception;
 
   type PDF_Type is
     (PDF_1_3);  --  PDF 1.3
@@ -362,6 +363,31 @@ package PDF_Out is
      rendering  :        Path_Rendering_Mode;  --  fill, stroke, or both
      rule       :        Inside_path_rule);
 
+  ---------------------------------------------------------------
+  --  Custom coordinates                                       --
+  --                                                           --
+  --  The methods affected by Set_Math_Plane are:              --
+  --    Text_XY, Put_XY, Image, Single_Line                    --
+  --    Draw, Move, Line, Cubic_Bezier, Arc, Circle.           --
+  --                                                           --
+  --  After a call to Set_Math_Plane, a dot at                 --
+  --  (math_plane.x_min, math_plane.y_min) will be at the      --
+  --  bottom left of the area bounded by the margins that are  --
+  --  defined at the time of the call; a dot at                --
+  --  (math_plane.x_min + math_plane.width                     --
+  --   math_plane.y_min + math_plane.height) will be at        --
+  --  the top right of the area bounded by the margins.        --
+  ---------------------------------------------------------------
+
+  procedure Set_Math_Plane
+    (pdf        : in out PDF_Out_Stream;
+     math_plane : in     Rectangle);
+
+  --  Return to normal, "paper" coordinates system in Points.
+  --  This is also the default system of the PDF standard.
+  --
+  procedure Restore_Paper_Plane (pdf : in out PDF_Out_Stream);
+
   -------------------
   --  Annotations  --
   -------------------
@@ -451,8 +477,9 @@ package PDF_Out is
   procedure Page_Header (pdf : in out PDF_Out_Stream);
   procedure Page_Footer (pdf : in out PDF_Out_Stream);
 
-  --  They have to be called before New_Page in order to influence the next page.
+  --  Margin methods have to be called before New_Page in order to influence the next page.
   --  For the first page, call them before any output (typically right after Create).
+  --  Margins are used by Text_XY and Put_XY for positioning text, as well as Set_Math_Plane.
   --
   procedure Left_Margin (pdf : out PDF_Out_Stream; pts : Real);
   function Left_Margin (pdf : PDF_Out_Stream) return Real;
@@ -604,7 +631,10 @@ private
     page_idx              : p_Page_Table      := null;  --  page_idx(p): Object ID of page p
     old_page_idx          : p_Page_Table      := null;  --  Needed for internal Hyperlink.
     page_box              : Rectangle         := A4_portrait;
-    maximum_box           : Rectangle         := A4_portrait;
+    maximum_box           : Rectangle         := A4_portrait;  --  Boundaries of the physical medium.
+    --  Affine parameters, changed by Set_Math_Plane:
+    resizing              : Rectangle         := (0.0, 0.0, 1.0, 1.0);
+    --
     page_margins          : Margins_Type      := cm_2_5_margins;
     objects               : PDF_Index_Type    := last_fix_obj_idx;
     object_offset         : p_Offset_Table    := null;

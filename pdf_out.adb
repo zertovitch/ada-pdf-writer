@@ -770,6 +770,16 @@ package body PDF_Out is
      Put_Line (pdf, To_String (To_Wide_Wide_String (ww_str)));
   end Put_Line_WWS;
 
+  function Transform_X_Coordinates (pdf : PDF_Out_Stream'Class; x : Real) return Real is
+  (pdf.resize.x_min + x * pdf.resize.width);
+
+  function Transform_Y_Coordinates (pdf : PDF_Out_Stream'Class; y : Real) return Real is
+  (pdf.resize.y_min + y * pdf.resize.height);
+
+  function Transform_Coordinates (pdf : PDF_Out_Stream'Class; p : Point) return Real is
+  (Transform_X_Coordinates (p.x),
+   Transform_Y_Coordinates (p.y));
+
   procedure Text_XY (pdf : in out PDF_Out_Stream; x, y : Real) is
   begin
     Flip_To (pdf, text);
@@ -777,7 +787,11 @@ package body PDF_Out is
     --  for resetting the text matrices (hence, position and orientation).
     End_Text (pdf);
     Begin_Text (pdf);
-    Insert_PDF_Code (pdf, Img (x) & ' ' & Img (y) & " Td");  --  Td: 9.4.2 Text-Positioning Operators
+    Insert_PDF_Code
+       (pdf, 
+        Img (Transform_X_Coordinates (x)) & ' ' & 
+        Img (Transform_Y_Coordinates (y)) & 
+        " Td");  --  9.4.2 Text-Positioning Operators
     pdf.current_line := 1;
     pdf.current_col := 1;
   end Text_XY;
@@ -846,8 +860,11 @@ package body PDF_Out is
     PDF_Out.Images.Image_ref (pdf, file_name, image_index);
     Insert_Graphics_PDF_Code
       (pdf, "q " &
-       Img (target.width) & " 0 0 " & Img (target.height) &
-       ' ' & Img (target.x_min) & ' ' & Img (target.y_min) & " cm " &  --  cm: Table 57
+       Img (pdf.resize.width  * target.width) & " 0 0 " &
+       Img (pdf.resize.height * target.height) &
+       ' ' &
+       Img (Transform_X_Coordinates (target.x_min)) & ' ' &
+       Img (Transform_Y_Coordinates (target.y_min)) & " cm " &  --  cm: Table 57
        Image_Name (image_index) & " Do Q");
   end Image;
 
@@ -872,7 +889,10 @@ package body PDF_Out is
 
   procedure Single_Line (pdf : in out PDF_Out_Stream; from, to : Point) is
   begin
-    Insert_Graphics_PDF_Code (pdf, Img (from) & " m " & Img (to) & " l s");
+    Insert_Graphics_PDF_Code
+      (pdf, 
+       Img (Transform_Coordinates (from)) & " m " & 
+       Img (Transform_Coordinates (to)) & " l s");
   end Single_Line;
 
   --    Table 59 - Path Construction Operators (8.5.2)
@@ -1040,6 +1060,28 @@ package body PDF_Out is
     end if;
   end Finish_Path;
 
+  procedure Set_Math_Plane
+    (pdf        : in out PDF_Out_Stream;
+     math_plane : in     Rectangle)
+  is
+    scale_x : constant Real :=
+      (pdf.page_box.width  - pdf.page_margins.left   - pdf.page_margins.right) / math_plane.width;
+
+    scale_y : constant Real :=
+      (pdf.page_box.height - pdf.page_margins.bottom - pdf.page_margins.top)   / math_plane.height;
+  begin
+    pdf.resizing :=
+      (x_min  => pdf.page_margins.left   - math_plane.x_min * scale_x,
+       y_min  => pdf.page_margins.bottom - math_plane.y_min * scale_y,
+       width  => scale_x,
+       height => scale_y);
+  end Set_Math_Plane;
+
+  procedure Restore_Paper_Plane (pdf : in out PDF_Out_Stream) is
+  begin
+    pdf.resizing := (0.0, 0.0, 1.0, 1.0);
+  end Restore_Paper_Plane;
+
   procedure Hyperlink
     (pdf     : in out PDF_Out_Stream;
      area    : in     Rectangle;
@@ -1160,6 +1202,9 @@ package body PDF_Out is
 
   procedure Left_Margin (pdf : out PDF_Out_Stream; pts : Real) is
   begin
+    if pts >= pdf.page_margins.right then
+      raise Invalid_Value with "Left margin greater or equal to right margin";
+    end if;
     pdf.page_margins.left := pts;
   end Left_Margin;
 
@@ -1170,6 +1215,9 @@ package body PDF_Out is
 
   procedure Right_Margin (pdf : out PDF_Out_Stream; pts : Real) is
   begin
+    if pts <= pdf.page_margins.left then
+      raise Invalid_Value with "Right margin smaller or equal to left margin";
+    end if;
     pdf.page_margins.right := pts;
   end Right_Margin;
 
@@ -1180,6 +1228,9 @@ package body PDF_Out is
 
   procedure Top_Margin (pdf : out PDF_Out_Stream; pts : Real) is
   begin
+    if pts <= pdf.page_margins.bottom then
+      raise Invalid_Value with "Top margin smaller or equal to bottom margin";
+    end if;
     pdf.page_margins.top := pts;
   end Top_Margin;
 
@@ -1190,6 +1241,9 @@ package body PDF_Out is
 
   procedure Bottom_Margin (pdf : out PDF_Out_Stream; pts : Real) is
   begin
+    if pts >= pdf.page_margins.top then
+      raise Invalid_Value with "Bottom margin greater or equal to top margin";
+    end if;
     pdf.page_margins.bottom := pts;
   end Bottom_Margin;
 
@@ -1218,9 +1272,9 @@ package body PDF_Out is
     mb_y_max := Real'Max (Y_Max (pdf.maximum_box), Y_Max (layout));
     pdf.maximum_box :=
       (x_min  => mb_x_min,
-        y_min  => mb_y_min,
-        width  => mb_x_max - mb_x_min,
-        height => mb_y_max - mb_y_min);
+       y_min  => mb_y_min,
+       width  => mb_x_max - mb_x_min,
+       height => mb_y_max - mb_y_min);
   end Page_Setup;
 
   function Layout (pdf : PDF_Out_Stream) return Rectangle is
@@ -1280,13 +1334,13 @@ package body PDF_Out is
       if pdf.last_page > 0 then
         WL (pdf, "     /Count " & Img (pdf.last_page));
       end if;
-      WL (pdf, "     /MediaBox [" & Img (pdf.maximum_box, absolute) & ']');
 
       --  7.7.3.3 Page Objects - MediaBox
       --  Boundaries of the physical medium on which the page shall be displayed or printed
       --  7.7.3.4 Inheritance of Page Attributes
       --  Global page size, lower-left to upper-right, measured in points
       --  Bounding box of all pages
+      WL (pdf, "     /MediaBox [" & Img (pdf.maximum_box, absolute) & ']');
       WL (pdf, "  >>");
       WL (pdf, "endobj");
     end Pages_Dictionary;
