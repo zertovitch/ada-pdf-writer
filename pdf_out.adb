@@ -771,14 +771,20 @@ package body PDF_Out is
   end Put_Line_WWS;
 
   function Transform_X_Coordinates (pdf : PDF_Out_Stream'Class; x : Real) return Real is
-  (pdf.resize.x_min + x * pdf.resize.width);
+  (pdf.resizing.x_min + x * pdf.resizing.width);
 
   function Transform_Y_Coordinates (pdf : PDF_Out_Stream'Class; y : Real) return Real is
-  (pdf.resize.y_min + y * pdf.resize.height);
+  (pdf.resizing.y_min + y * pdf.resizing.height);
 
-  function Transform_Coordinates (pdf : PDF_Out_Stream'Class; p : Point) return Real is
-  (Transform_X_Coordinates (p.x),
-   Transform_Y_Coordinates (p.y));
+  function Transform_Coordinates (pdf : PDF_Out_Stream'Class; p : Point) return Point is
+  (Transform_X_Coordinates (pdf, p.x),
+   Transform_Y_Coordinates (pdf, p.y));
+
+  function Transform_Coordinates (pdf : PDF_Out_Stream'Class; r : Rectangle) return Rectangle is
+  (Transform_X_Coordinates (pdf, r.x_min),
+   Transform_Y_Coordinates (pdf, r.y_min),
+   r.width  * pdf.resizing.width,
+   r.height * pdf.resizing.height);
 
   procedure Text_XY (pdf : in out PDF_Out_Stream; x, y : Real) is
   begin
@@ -788,9 +794,9 @@ package body PDF_Out is
     End_Text (pdf);
     Begin_Text (pdf);
     Insert_PDF_Code
-       (pdf, 
-        Img (Transform_X_Coordinates (x)) & ' ' & 
-        Img (Transform_Y_Coordinates (y)) & 
+       (pdf,
+        Img (Transform_X_Coordinates (pdf, x)) & ' ' &
+        Img (Transform_Y_Coordinates (pdf, y)) &
         " Td");  --  9.4.2 Text-Positioning Operators
     pdf.current_line := 1;
     pdf.current_col := 1;
@@ -860,11 +866,11 @@ package body PDF_Out is
     PDF_Out.Images.Image_ref (pdf, file_name, image_index);
     Insert_Graphics_PDF_Code
       (pdf, "q " &
-       Img (pdf.resize.width  * target.width) & " 0 0 " &
-       Img (pdf.resize.height * target.height) &
+       Img (pdf.resizing.width  * target.width) & " 0 0 " &
+       Img (pdf.resizing.height * target.height) &
        ' ' &
-       Img (Transform_X_Coordinates (target.x_min)) & ' ' &
-       Img (Transform_Y_Coordinates (target.y_min)) & " cm " &  --  cm: Table 57
+       Img (Transform_X_Coordinates (pdf, target.x_min)) & ' ' &
+       Img (Transform_Y_Coordinates (pdf, target.y_min)) & " cm " &  --  cm: Table 57
        Image_Name (image_index) & " Do Q");
   end Image;
 
@@ -890,9 +896,9 @@ package body PDF_Out is
   procedure Single_Line (pdf : in out PDF_Out_Stream; from, to : Point) is
   begin
     Insert_Graphics_PDF_Code
-      (pdf, 
-       Img (Transform_Coordinates (from)) & " m " & 
-       Img (Transform_Coordinates (to)) & " l s");
+      (pdf,
+       Img (Transform_Coordinates (pdf, from)) & " m " &
+       Img (Transform_Coordinates (pdf, to)) & " l s");
   end Single_Line;
 
   --    Table 59 - Path Construction Operators (8.5.2)
@@ -909,17 +915,18 @@ package body PDF_Out is
 
   procedure Draw (pdf : in out PDF_Out_Stream; what : Rectangle; rendering : Path_Rendering_Mode) is
   begin
-    Insert_Graphics_PDF_Code (pdf, Img (what, relative) & " re " & path_drawing_operator (rendering));
+    Insert_Graphics_PDF_Code
+      (pdf, Img (Transform_Coordinates (pdf, what), relative) & " re " & path_drawing_operator (rendering));
   end Draw;
 
   procedure Move (pdf : in out PDF_Out_Stream; to : Point) is
   begin
-    Insert_Graphics_PDF_Code (pdf, Img (to) & " m");  --  m operator (Table 59)
+    Insert_Graphics_PDF_Code (pdf, Img (Transform_Coordinates (pdf, to)) & " m");  --  m operator (Table 59)
   end Move;
 
   procedure Line (pdf : in out PDF_Out_Stream; to : Point) is
   begin
-    Insert_Graphics_PDF_Code (pdf, Img (to) & " l");
+    Insert_Graphics_PDF_Code (pdf, Img (Transform_Coordinates (pdf, to)) & " l");
   end Line;
 
   procedure Cubic_Bezier
@@ -930,9 +937,9 @@ package body PDF_Out is
   begin
     Insert_Graphics_PDF_Code
       (pdf,
-       Img (control_1) & ' ' &
-       Img (control_2) & ' ' &
-       Img (to) & " c");
+       Img (Transform_Coordinates (pdf, control_1)) & ' ' &
+       Img (Transform_Coordinates (pdf, control_2)) & ' ' &
+       Img (Transform_Coordinates (pdf, to)) & " c");
   end Cubic_Bezier;
 
   procedure Arc
