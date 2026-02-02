@@ -42,6 +42,7 @@ project PDF_Out is
            "sierpinski_arrowhead_curve.adb",
            "img2pdf.adb",                     --  Tools
            "arc_test.adb",                    --  Tests
+           "coord_test.adb",
            "page_test.adb",
            "validation_test.adb");
 
