@@ -370,18 +370,22 @@ package PDF_Out is
   --    Text_XY, Put_XY, Image, Single_Line                    --
   --    Draw, Move, Line, Cubic_Bezier, Arc, Circle.           --
   --                                                           --
-  --  After a call to Set_Math_Plane, a dot at                 --
-  --  (math_plane.x_min, math_plane.y_min) will be at the      --
-  --  bottom left of the area bounded by the margins that are  --
-  --  defined at the time of the call; a dot at                --
-  --  (math_plane.x_min + math_plane.width                     --
-  --   math_plane.y_min + math_plane.height) will be at        --
-  --  the top right of the area bounded by the margins.        --
+  --  After a call to Set_Math_Plane, a call to                --
+  --  Draw (pdf, math_plane) will draw a rectangle on the      --
+  --  margins that were defined at the time of the call.       --
   ---------------------------------------------------------------
 
   procedure Set_Math_Plane
     (pdf        : in out PDF_Out_Stream;
      math_plane : in     Rectangle);
+
+  --  This variant maps the `math_plane` rectangle onto the
+  --  `target` rectangle in "paper" coordinates.
+
+  procedure Set_Math_Plane
+    (pdf        : in out PDF_Out_Stream;
+     math_plane : in     Rectangle;
+     target     : in     Rectangle);
 
   --  Return to normal, "paper" coordinates system in Points.
   --  This is also the default system of the PDF standard.
@@ -604,6 +608,8 @@ private
 
   type Standard_Font_Set is array (Standard_Font_Type) of Boolean;
 
+  subtype Affine_Parameters_2D is Rectangle;
+
   ------------------------------------------
   --  Raw Streams, with 'Read and 'Write  --
   ------------------------------------------
@@ -620,33 +626,31 @@ private
   type PDF_Out_Pre_Root_Type is tagged record
     pdf_stream            : PDF_Raw_Stream_Class;
     start_index           : Ada.Streams.Stream_IO.Count;
-    is_created            : Boolean           := False;
-    is_closed             : Boolean           := False;
-    format                : PDF_Type          := default_PDF_type;
-    zone                  : Page_Zone         := nowhere;
-    text_switch           : Text_or_Graphics  := graphics;
-    last_page             : PDF_Index_Type    := 0;
-    current_line          : Positive          := 1;  --  Mostly for Ada.Text_IO compatibility
-    current_col           : Positive          := 1;  --  Mostly for Ada.Text_IO compatibility
-    page_idx              : p_Page_Table      := null;  --  page_idx(p): Object ID of page p
-    old_page_idx          : p_Page_Table      := null;  --  Needed for internal Hyperlink.
-    page_box              : Rectangle         := A4_portrait;
-    maximum_box           : Rectangle         := A4_portrait;  --  Boundaries of the physical medium.
-    --  Affine parameters, changed by Set_Math_Plane:
-    resizing              : Rectangle         := (0.0, 0.0, 1.0, 1.0);
-    --
-    page_margins          : Margins_Type      := cm_2_5_margins;
-    objects               : PDF_Index_Type    := last_fix_obj_idx;
-    object_offset         : p_Offset_Table    := null;
+    is_created            : Boolean              := False;
+    is_closed             : Boolean              := False;
+    format                : PDF_Type             := default_PDF_type;
+    zone                  : Page_Zone            := nowhere;
+    text_switch           : Text_or_Graphics     := graphics;
+    last_page             : PDF_Index_Type       := 0;
+    current_line          : Positive             := 1;  --  Mostly for Ada.Text_IO compatibility
+    current_col           : Positive             := 1;  --  Mostly for Ada.Text_IO compatibility
+    page_idx              : p_Page_Table         := null;  --  page_idx(p): Object ID of page p
+    old_page_idx          : p_Page_Table         := null;  --  Needed for internal Hyperlink.
+    page_box              : Rectangle            := A4_portrait;
+    maximum_box           : Rectangle            := A4_portrait;  --  Boundaries of the physical medium.
+    resizing              : Affine_Parameters_2D := (0.0, 0.0, 1.0, 1.0);
+    page_margins          : Margins_Type         := cm_2_5_margins;
+    objects               : PDF_Index_Type       := last_fix_obj_idx;
+    object_offset         : p_Offset_Table       := null;
     stream_obj_buf        : Unbounded_String;
-    img_dir_tree          : p_Dir_Node        := null;
-    img_count             : Natural           := 0;
-    current_font          : Font_Type         := Helvetica;
-    font_size             : Real              := 11.0;
-    line_spacing          : Real              := default_line_spacing;
+    img_dir_tree          : p_Dir_Node           := null;
+    img_count             : Natural              := 0;
+    current_font          : Font_Type            := Helvetica;
+    font_size             : Real                 := 11.0;
+    line_spacing          : Real                 := default_line_spacing;
     ext_font_name         : Unbounded_String;
     current_annot         : Unbounded_String;
-    std_font_used_in_page : Standard_Font_Set := (others => False);
+    std_font_used_in_page : Standard_Font_Set    := (others => False);
     doc_title             : Unbounded_String;  --  Document information (14.3.3)
     doc_author            : Unbounded_String;  --  Document information (14.3.3)
     doc_subject           : Unbounded_String;  --  Document information (14.3.3)

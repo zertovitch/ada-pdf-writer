@@ -786,6 +786,16 @@ package body PDF_Out is
    r.width  * pdf.resizing.width,
    r.height * pdf.resizing.height);
 
+  procedure Check_Rectangle (r : Rectangle) is
+  begin
+    if r.width <= 0.0 then
+      raise Invalid_Value with "Rectangle width not positive";
+    end if;
+    if r.height <= 0.0 then
+      raise Invalid_Value with "Rectangle height not positive";
+    end if;
+  end Check_Rectangle;
+
   procedure Text_XY (pdf : in out PDF_Out_Stream; x, y : Real) is
   begin
     Flip_To (pdf, text);
@@ -915,6 +925,7 @@ package body PDF_Out is
 
   procedure Draw (pdf : in out PDF_Out_Stream; what : Rectangle; rendering : Path_Rendering_Mode) is
   begin
+    Check_Rectangle (what);
     Insert_Graphics_PDF_Code
       (pdf, Img (Transform_Coordinates (pdf, what), relative) & " re " & path_drawing_operator (rendering));
   end Draw;
@@ -1069,19 +1080,37 @@ package body PDF_Out is
 
   procedure Set_Math_Plane
     (pdf        : in out PDF_Out_Stream;
-     math_plane : in     Rectangle)
+     math_plane : in     Rectangle;
+     target     : in     Rectangle)
   is
-    scale_x : constant Real :=
-      (pdf.page_box.width  - pdf.page_margins.left   - pdf.page_margins.right) / math_plane.width;
-
-    scale_y : constant Real :=
-      (pdf.page_box.height - pdf.page_margins.bottom - pdf.page_margins.top)   / math_plane.height;
+    scale_x, scale_y : Real;
   begin
+    Check_Rectangle (math_plane);
+
+    scale_x := target.width  / math_plane.width;
+    scale_y := target.height / math_plane.height;
+
     pdf.resizing :=
-      (x_min  => pdf.page_margins.left   - math_plane.x_min * scale_x,
-       y_min  => pdf.page_margins.bottom - math_plane.y_min * scale_y,
+      (x_min  => target.x_min - math_plane.x_min * scale_x,
+       y_min  => target.y_min - math_plane.y_min * scale_y,
        width  => scale_x,
        height => scale_y);
+  end Set_Math_Plane;
+
+  procedure Set_Math_Plane
+    (pdf        : in out PDF_Out_Stream;
+     math_plane : in     Rectangle)
+  is
+  begin
+    Set_Math_Plane
+      (pdf        => pdf,
+       math_plane => math_plane,
+       target     =>
+         --  Rectangle covering the page margins:
+         (x_min  => pdf.page_margins.left,
+          y_min  => pdf.page_margins.bottom,
+          width  => pdf.page_box.width  - pdf.page_margins.left   - pdf.page_margins.right,
+          height => pdf.page_box.height - pdf.page_margins.bottom - pdf.page_margins.top));
   end Set_Math_Plane;
 
   procedure Restore_Paper_Plane (pdf : in out PDF_Out_Stream) is
