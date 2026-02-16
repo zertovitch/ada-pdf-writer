@@ -29,9 +29,9 @@ Contents
   - pdf_out.adb              : package body
   - pdf_out-*                : private children packages (needed but not relevant for users)
                              
-  - pdf_out.gpr              : project file for the GNAT compiler, using a local GID copy
+  - pdf_out.gpr              : standalone project file for the GNAT compiler, using a local GID copy
   - pdf_out_project_tree.gpr : project file for the GNAT compiler, with reference to GID as project (*)
-  - pdf_out.prj              : project file for the ObjectAda (10+) compiler
+  - pdf_out.prj              : standalone project file for the ObjectAda (10+) compiler
 
   - pdf_writer.txt           : this file
 
